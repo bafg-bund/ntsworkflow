@@ -1,0 +1,44 @@
+Carbamazepine:             # Substanzname muss mit Buchstabe anfangen, keine Sonderzeichen, erforderlich
+  mz: 237.1015             # muss decimal, optional
+  rt: 9.0                  # muss decimal, optional
+  formula: "C15H12N2O"     # Für die Berechnung des Isotopenmusters, text muss mit "", optional
+  adduct: "[M+H]+"         # Für die Berechnung des Isotopenmusters, optional 
+  fragments:               # Erforderlich, format = - [mz, relative Intensität], oder - mz (siehe unten)
+    - [194.0958, 1.0]      # 1.0 muss als decimal
+    - [192.081, .25]       # 0.25 oder .25
+    - [165.0709, .1]       # wenn man relative Intensität angibt muss mehr als 
+Tetrabutylammonium:        # eine Masse angegeben werden
+  mz: 242.2826
+  rt: 9.22
+  fragments:
+    - [142.1596, 1.0] 
+    - [100.1133, .9]
+    - [58.071, .25]
+    - [186.2216, .25]
+PAN8:
+  mz: 505.1776
+  rt: 7.66
+  formula: "C24H26N8SO3"
+  adduct: "[M-H]-"
+  fragments:
+    - [40.0179, 0.0021]
+    - [52.0158, 0.0005]
+    - [80.964, 0.1064]
+    - [91.0269, 0.0006]
+    - [93.0436, 0.0201]
+    - [105.0454, 0.0042]
+    - [117.0451, 0.0215]
+    - [131.0615, 0.0073]
+    - [146.0703, 0.0115]
+    - [158.0714, 0.244]
+    - [161.3986, 0.0035]
+    - [184.0899, 0.0028]
+    - [196.0868, 0.001]
+    - [199.0942, 0.0115]
+    - [210.113, 0.001]
+    - [211.0972, 0.002]
+    - [359.9754, 0.0039]
+    - [410.6686, 0.0055]
+    - [503.5572, 0.0061]
+    - [505.1763, 1.0]
+    - [506.1857, 0.0107]

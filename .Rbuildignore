@@ -1,0 +1,10 @@
+^Meta$
+^doc$
+^README\.Rmd$
+^\.gitignore$
+^tests$
+^.*\.Rproj$
+^\.Rproj\.user$
+^depricatedVersions$
+^MS2_db_v7.db$
+^.Rprofile$

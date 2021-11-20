@@ -1,0 +1,121 @@
+---
+title: "Example peak-picking and annotation using ntsworkflow"
+author: "Department G2 (Water Chemistry), Federal Institute of Hydrology, Koblenz"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Peak-picking and annotation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Walk-through
+
+After loading the package with `library(ntsworkflow)`, to start data evaluation use the command `runPeakPicking()`. 
+
+### Selecting MS data files for processing
+
+LC/GC-HRMS data-files must be previously converted to `*.mzML` or `*.mzXML` format. For optimal performance, these files should contain only centroid spectra. `ntsworkflow` is designed to work with MS and MS^2^ spectra whereby MS^2^ are acquired in data-dependent mode.
+
+To select files click `Add Sample` and use the dialog. You can select more than one file by holding shift or Ctrl while selecting. The dialog will open automatically in your current working directory.
+
+The files will be loaded into memory. Be careful not to add too many files since you may quickly fill your system's RAM. If the memory is not large enough to hold all your files try using [`Batch Process`](#batch) instead.
+
+### Viewing files
+After files are loaded, you can view their contents by selecting the `TIC` or `XIC` tabs and then selecting the file in the sample table on the left. In the `XIC` tab, a specific m/z and tolerance can be entered and this will be extracted.
+
+
+### Peak-picking
+
+To start peak-picking, select the `Peak Picking` tab. Here are are a number of settings which need to be set and optimized for each LC or GC method and MS type. 
+
+#### Mass range, RT range
+These are the ranges in the m/z and time domain in which you want the algorithm to look for peaks.
+
+#### m/z step
+This is the binning step used to generate EICs (extracted ion chromatograms). An m/z step of 0.02 and starting from a mass of 100 means the algorithm will generate an EIC using the mass range 100.0000 to 100.0200 and use this EIC to look for peaks. The larger the m/z step, the faster the processing (since fewer EICs need to be searched for a given mass range), but choosing a step which is too large might lead to noisy EICs or overlapping peaks which make peak picking more difficult. If you select one of the files in the sample table on the left side, a suggested value will be calculated based of the resolution of the data. Please test different values and optimize for your own data.
+
+#### Min. Intensity
+Peaks below this intensity (height of highest spectral centroid) will not be considered. 
+
+The minimum intensity can also be calculated dynamically for each sample using an internal standard. Select `Derive min. intensity from internal standard` and give the mass and RT (with tolerances) to find this peak. Then say how to set the min. intensity relative to this peak. *Note:* blanks must also contain internal standard.   
+
+#### S/N
+Peaks with signal-to-noise ratio below this value will not be considered.
+
+#### Noise (scans)
+The noise level is determined X number of MS scans before and after the chromatographic peak. This value should be large enough to make a good estimation of the noise level which applies to the peak.
+
+#### Peak width (sec)
+Peaks with a base width outside of this range will not be considered.
+
+### Batch processing  {#batch}
+
+(In progress)
+
+### Feature alignment
+
+Features are aligned accross multiple files under the tab "Alignment/Table" with the "Align Features" button. This algorithm starts by taking the first feature of the first sample and examines all other samples for features which fulfill the alignment parameters defined (m/z and *t*~R~ tolerance. Of all these candidate features the most intense one is chosen and subsequently the first step is repeated using this feature as a starting point (since it is assumed that the more intense feature most accurately represents the correct m/z and *t*~R~). This process is repeated for the remaining non-aligned features in all samples. Features are aligned in the *alignment table* showing the average m/z and *t*~R~ and the intensities for this aligned feature in all the samples. Clicking on a row will show the overlayed EICs, the intensity profile and the overlayed MS^2^ spectra.
+
+### Normalization
+
+The intensity of all features can be normalized to one internal standard. To do this select the row of the internal standard and click the "Normalize" button. The intensities in the alignment table will recalculated and for each feature the intensity in each sample will be divided by the intensity of the internal standard.
+
+To reset the alignment table to the original click again on "Align Features".
+
+### Blank correction
+
+By clicking "Blank Correction" the features which are also found in blank samples are removed from the alignment table. Samples are defined as blank in the "Sample info" tab under "sample type". Features which have a 10x higher intensity in the samples compared to the blank are kept by default. This can be changed in the Alignment/Table tab by setting the "Blank factor".
+
+It is recommended to set the peak-picking parameters at lower "Min Intensity" and "S/N" for blank samples, so that peaks are not "cut off" if they are slightly below threshold in the blank.
+
+To reset the alignment table to the original click again on "Align Features".
+
+### Further alignment table filters
+
+These filters further reduce the size of the alignment table. the first filer can remove rows with only a limited number of detections. The other filters are less straight-forward and are explained below. To reset the alignment table to the original click again on "Align Features".
+
+#### Remove features which are not the highest in their component
+
+This goes through the alignment table and checks if an aligned feature was never the most intense feature in its component. If this is the case the aligned feature is removed from the alignment table. In other words, If in one or more samples the feature was the most intense in its component, it is not removed from the alignment table. You must give the samples which are to be considered in the form "1:10". The entire row is removed (i.e. all samples) based on the componentization results of these considered samples.
+
+#### Remove features which are not found in replicate injections
+
+If a feature is not found in replicate injections, its intensity is set to zero. The files to consider are given again in the form "1:10". Then the number of replicates is specified (the number of files must be divisible by the number of replicates) and how many times the feature should be detected. For example, if you have 2 samples each injected 3 times and the features should be found in at least 2 out of 3 injections then "files to consider" is 1:6, "No. of replicates" is 3 and "In at least" is 2.
+
+After setting intensities to zero, rows with all zero intensities are removed.
+
+#### Get average intensity of features in replicates
+
+No rows are removed with this filter, only columns. The parameters are similar to the filter above, only here an average intensity is calculated from the replicate injections (ignoring intensity zero). Replicate injections are removed from the alignment table and only the first injection is kept. Only the *intensities* are averaged everything else in the table stays the same. 
+
+#### Remove row where features are not detected in consecutive files
+
+This is most usefull for high frequency, time-series data, where a feature is expected to be found in multiple consecutive samples.  
+
+
+### Similar trends
+
+To view aligned features with intensity profiles which are similar to a selected feature, you must give a minimum correlation factor (Pearson's R) in the box "Trend:", e.g. 0.9. Then select a row from the alignment table and then select the tab "Alignement/Similar trends". By hovering over a line in the chart, the current feature is printed below the chart.
+
+### Overview, Highest intensities and Cluster analysis tabs
+
+These tabs are intended to provide an better overview of the alignment table. In all cases it is better to reduce the size of the alignment table as much as possible before accessing these tabs, to reduce computation time. In these tabs you can see the intensity profile of an aligned feature by hovering over a point in the upper plot. By selecting an area and clicking on it, a table of the features contained in this area is shown. By double-clicking on this area the upper plot is zoomed. Double-click again to reset the zoom.
+
+After an annotation of the alignment table has taken place, the cluster dendrogram is labelled accordingly.
+
+### Annotation  
+<!-- TODO: include detail of parameters -->
+
+Annotation will attempt to label features in the alignment table if these are found in the compound database. Select the database file and then click "Annotate". The table shown is a copy of the alignment table with a few extra columns. Only one feature from each row is checked against the database to save computation time. The "sample" column shows which sample was used to make the comparison. 
+
+A name column is added to the alignment table in the Alignment/Table tab showing the annotations.
+
+
