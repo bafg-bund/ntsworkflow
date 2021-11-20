@@ -22,11 +22,18 @@ The ntsworkflow package is shared under the GNU GPL-3.0 license.
 If you use the package or any derivative thereof, please cite the work.
 To cite this work please use the following citation or run `citation("ntsworkflow")`.
 
-> Christian Dietrich, Kevin S. Jewell, Toni Köppe, Arne Wick and Thomas A. Ternes (2019). 
-> ntsworkflow: A Non-Target Screening Data Evaluation Tool. R package version 0.1.6.
+> Christian Dietrich, Kevin S. Jewell, Toni Köppe, Arne Wick and Thomas A. Ternes (2021). 
+> ntsworkflow: A Non-Target Screening Data Evaluation Tool. R package version 0.2.2.
 
+### Peer-reviewed articles reporting the development of ntsworkflow
+
+* K. S. Jewell, U. Kunkel, B. Ehlig, F. Thron, M. Schlüsener, C. Dietrich, A. Wick, and T. A. Ternes, *Rapid Communications in Mass Spectrometry*, **2019**, 34, e8541.
+* T. Köppe, K. S. Jewell, C. Dietrich, A. Wick, and T. A. Ternes, *Water Research*, **2020**, 178, 115703.
+* C. Dietrich, A. Wick, and T. A. Ternes, *Rapid Communications in Mass Spectrometry*, **2021**, e9206.
 
 ## Installation
+
+ntsworkflow is designed for use on servers and is only available for Linux-based systems. It is usually run on centOS or Ubuntu.
 
 ### Step 1: Install dependencies
 To use the package, you must first install some dependencies. R (v4.0.4) and RStudio (v1.1) are needed firstly (www.r-project.org, www.rstudio.com). Java JRE and JDK (v1.8) will also be needed (www.java.com/download). Once you have these installed, please execute the following code in the R console. 
