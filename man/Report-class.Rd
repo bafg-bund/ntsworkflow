@@ -147,10 +147,10 @@ spectrum used to make the identification.}
 \item{\code{process_all(comp_names = NULL, alsoDeleteFP = TRUE)}}{Process all currently unprocessed files in the report object. Previously recorded false
 positives (without specified sample) are deleted by default.}
 
-\item{\code{reduceSizeEic()}}{Will average out data points outside of the peak to reduce size of the EIC table}
-
 \item{\code{reIntegrate(indices)}}{Reintegrate peak areas for all found compounds based only on m/z and rt. No MS2 comparison
 will be performed. The m/z and rt are taken as an average of those found in the peak list.}
+
+\item{\code{reduceSizeEic()}}{Will average out data points outside of the peak to reduce size of the EIC table}
 
 \item{\code{remRawFiles(indices)}}{Delete files based on their indices}
 

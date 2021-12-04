@@ -58,9 +58,8 @@ annotate_grouped <- function(sampleListLocal,
                              mztolu_ms2 = 0.015,
                              rtoffset = 0,
                              intCutData = 0) {
-  
   # open database connection or open custom database (.yaml)
-   #browser()
+  #browser()
   if (grepl("\\.yaml$", db_path)) {
     useCustom <- TRUE
     customdb <- yaml::read_yaml(db_path)
@@ -96,7 +95,7 @@ annotate_grouped <- function(sampleListLocal,
     compTable <- tbl(dbi, "compound")
     
     
-# Spectra_DB or Label_DB, decided by the existence of the table "sample"    
+    # Spectra_DB or Label_DB, decided by the existence of the table "sample"    
     if (DBI::dbExistsTable(dbi, "sample")){
       sampTable <- tbl(dbi, "sample")
       paraTable <- tbl(dbi, "parameter") %>% 
@@ -143,26 +142,34 @@ annotate_grouped <- function(sampleListLocal,
     x[1,1]
   }
   intMax <- mapply(getBestSamp, 
-                split(intCols, seq_len(nrow(alignmentTable))),
-                split(ms2Cols, seq_len(nrow(alignmentTable))), 
-                SIMPLIFY = TRUE, USE.NAMES = FALSE)
+                   split(intCols, seq_len(nrow(alignmentTable))),
+                   split(ms2Cols, seq_len(nrow(alignmentTable))), 
+                   SIMPLIFY = TRUE, USE.NAMES = FALSE)
   
   # reorder alignment table by max samples
   #intMax <- unlist(intMax)
   alignmentTable <- cbind(alignmentTable, intMax)
   alignmentTable <- alignmentTable[order(intMax, na.last = FALSE), ]
   
+  # 211204
+  # preload tables for faster speed
+  if (!useCustom) {
+    fragTable <- tbl(dbi, "fragment") %>% collect()
+    expTable <- tbl(dbi, "experiment") %>% collect()
+    compTable <- tbl(dbi, "compound") %>% select(-chem_list_id) %>% collect()
+  }
+  
+  
   # for each row in alignmenttable, find out which samples have an MS2 spectrum and of these,
   # record the sample with the highest intensity
   #browser()
-  hits <- foreach(row = seq_len(nrow(alignmentTable)), .combine = rbind) %do% {
+  # 211204
+  hits <- parallel::mclapply(seq_len(nrow(alignmentTable)), function(row) {
     
-
     sample_highest <- alignmentTable[row, "intMax"]
     if (is.na(sample_highest)) # no MS2, no result
       return(NULL)
     
-
     # get mz and RT of most intense peak, get DB experiments
     # remove cross-referencing in table, turn into long form for easier data manipulation
     # ignore unnecessary columns                
@@ -176,7 +183,7 @@ annotate_grouped <- function(sampleListLocal,
     hasMS2 <- feature[feature$type == "ms2scan" & feature$value != 0, "file"]
     feature <- feature[feature$file %in% hasMS2, ]
     ms2_scan_highest <- round(feature[feature$type == "ms2scan" &
-                                  feature$file == sample_highest, "value"])
+                                        feature$file == sample_highest, "value"])
     # mz and rt of peak
     peakMz <- feature[feature$type == "mz" & feature$file == sample_highest, "value"]
     peakRt <- feature[feature$type == "RT" & feature$file == sample_highest, "value"] / 60
@@ -189,7 +196,7 @@ annotate_grouped <- function(sampleListLocal,
       return(NULL)  # if no db entry, no result
     
     #browser()
-    
+
     if (useCustom) {
       # extract spectra from yaml
       db_spectra <- lapply(viabExp$name, function(x) {
@@ -217,20 +224,29 @@ annotate_grouped <- function(sampleListLocal,
       viabExp$db_available <- TRUE
       stopifnot(all(!is.null(db_spectra)))
     } else {  
-      db_spectra <- lapply(viabExp$experiment_id, ntsworkflow::dbGetSpectrum, db = dbi)
+      # 211204
+      db_spectra <- lapply(
+        viabExp$experiment_id, 
+        get_spectrum_preloaded, 
+        fragTable = fragTable, 
+        expTable = expTable,
+        compTable = compTable
+      )
       db_spectra <- lapply(db_spectra, ntsworkflow::normalizeMs2)
       viabExp$db_available <- vapply(db_spectra, Negate(is.null), logical(1))
       viabExp <- viabExp[viabExp$db_available, ]
       if (nrow(viabExp) == 0)
         return(NULL)  # check that spectra are available from DB
-      
+      compact <- function(x) {
+        Filter(Negate(is.null), x)
+      }
       db_spectra <- compact(db_spectra)
     }
     #browser()
     # check that file is loaded, if not, load file
     if (!sampleListLocal[sampleListLocal$ID == sample_highest, "RAM"]) {
       datenList[[sample_highest]] <<- xcms::xcmsRaw(datenList[[sample_highest]]@filepath@.Data, 
-                                                   includeMSn = TRUE)
+                                                    includeMSn = TRUE)
       sampleListLocal[sampleListLocal$ID == sample_highest, "RAM"] <- TRUE
     }
     
@@ -254,7 +270,7 @@ annotate_grouped <- function(sampleListLocal,
     idsToRemove <- Filter(function(idi) {
       sampleListLocal[sampleListLocal$ID == idi, "RAM"] &&
         !sampleList[sampleList$ID == idi, "RAM"]
-      }, prevIds)
+    }, prevIds)
     
     for (toRemove in idsToRemove) {
       datenList[[toRemove]]@env$intensity <<- 0
@@ -347,8 +363,8 @@ annotate_grouped <- function(sampleListLocal,
     viabExp$rtData <- round(peakRt, 2)
     
     viabExp
-  }
-  
+  }, mc.preschedule = TRUE, mc.cores = ifelse(useCustom, 1, 1))
+  hits <- do.call("rbind", hits)
   # Some raw files might still be in memory, close all files which were closed
   # before 
   for (i in seq_len(nrow(sampleListLocal))) {
@@ -368,25 +384,25 @@ annotate_grouped <- function(sampleListLocal,
     return(NULL)
   
   if (!useCustom && DBI::dbExistsTable(dbi, "sample")){
-  
-  hits <- hits[, c("alignmentID", "mzData", "rtData", "samplename", "sample_type",
-                   "name", "CAS" , "mz", "rt", "experiment_id", "adduct", 
-                   "isotope","score" , "db_available","CE","CES", "enrichment", "enrichment_factor",
-                   "contact", "project","datenListVerwendet" )]
-  colnames(hits) <- c("alignmentID", "mzData", "rtData","samplename", "sample_type",
-                      "name", "CAS", "mzDB", "rtDB", "expID", "adduct",
-                      "isotope", "score", "db_available", "CE", "CES", "enrichment", "enrichment_factor",
-                      "contact", "project", "sample" )
-  
+    
+    hits <- hits[, c("alignmentID", "mzData", "rtData", "samplename", "sample_type",
+                     "name", "CAS" , "mz", "rt", "experiment_id", "adduct", 
+                     "isotope","score" , "db_available","CE","CES", "enrichment", "enrichment_factor",
+                     "contact", "project","datenListVerwendet" )]
+    colnames(hits) <- c("alignmentID", "mzData", "rtData","samplename", "sample_type",
+                        "name", "CAS", "mzDB", "rtDB", "expID", "adduct",
+                        "isotope", "score", "db_available", "CE", "CES", "enrichment", "enrichment_factor",
+                        "contact", "project", "sample" )
+    
   } else {
-  
-  hits <- hits[, c("alignmentID", "mzData", "rtData", "name", 
-                   "CAS", "mz", "rt", "experiment_id", "formula", "SMILES", "adduct", 
-                   "isotope",  "score", "db_available", "CE", "CES", "datenListVerwendet" )]
-  colnames(hits) <- c("alignmentID", "mzData", "rtData", "name", 
-                      "CAS", "mzDB", "rtDB", "expID", "formula", "SMILES", "adduct", "isotope", 
-                      "score", "db_available", "CE", "CES", "sample" )
-  
+    
+    hits <- hits[, c("alignmentID", "mzData", "rtData", "name", 
+                     "CAS", "mz", "rt", "experiment_id", "formula", "SMILES", "adduct", 
+                     "isotope",  "score", "db_available", "CE", "CES", "datenListVerwendet" )]
+    colnames(hits) <- c("alignmentID", "mzData", "rtData", "name", 
+                        "CAS", "mzDB", "rtDB", "expID", "formula", "SMILES", "adduct", "isotope", 
+                        "score", "db_available", "CE", "CES", "sample" )
+    
   }
   hits$rtDB <- round(hits$rtDB, 2)
   hits$score <- round(hits$score)
@@ -426,7 +442,8 @@ annotate_grouped <- function(sampleListLocal,
 #'
 #' @export
 #' @import dplyr
-ms2_search <- function(data_path, db_path, rttolm = 1, mztolu = 0.5,
+ms2_search <- function(data_path, db_path, 
+                       rttolm = 1, mztolu = 0.5,
                        mztolu_fine = 0.005,
                        chromatography =
                          "dx.doi.org/10.1016/j.chroma.2015.11.014",
@@ -436,15 +453,15 @@ ms2_search <- function(data_path, db_path, rttolm = 1, mztolu = 0.5,
                        comparison = "dot_product", threshold = 400,
                        rt_res = 1.5, rtoffset = 0,
                        ndp_m = 2, ndp_n = 1, mztolu_ms2 = 0.015,
-                       compounds = NULL, numcores = 1) {
-
+                       compounds = NULL) {
+  
   stopifnot(inherits(data_path, "character") || inherits(data_path, "list"))
   if (inherits(data_path, "character"))
     data_path <- normalizePath(data_path)
-
+  
   if (db_path == "Z:\\G\\G2\\HRMS\\Spektrendatenbank\\sqlite\\MS2_db_v7.db")
     stop("Copy database to the local harddrive, do not use copy on Z")
-
+  
   db <- DBI::dbConnect(RSQLite::SQLite(), db_path)
   
   # get list of all compounds in db with rt
@@ -464,6 +481,11 @@ ms2_search <- function(data_path, db_path, rttolm = 1, mztolu = 0.5,
     select(name, CAS, mz, rt, adduct, experiment_id, compound_id) %>%
     dplyr::collect() %>% distinct()
   
+  # 211204
+  exptbl <- tbl(db, "experiment") %>% collect()
+  comptbl <- tbl(db, "compound") %>% select(-chem_list_id) %>% collect()
+  fragtbl <- tbl(db, "fragment") %>% collect()
+  
   DBI::dbDisconnect(db)
   
   if (!is.null(compounds)) {
@@ -471,9 +493,9 @@ ms2_search <- function(data_path, db_path, rttolm = 1, mztolu = 0.5,
       stop("Chosen compounds not in DB")
     suspects <- filter(suspects, name %in% compounds)
   }
-
-  # for each sample
-  eval_samp <- function(pth) {
+  
+  # evaluate each sample
+  eval_samp <- function(pth, exptbl, comptbl, fragtbl) {
     if (inherits(pth, "character")) {
       raw_data <- xcms::xcmsRaw(pth, includeMSn = TRUE)
     } else if (inherits(pth, "xcmsRaw")) {
@@ -481,10 +503,10 @@ ms2_search <- function(data_path, db_path, rttolm = 1, mztolu = 0.5,
     } else {
       stop("data_path is not character or list of xcmsRaw")
     }
-
+    
     # for each compound in db, search raw data to find ms2 spectra with the
     # correct precursor mass and correct rt
-    eval_comp <- function(compound) {
+    eval_comp <- function(compound, exptbl, comptbl, fragtbl) {
       #browser(expr = compound$name == "Carbamazepine")
       
       inf <- data.frame(
@@ -542,16 +564,15 @@ ms2_search <- function(data_path, db_path, rttolm = 1, mztolu = 0.5,
       stopifnot(nrow(inf) == length(data_specs))
       
       # Collect spectra from database
-      db <- DBI::dbConnect(RSQLite::SQLite(), db_path)  # parallel cores can not read db
-      exptt <- tbl(db, "experiment") %>% select(experiment_id, compound_id, mz)
-      compt <- tbl(db, "compound") %>% select(compound_id, CAS, name)
-      spectra <- filter(tbl(db, "fragment"), experiment_id %in% !!compound$experiment_id) %>% 
+      #db <- DBI::dbConnect(RSQLite::SQLite(), db_path)  # parallel cores can not read db
+      exptt <- exptbl %>% select(experiment_id, compound_id, mz)
+      compt <- comptbl %>% select(compound_id, CAS, name)
+      spectra <- filter(fragtbl, experiment_id %in% !!compound$experiment_id) %>% 
         select(mz, int, experiment_id) %>% 
         left_join(exptt, by = "experiment_id") %>% 
-        left_join(compt, by = "compound_id") %>% 
-        dplyr::collect()
+        left_join(compt, by = "compound_id") 
       
-      DBI::dbDisconnect(db)
+      #DBI::dbDisconnect(db)
       db_specs <- split(spectra, spectra$experiment_id)
       db_specs <- lapply(db_specs, function(sp) {
         res <- sp[, c("mz.x", "int")]
@@ -562,8 +583,6 @@ ms2_search <- function(data_path, db_path, rttolm = 1, mztolu = 0.5,
         attr(res, "db_exp_ID") <- sp$experiment_id[1]
         res
       })
-      
-      
       
       db_specs <- lapply(db_specs, normalizeMs2)
       db_specs <- compact(db_specs)
@@ -685,16 +704,23 @@ ms2_search <- function(data_path, db_path, rttolm = 1, mztolu = 0.5,
     }
     #browser()
     splitByComp <- split(suspects, suspects$compound_id)
-  
-    all_comps <- parallel::mclapply(splitByComp, eval_comp, mc.cores = numcores)
-
+    
+    all_comps <- lapply(
+      splitByComp, 
+      eval_comp, 
+      exptbl = exptbl,
+      comptbl = comptbl,
+      fragtbl = fragtbl
+    )
+    
+    
     all_comps <- Filter(function(x) !inherits(x, "try-error"), all_comps)
-
+    
     all_comps <- compact(all_comps)
-
+    
     if (inherits(pth, "character"))
       rm(raw_data)
-
+    
     if (length(all_comps) == 0)
       return(NULL)
     # join all compounds together
@@ -702,8 +728,8 @@ ms2_search <- function(data_path, db_path, rttolm = 1, mztolu = 0.5,
     all_comps <- do.call("rbind", all_comps)
     all_comps
   }
-
-  all_samps <- mclapply(data_path, eval_samp)
+  # 211204
+  all_samps <- lapply(data_path, eval_samp, exptbl = exptbl, comptbl = comptbl, fragtbl = fragtbl)
   all_samps <- compact(all_samps)
   if (length(all_samps) == 0) {
     message("no compounds found in sample(s)")
@@ -714,7 +740,7 @@ ms2_search <- function(data_path, db_path, rttolm = 1, mztolu = 0.5,
   class(all_samps) <- c("sus_search_ms2", "sus_search", "data.frame")
   attr(all_samps, "processing_date") <- date()
   attr(all_samps, "db_path") <- db_path
-
+  
   
   all_samps
 }
@@ -835,6 +861,38 @@ dbGetSpectrum <- function(db, Exp.ID) {
   return(dbSpectrum)
 }
 
+#' @export
+#' @import dplyr
+get_spectrum_preloaded <- function(fragTable, expTable, compTable, Exp.ID) {
+  
+  stopifnot(length(Exp.ID) == 1)
+  
+  # Selection of Spectrum by Exp.ID
+  dbSpectrum <- fragTable %>%          # Selection of database
+    filter(experiment_id == !!Exp.ID) %>%       # Selection of one Experiment
+    select(mz, int) 
+  
+  mz_i <- expTable %>%
+    filter(experiment_id == !!Exp.ID) %>%
+    .$mz
+  
+  meta_data <- id_to_name_preloaded(Exp.ID, expTable, compTable)
+  
+  attr(dbSpectrum, "precursor_mz") <- mz_i
+  attr(dbSpectrum, "comp_name") <- meta_data$name
+  attr(dbSpectrum, "CAS") <- meta_data$CAS
+  attr(dbSpectrum, "db_exp_ID") <- Exp.ID
+  dbSpectrum
+}
+
+#' @export
+#' @import dplyr
+id_to_name_preloaded <- function(id, expTable, compTable) {
+  name <- expTable %>% filter(experiment_id == !!id) %>%
+    inner_join(compTable, by = "compound_id") %>% select(name, CAS)
+  name$exp_ID <- id
+  name
+}
 
 
 

@@ -23,8 +23,7 @@ ms2_search(
   ndp_m = 2,
   ndp_n = 1,
   mztolu_ms2 = 0.015,
-  compounds = NULL,
-  numcores = 1
+  compounds = NULL
 )
 }
 \arguments{

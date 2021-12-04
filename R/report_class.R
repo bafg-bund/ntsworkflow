@@ -449,8 +449,7 @@ Report <- setRefClass(
           comparison = settings$comparison, threshold = settings$threshold,
           rt_res = settings$rt_res, rtoffset = settings$rtoffset,
           ndp_m = settings$ndp_m, ndp_n = settings$ndp_n, mztolu_ms2 = settings$mztolu_ms2,
-          compounds = comp_names, 
-          numcores = settings$numcores
+          compounds = comp_names
         )
         #browser()
         # if no ms2 comparison is desired i.e. threshold score = 0, for compounds not found 

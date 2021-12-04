@@ -1,6 +1,6 @@
 # Non-Target App
 # written by: Christian Dietrich, Kevin Jewell, Toni Köppe
-# Last update: 20.07.2021
+# Last update: 2021-11-20
 
 library(shiny)
 library(shinyBS)
@@ -3864,11 +3864,12 @@ server <- function(input, output, session) {
       showNotification("First align the samples", type = "error")
     validate(need(!is.null(grouped), "First align the samples"))
     progress <- shiny::Progress$new()
+    progress$set(message = "Annotating alignment table...")
     
     # if no db chosen, annotate with peaklist component info (Cl and Br)
     if (length(dbPath) == 0) {
       showNotification("No database chosen, annotating just with components")
-      progress$set(message = "Searching Peaklists...")
+      progress$set(detail = "Searching Peaklists...")
       
       annotationTable <<- ntsworkflow::annotate_grouped_compononents(
         sampleListLocal = sampleList,
@@ -3881,7 +3882,7 @@ server <- function(input, output, session) {
     # validate(need(length(dbPath) != 0, "Choose a database file"))
     # removeNotification("nothingFound")
     
-      progress$set(message = "Searching database...")
+      progress$set(detail = "Appending annotations...")
       
       annotationTableNew <- ntsworkflow::annotate_grouped(  # instrument: default settings
         sampleListLocal = sampleList,
@@ -3918,7 +3919,7 @@ server <- function(input, output, session) {
     }
     
     
-    progress$set(detail = "Cleaning up...")
+    progress$set(detail = "Annotation complete, cleaning up...")
     if (is.null(annotationTable)) {
       showNotification("No compounds from the database were found in the alignment table.", 
                        duration = NULL, id = "nothingFound")
