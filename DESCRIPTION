@@ -1,0 +1,43 @@
+Package: ntsworkflow
+Type: Package
+Title: A Non-Target Screening Data Evaluation Tool. Federal Institute of Hydrology, Koblenz, Germany
+Version: 0.2.2
+Date: 2021-11-20
+Authors@R: c(
+             person("Christian", "Dietrich", email = "Christian.Dietrich@bafg.de", role = c("aut"),
+             comment = "Federal Institute of Hydrology (BfG) Koblenz, Germany"),
+             person(c("Kevin", "S."), "Jewell", email = "Jewell@bafg.de", role = c("aut", "cre"),
+             comment = "Federal Institute of Hydrology (BfG) Koblenz, Germany"),
+             person("Toni", "Köppe", email = "Koeppe@bafg.de", role = "aut",
+             comment = "Federal Institute of Hydrology (BfG) Koblenz, Germany"),
+             person("Arne", "Wick", email = "Wick@bafg.de", role = "aut",
+             comment = "Federal Institute of Hydrology (BfG) Koblenz, Germany"),
+             person(c("Thomas", "A."), "Ternes", email = "Ternes@bafg.de", role = "aut",
+             comment = "Federal Institute of Hydrology (BfG) Koblenz, Germany")
+             )
+Description: This is a collection of functions to be used for non-target
+    data analysis. Specifically for the identification of unknowns and process
+    evaluation. 
+License: GNU GPL-3.0 (comes with ABSOLUTELY NO WARRANTY)
+LazyData: TRUE
+Imports:
+    tidyverse,
+    parallel,
+    RSQLite,
+    DBI,
+    shiny,
+    shinyFiles,
+    shinyBS,
+    DT,
+    tcltk2,
+    foreach,
+    doParallel,
+    iterators,
+    Rcpp (>= 1.0.7),
+    RcppArmadillo
+RoxygenNote: 7.1.2
+Suggests:
+    rcdk
+Encoding: UTF-8
+LinkingTo: Rcpp, RcppArmadillo
+VignetteBuilder: knitr
