@@ -937,7 +937,7 @@ server <- function(input, output, session) {
     XIC <- XIC[XIC$intensity != 0,]  # remove row with intensity 0 to reduce length and increase speed
     # overlay plot
     # browser()
-    ggplot(XIC, aes(scanTime, intensity, color = samp)) + geom_line() + guides(color = FALSE) +
+    ggplot(XIC, aes(scanTime, intensity, color = samp)) + geom_line() + guides(color = "none") +
       xlab("Time (min.)") + ylab("Inten. (cps)") + 
       geom_vline(xintercept = grouped[zeile, "mean_RT"]/60, color = "red", alpha = .2) + 
       theme_bw(14) + coord_cartesian(xlim = aligXICranges$x, ylim = aligXICranges$y, expand = F)
@@ -999,7 +999,7 @@ server <- function(input, output, session) {
       geom_segment(aes(x = mz, xend = mz, y = 0, yend = intensity),
                    stat = "identity", size = .5, alpha = .5) +
       geom_text(aes(label = round(mz,4)), alpha = .6, nudge_y = intMax*.02, check_overlap = T) +
-      guides(color = FALSE) + xlab("m/z") + ylab("Inten. (cps)") +
+      guides(color = "none") + xlab("m/z") + ylab("Inten. (cps)") +
       scale_x_continuous(limits = massRange) + scale_y_continuous(limits = c(NA, intMax*1.05)) +
       theme_bw(base_size = 14) + annotate("text", -Inf, Inf, vjust = 2, hjust = -.3, label = selection, color = "grey20")
   }
@@ -3897,7 +3897,9 @@ server <- function(input, output, session) {
         CES = input$annotCES,
         mztolu_ms2 = input$annotDpWind / 1000,
         rtoffset = input$annotRtOffset,
-        intCutData = input$annotIntCut
+        intCutData = input$annotIntCut,
+        numcores = input$numcores,
+        datenListLocal = datenList
       )
       annotationTable <<- rbind(annotationTable, annotationTableNew)
     } else {
@@ -3914,7 +3916,9 @@ server <- function(input, output, session) {
         CES = input$annotCES,
         mztolu_ms2 = input$annotDpWind / 1000,
         rtoffset = input$annotRtOffset,
-        intCutData = input$annotIntCut
+        intCutData = input$annotIntCut,
+        numcores = input$numcores,
+        datenListLocal = datenList
       )
     }
     

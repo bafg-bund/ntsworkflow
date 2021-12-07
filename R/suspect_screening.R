@@ -31,6 +31,7 @@
 #' @param mztolu_ms2 
 #' @param rtoffset Note: Offset the database to make it match your values
 #' @param intCutData
+#' @param numcores Number of cores for parallelization
 #' 
 #'@details If data files are not in memory, they will be temporary loaded and  
 #'    
@@ -57,7 +58,9 @@ annotate_grouped <- function(sampleListLocal,
                              ndp_n = 1,
                              mztolu_ms2 = 0.015,
                              rtoffset = 0,
-                             intCutData = 0) {
+                             intCutData = 0,
+                             numcores = 1,
+                             datenListLocal) {
   # open database connection or open custom database (.yaml)
   #browser()
   if (grepl("\\.yaml$", db_path)) {
@@ -146,12 +149,16 @@ annotate_grouped <- function(sampleListLocal,
                    split(ms2Cols, seq_len(nrow(alignmentTable))), 
                    SIMPLIFY = TRUE, USE.NAMES = FALSE)
   
+  
   # reorder alignment table by max samples
   #intMax <- unlist(intMax)
   alignmentTable <- cbind(alignmentTable, intMax)
-  alignmentTable <- alignmentTable[order(intMax, na.last = FALSE), ]
+  #alignmentTable <- alignmentTable[order(intMax, na.last = FALSE), ]
+  alignmentTableDf <- as.data.frame(alignmentTable)
   
-  # 211204
+  # NAs are ignored, but that doesnt matter anyway
+  alignmentTableDfList <- split(alignmentTableDf, alignmentTableDf$intMax)
+  
   # preload tables for faster speed
   if (!useCustom) {
     fragTable <- tbl(dbi, "fragment") %>% collect()
@@ -159,224 +166,197 @@ annotate_grouped <- function(sampleListLocal,
     compTable <- tbl(dbi, "compound") %>% select(-chem_list_id) %>% collect()
   }
   
-  
-  # for each row in alignmenttable, find out which samples have an MS2 spectrum and of these,
-  # record the sample with the highest intensity
-  #browser()
-  # 211204
-  hits <- parallel::mclapply(seq_len(nrow(alignmentTable)), function(row) {
-    
-    sample_highest <- alignmentTable[row, "intMax"]
-    if (is.na(sample_highest)) # no MS2, no result
-      return(NULL)
-    
-    # get mz and RT of most intense peak, get DB experiments
-    # remove cross-referencing in table, turn into long form for easier data manipulation
-    # ignore unnecessary columns                
-    value <- subset(alignmentTable, , -c(mean_mz, mean_RT, MS2Fit, Gruppe, alignmentID, intMax))
-    value <- value[row, ]
-    file <- as.numeric(stringr::str_match(names(value), "_(\\d+)$")[, 2])
-    type <- stringr::str_match(names(value), "^(\\w+)_")[, 2]
-    feature <- data.frame(type, file, value, stringsAsFactors = F)
-    
-    # get sample MS2 scan number from most intense peak with an MS2
-    hasMS2 <- feature[feature$type == "ms2scan" & feature$value != 0, "file"]
-    feature <- feature[feature$file %in% hasMS2, ]
-    ms2_scan_highest <- round(feature[feature$type == "ms2scan" &
-                                        feature$file == sample_highest, "value"])
-    # mz and rt of peak
-    peakMz <- feature[feature$type == "mz" & feature$file == sample_highest, "value"]
-    peakRt <- feature[feature$type == "RT" & feature$file == sample_highest, "value"] / 60
-    
-    # get available DB or custom spectra
-    boolMz <- is.na(allExps$mz) | abs(peakMz - allExps$mz) <= mztolu # some compounds no mz
-    boolRt <- is.na(allExps$rt) | abs(peakRt - allExps$rt) <= rttol  # some compounds no RT
-    viabExp <- allExps[boolMz & boolRt, ]
-    if (nrow(viabExp) == 0)
-      return(NULL)  # if no db entry, no result
-    
+  # Process list of alignmentTables
+  hitsBySample <- parallel::mclapply(alignmentTableDfList, function(aligSamp) {
     #browser()
-
-    if (useCustom) {
-      # extract spectra from yaml
-      db_spectra <- lapply(viabExp$name, function(x) {
-        # three cases: only fragments, only neutral losses or both
-        av <- names(customdb[[x]])
-        if ("fragments" %in% av && "neutral_losses" %in% av) {
-          spec <- customdb[[x]]$fragments
-          nl <- customdb[[x]]$neutral_losses
-          return(list(frags = spec, losses = nl))
-        } else if ("fragments" %in% av) {
-          spec <- customdb[[x]]$fragments
-          if (is.list(spec)) {
-            spec <- do.call("rbind", spec)
-            colnames(spec) <- c("mz", "int")
-          }
-          return(spec)
-        } else if ("neutral_losses" %in% av) {
-          nl <- customdb[[x]]$neutral_losses
-          return(nl)
-        } else {
-          stop("need fragments or neutral losses")
-        }
-      })
-      
-      viabExp$db_available <- TRUE
-      stopifnot(all(!is.null(db_spectra)))
-    } else {  
-      # 211204
-      db_spectra <- lapply(
-        viabExp$experiment_id, 
-        get_spectrum_preloaded, 
-        fragTable = fragTable, 
-        expTable = expTable,
-        compTable = compTable
-      )
-      db_spectra <- lapply(db_spectra, ntsworkflow::normalizeMs2)
-      viabExp$db_available <- vapply(db_spectra, Negate(is.null), logical(1))
-      viabExp <- viabExp[viabExp$db_available, ]
-      if (nrow(viabExp) == 0)
-        return(NULL)  # check that spectra are available from DB
-      compact <- function(x) {
-        Filter(Negate(is.null), x)
-      }
-      db_spectra <- compact(db_spectra)
-    }
-    #browser()
+    sample_highest <- aligSamp[, "intMax"]
+    sample_highest <- unique(sample_highest)
+    stopifnot(length(sample_highest) == 1, !is.na(sample_highest), is.numeric(sample_highest))
+    
     # check that file is loaded, if not, load file
+    
     if (!sampleListLocal[sampleListLocal$ID == sample_highest, "RAM"]) {
-      datenList[[sample_highest]] <<- xcms::xcmsRaw(datenList[[sample_highest]]@filepath@.Data, 
+      currentDataFile <- xcms::xcmsRaw(datenListLocal[[sample_highest]]@filepath@.Data, 
                                                     includeMSn = TRUE)
-      sampleListLocal[sampleListLocal$ID == sample_highest, "RAM"] <- TRUE
+    } else {
+      currentDataFile <- datenListLocal[[sample_highest]]
     }
     
-    # get MS2 from file
-    ms2spektrum <- xcms::getMsnScan(datenList[[sample_highest]], ms2_scan_highest)
-    ms2spektrum <- as.data.frame(ms2spektrum)
-    attr(ms2spektrum, "comp_name") <- sprintf("Sample%i_%.4f_%.2f", sample_highest, peakMz, peakRt)
-    attr(ms2spektrum, "precursor_mz") <- peakMz
-    colnames(ms2spektrum) <- c("mz", "int")
-    ms2spektrumNorm <- ntsworkflow::normalizeMs2(ms2spektrum)
-    # browser()
-    # cut off low intensity fragments if desired
-    if (intCutData != 0) {
-      ms2spektrumNorm <- ms2spektrumNorm[ms2spektrumNorm$int >= intCutData, ]
-    }
-    #browser(expr = sample_highest == 2)
-    # Check that any previous raw files which were not previously in memory are removed
-    # if this is the last row remove all
-    prevIds <- ifelse(sample_highest == 1, 0, 1:(sample_highest - 1))
-    # are any of these in memory and were originally not in memory?
-    idsToRemove <- Filter(function(idi) {
-      sampleListLocal[sampleListLocal$ID == idi, "RAM"] &&
-        !sampleList[sampleList$ID == idi, "RAM"]
-    }, prevIds)
     
-    for (toRemove in idsToRemove) {
-      datenList[[toRemove]]@env$intensity <<- 0
-      datenList[[toRemove]]@env$mz <<- 0
-      datenList[[toRemove]]@env$profile <<- 0
-      datenList[[toRemove]]@env$msnIntensity <<- 0
-      datenList[[toRemove]]@env$msnMz <<- 0
-      sampleListLocal[sampleListLocal$ID == toRemove, "RAM"] <- FALSE
-    }
     
-    # if the db_spectra are just a vector of masses, do a simple search for the fragments (yes/no)
-    
-    # simple search of fragments
-    simpleSearch <- function(d_spec, db_spec) 
-      all(vapply(db_spec, function(x) any(abs(d_spec$mz - x) <= mztolu_ms2), logical(1)))
-    
-    # compare with data spectrum with DB spectra
-    custom_calc_ndp <- function(d_spec, db_spec) 
-      calc_ndp(d_spec, db_spec, ndp_m = ndp_m, ndp_n = ndp_n, mztolu_ms2 = mztolu_ms2)
-    #browser()
-    # prepare spec for neutral loss search, returns vector of all differences
-    # spec must be normalized already!!
-    # only get mass area within 200 Da of precursor
-    get_nl <- function(spec) {
-      mz <- spec[spec$mz > peakMz - 200, "mz"]
-      mz <- append(mz, peakMz)  # append precursor
-      all_diff <- abs(outer(mz, mz, "-"))
-      all_diff <- as.vector(all_diff[upper.tri(all_diff)])
-      if (length(all_diff) == 0)
-        data.frame(mz = 0, int = 0) else data.frame(mz = all_diff, int = 1)
-    }
-    
-    # the type of search done depends on what was provided
-    
-    if (useCustom) {
-      # which compounds are "normal" fragments, simple fragments, simple fragments and nl and just nl
-      # normal comparison
-      hasSpec <- sapply(db_spectra, is.matrix)
-      normal <- which(hasSpec)
-      viabExp[normal, "score"] <- vapply(db_spectra[normal], custom_calc_ndp, numeric(1), d_spec = ms2spektrumNorm)
+    hitsForSamp <- lapply(seq_len(nrow(aligSamp)), function(row) {
       
-      # okay now the complicated cases
-      provided <- lapply(customdb[viabExp$name], names)
-      hasFragments <- vapply(provided, is.element, logical(1), el = "fragments")
-      hasNl <- vapply(provided, is.element, logical(1), el = "neutral_losses")
-      # just simple frag
-      justFrag <- which(hasFragments & !hasNl & !hasSpec)
-      if (length(justFrag) != 0) {
-        found <- vapply(db_spectra[justFrag], simpleSearch, logical(1), d_spec = ms2spektrumNorm)
-        viabExp[justFrag, "score"] <- ifelse(found, 1000, 0)
+      # get mz and RT of most intense peak, get DB experiments
+      # remove cross-referencing in table, turn into long form for easier data manipulation
+      # ignore unnecessary columns                
+      value <- subset(aligSamp, , -c(mean_mz, mean_RT, MS2Fit, Gruppe, alignmentID, intMax))
+      value <- value[row, ]
+      file <- as.numeric(stringr::str_match(names(value), "_(\\d+)$")[, 2])
+      type <- stringr::str_match(names(value), "^(\\w+)_")[, 2]
+      feature <- data.frame(type, file, value = as.numeric(value), stringsAsFactors = F)
+      
+      # get sample MS2 scan number from most intense peak with an MS2
+      hasMS2 <- feature[feature$type == "ms2scan" & feature$value != 0, "file"]
+      feature <- feature[feature$file %in% hasMS2, ]
+      ms2_scan_highest <- round(feature[feature$type == "ms2scan" &
+                                          feature$file == sample_highest, "value"])
+      # mz and rt of peak
+      peakMz <- feature[feature$type == "mz" & feature$file == sample_highest, "value"]
+      peakRt <- feature[feature$type == "RT" & feature$file == sample_highest, "value"] / 60
+      
+      # get available DB or custom spectra
+      boolMz <- is.na(allExps$mz) | abs(peakMz - allExps$mz) <= mztolu # some compounds no mz
+      boolRt <- is.na(allExps$rt) | abs(peakRt - allExps$rt) <= rttol  # some compounds no RT
+      viabExp <- allExps[boolMz & boolRt, ]
+      if (nrow(viabExp) == 0)
+        return(NULL)  # if no db entry, no result
+
+      if (useCustom) {
+        # extract spectra from yaml
+        db_spectra <- lapply(viabExp$name, function(x) {
+          # three cases: only fragments, only neutral losses or both
+          av <- names(customdb[[x]])
+          if ("fragments" %in% av && "neutral_losses" %in% av) {
+            spec <- customdb[[x]]$fragments
+            nl <- customdb[[x]]$neutral_losses
+            return(list(frags = spec, losses = nl))
+          } else if ("fragments" %in% av) {
+            spec <- customdb[[x]]$fragments
+            if (is.list(spec)) {
+              spec <- do.call("rbind", spec)
+              colnames(spec) <- c("mz", "int")
+            }
+            return(spec)
+          } else if ("neutral_losses" %in% av) {
+            nl <- customdb[[x]]$neutral_losses
+            return(nl)
+          } else {
+            stop("need fragments or neutral losses")
+          }
+        })
+        
+        viabExp$db_available <- TRUE
+        stopifnot(all(!is.null(db_spectra)))
+      } else {  
+        # 211204
+        db_spectra <- lapply(
+          viabExp$experiment_id, 
+          ntsworkflow::get_spectrum_preloaded, 
+          fragTable = fragTable, 
+          expTable = expTable,
+          compTable = compTable
+        )
+        db_spectra <- lapply(db_spectra, ntsworkflow::normalizeMs2)
+        viabExp$db_available <- vapply(db_spectra, Negate(is.null), logical(1))
+        viabExp <- viabExp[viabExp$db_available, ]
+        if (nrow(viabExp) == 0)
+          return(NULL)  # check that spectra are available from DB
+        compact <- function(x) {
+          Filter(Negate(is.null), x)
+        }
+        db_spectra <- compact(db_spectra)
       }
-      # just nl
-      justNl <- which(!hasFragments & hasNl & !hasSpec)
-      if (length(justNl) != 0) {
-        found <- vapply(db_spectra[justNl], simpleSearch, logical(1), d_spec = get_nl(ms2spektrumNorm))
-        viabExp[justNl, "score"] <- ifelse(found, 1000, 0)
+
+      # get MS2 from file
+      ms2spektrum <- xcms::getMsnScan(currentDataFile, ms2_scan_highest)
+      ms2spektrum <- as.data.frame(ms2spektrum)
+      attr(ms2spektrum, "comp_name") <- sprintf("Sample%i_%.4f_%.2f", sample_highest, peakMz, peakRt)
+      attr(ms2spektrum, "precursor_mz") <- peakMz
+      colnames(ms2spektrum) <- c("mz", "int")
+      ms2spektrumNorm <- ntsworkflow::normalizeMs2(ms2spektrum)
+      # browser()
+      # cut off low intensity fragments if desired
+      if (intCutData != 0) {
+        ms2spektrumNorm <- ms2spektrumNorm[ms2spektrumNorm$int >= intCutData, ]
       }
-      # combined search, frag and nl
-      combi <- which(hasFragments & hasNl & !hasSpec)
-      if (length(combi) != 0) {
-        found_frags <- vapply(lapply(db_spectra[combi], "[[", "frags"), simpleSearch, logical(1), d_spec = ms2spektrumNorm)
-        found_losses <- vapply(lapply(db_spectra[combi], "[[", "losses"), simpleSearch, logical(1), d_spec = get_nl(ms2spektrumNorm))
-        viabExp[combi, "score"] <- ifelse(found_frags & found_losses, 1000, 0)
+      # if the db_spectra are just a vector of masses, do a simple search for the fragments (yes/no)
+      
+      # simple search of fragments
+      simpleSearch <- function(d_spec, db_spec) 
+        all(vapply(db_spec, function(x) any(abs(d_spec$mz - x) <= mztolu_ms2), logical(1)))
+      
+      # compare with data spectrum with DB spectra
+      custom_calc_ndp <- function(d_spec, db_spec) 
+        ntsworkflow::calc_ndp(d_spec, db_spec, ndp_m = ndp_m, ndp_n = ndp_n, mztolu_ms2 = mztolu_ms2)
+      # prepare spec for neutral loss search, returns vector of all differences
+      # spec must be normalized already!!
+      # only get mass area within 200 Da of precursor
+      get_nl <- function(spec) {
+        mz <- spec[spec$mz > peakMz - 200, "mz"]
+        mz <- append(mz, peakMz)  # append precursor
+        all_diff <- abs(outer(mz, mz, "-"))
+        all_diff <- as.vector(all_diff[upper.tri(all_diff)])
+        if (length(all_diff) == 0)
+          data.frame(mz = 0, int = 0) else data.frame(mz = all_diff, int = 1)
       }
       
-    } else {  # for normal db search
-      viabExp$score <- vapply(db_spectra, custom_calc_ndp, numeric(1), d_spec = ms2spektrumNorm)
-    }
+      # the type of search done depends on what was provided
+      
+      if (useCustom) {
+        # which compounds are "normal" fragments, simple fragments, simple fragments and nl and just nl
+        # normal comparison
+        hasSpec <- sapply(db_spectra, is.matrix)
+        normal <- which(hasSpec)
+        viabExp[normal, "score"] <- vapply(db_spectra[normal], custom_calc_ndp, numeric(1), d_spec = ms2spektrumNorm)
+        
+        # okay now the complicated cases
+        provided <- lapply(customdb[viabExp$name], names)
+        hasFragments <- vapply(provided, is.element, logical(1), el = "fragments")
+        hasNl <- vapply(provided, is.element, logical(1), el = "neutral_losses")
+        # just simple frag
+        justFrag <- which(hasFragments & !hasNl & !hasSpec)
+        if (length(justFrag) != 0) {
+          found <- vapply(db_spectra[justFrag], simpleSearch, logical(1), d_spec = ms2spektrumNorm)
+          viabExp[justFrag, "score"] <- ifelse(found, 1000, 0)
+        }
+        # just nl
+        justNl <- which(!hasFragments & hasNl & !hasSpec)
+        if (length(justNl) != 0) {
+          found <- vapply(db_spectra[justNl], simpleSearch, logical(1), d_spec = get_nl(ms2spektrumNorm))
+          viabExp[justNl, "score"] <- ifelse(found, 1000, 0)
+        }
+        # combined search, frag and nl
+        combi <- which(hasFragments & hasNl & !hasSpec)
+        if (length(combi) != 0) {
+          found_frags <- vapply(lapply(db_spectra[combi], "[[", "frags"), simpleSearch, logical(1), d_spec = ms2spektrumNorm)
+          found_losses <- vapply(lapply(db_spectra[combi], "[[", "losses"), simpleSearch, logical(1), d_spec = get_nl(ms2spektrumNorm))
+          viabExp[combi, "score"] <- ifelse(found_frags & found_losses, 1000, 0)
+        }
+        
+      } else {  # for normal db search
+        viabExp$score <- vapply(db_spectra, custom_calc_ndp, numeric(1), d_spec = ms2spektrumNorm)
+      }
+      
+      stopifnot(all(!is.na(viabExp$score)))
+      
+      # are any above threshold?
+      if (all(viabExp$score < threshold_score, na.rm = TRUE))
+        return(NULL)
+      
+      #browser()
+      # get matching compounds from DB
+      # for those above threshold save names and CAS in a table, link this with peaklist table
+      # by "Zeile"
+      viabExp <- viabExp[viabExp$score >= threshold_score, ]
+      # for each compound found, select the highest score
+      #browser()
+      if (any(is.na(viabExp$name))) {viabExp$name[is.na(viabExp$name)] <- "unknown compound"}
+      uniques <- by(viabExp, viabExp$name, function(r) r[which.max(r$score), ], simplify = TRUE)
+      viabExp <- Reduce(rbind, uniques)
+      viabExp <- viabExp[order(viabExp$score, decreasing = TRUE), ]
+      viabExp$alignmentID <- aligSamp[row, "alignmentID"]
+      viabExp$datenListVerwendet <- sample_highest
+      viabExp$mzData <- peakMz
+      viabExp$rtData <- round(peakRt, 2)
+      
+      viabExp
+    })
     
-    stopifnot(all(!is.na(viabExp$score)))
-    
-    # are any above threshold?
-    if (all(viabExp$score < threshold_score, na.rm = TRUE))
-      return(NULL)
-    
-    #browser()
-    # get matching compounds from DB
-    # for those above threshold save names and CAS in a table, link this with peaklist table
-    # by "Zeile"
-    viabExp <- viabExp[viabExp$score >= threshold_score, ]
-    # for each compound found, select the highest score
-    
-    if (any(is.na(viabExp$name))) {viabExp$name[is.na(viabExp$name)] <- "unknown compound"}
-    uniques <- by(viabExp, viabExp$name, function(r) r[which.max(r$score), ], simplify = TRUE)
-    viabExp <- Reduce(rbind, uniques)
-    viabExp <- viabExp[order(viabExp$score, decreasing = TRUE), ]
-    viabExp$alignmentID <- alignmentTable[row, "alignmentID"]
-    viabExp$datenListVerwendet <- sample_highest
-    viabExp$mzData <- peakMz
-    viabExp$rtData <- round(peakRt, 2)
-    
-    viabExp
-  }, mc.preschedule = TRUE, mc.cores = ifelse(useCustom, 1, 1))
-  hits <- do.call("rbind", hits)
-  # Some raw files might still be in memory, close all files which were closed
-  # before 
-  for (i in seq_len(nrow(sampleListLocal))) {
-    if (sampleListLocal[i, "RAM"] && !sampleList[i, "RAM"]) {
-      datenList[[i]]@env$intensity <<- 0
-      datenList[[i]]@env$mz <<- 0
-      datenList[[i]]@env$profile <<- 0
-      datenList[[i]]@env$msnIntensity <<- 0
-      datenList[[i]]@env$msnMz <<- 0
-      sampleListLocal[i, "RAM"] <- FALSE
-    }
-  }
+    hitsForSamp <- do.call("rbind", hitsForSamp)
+    hitsForSamp
+  }, mc.preschedule = FALSE, mc.cores = 1)  # at the moment does not work multicore, do not know why
+  
+  hits <- do.call("rbind", hitsBySample)
   
   # reformat the hits table
   #browser()
@@ -876,7 +856,7 @@ get_spectrum_preloaded <- function(fragTable, expTable, compTable, Exp.ID) {
     filter(experiment_id == !!Exp.ID) %>%
     .$mz
   
-  meta_data <- id_to_name_preloaded(Exp.ID, expTable, compTable)
+  meta_data <- ntsworkflow::id_to_name_preloaded(Exp.ID, expTable, compTable)
   
   attr(dbSpectrum, "precursor_mz") <- mz_i
   attr(dbSpectrum, "comp_name") <- meta_data$name

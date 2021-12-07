@@ -13,7 +13,7 @@ build_vignettes_to_inst <- function() {
   return(all(has_worked)) # Returns TRUE if everything worked OK
 }
 
-build_vignettes_to_inst() # Call the function
+build_vignettes_to_inst() 
 
 # only run this on linux
 devtools::build(path = "~/G2_Z/HRMS/sw_entwicklung/ntsworkflow/linux", binary = TRUE)

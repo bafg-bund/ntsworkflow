@@ -22,7 +22,9 @@ annotate_grouped(
   ndp_n = 1,
   mztolu_ms2 = 0.015,
   rtoffset = 0,
-  intCutData = 0
+  intCutData = 0,
+  numcores = 1,
+  datenListLocal
 )
 }
 \arguments{
@@ -56,7 +58,7 @@ annotate_grouped(
 
 \item{rtoffset}{Note: Offset the database to make it match your values}
 
-\item{intCutData}{}
+\item{numcores}{Number of cores for parallelization}
 }
 \value{
 
