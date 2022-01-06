@@ -1,4 +1,7 @@
 
+
+
+
 #' @export
 annotate_grouped_compononents <- function(sampleListLocal,
                                           peakListList,
@@ -371,9 +374,10 @@ componentization_BfG <- function(Liste,
 #'
 #' @return Alignment table with the group column "Gruppe" replaced with the new values
 #' @export
-alig_componentisation <- function(altable, rttols = 5, fracComponMatch = 0.5, mztol = 0.005, pearsonCorr = 0.5, pol = "pos") {
+alig_componentisation <- function(altable, rttols = 3, fracComponMatch = 0.5, mztol = 0.005, pearsonCorr = 0.5, pol = "pos") {
   stopifnot(pol %in% c("pos", "neg"))
   # RT difference
+  
   message("Computing RT distance matrix")
   rt_comp <- RcppXPtrUtils::cppXPtr(
     sprintf("double customDist(const arma::mat &A, const arma::mat &B) {
@@ -397,12 +401,13 @@ alig_componentisation <- function(altable, rttols = 5, fracComponMatch = 0.5, mz
   rm(rtDistT)
   
   # componentisation grouping from peaklist
+  # the componentisation from the peaklist needs to be improved using dtw correlation.
   message("Computing peak shape componentisation distance matrix")
   group_comp <- RcppXPtrUtils::cppXPtr(
     sprintf("double customDist(const arma::mat &A, const arma::mat &B) {
       arma::rowvec x = A.row(0);
       arma::rowvec y = B.row(0);
-      double answer = 1;
+      double answer = 3;
       // remove any entries with 0
       arma::uvec keepx = arma::find(x);
       arma::uvec keepy = arma::find(y);
@@ -411,25 +416,28 @@ alig_componentisation <- function(altable, rttols = 5, fracComponMatch = 0.5, mz
       if (keep.n_elem < 3) {  // need to have at least 3 values to work with
         return(answer);
       }
-      x.elem(keep);
-      y.elem(keep);
-      arma::rowvec z = x - y;
+      arma::vec z(keep.n_elem, arma::fill::zeros);
+      z = x.elem(keep) - y.elem(keep);
+  
       arma::uvec isSameGroup = arma::find(z == 0);
-      double fractionSame = isSameGroup.n_elem / (double)x.n_elem;
+      double fractionSame = isSameGroup.n_elem / (double)z.n_elem;
       if (fractionSame > %.2f) {  // more than half of samples show same group
         answer = 0;
-      } else {
+      } else if (fractionSame > %.2f) {  // can still be compensated for
         answer = 1;
+      } else {
+        answer = 3;  // higher penalty if never in similar component
       }
-      // std::cout << z << std::endl;
+      // std::cout << fractionSame << std::endl;
       return(answer);
-    }", fracComponMatch), depends = c("RcppArmadillo")
+    }", fracComponMatch, fracComponMatch / 2), depends = c("RcppArmadillo")
   )
   all_gruppe <- altable[, grep("^gruppe_\\d+$", colnames(altable)), drop = F]
   groupDistT <- parallelDist::parDist(all_gruppe, method = "custom", func = group_comp)
   
   shapeDist <- as.integer(groupDistT)
   attributes(shapeDist) <- attributes(groupDistT)
+  
   rm(groupDistT)
   
   # known mass differences
@@ -442,7 +450,7 @@ alig_componentisation <- function(altable, rttols = 5, fracComponMatch = 0.5, mz
                     double mzDiff = std::abs(mz1 - mz2);
                     double answer = 0;
                     arma::vec knownMasses = arma::zeros<arma::vec>(10);
-                    knownMasses(0) = 1.003;
+                    knownMasses(0) = 1.003;  // 13C
                     knownMasses(1) = 21.982;
                     knownMasses(2) = 18.011;
                     knownMasses(3) = 23.075;
@@ -545,8 +553,8 @@ alig_componentisation <- function(altable, rttols = 5, fracComponMatch = 0.5, mz
   rm(mzDist, corrDist, shapeDist, rtDist)
   
   #dbscan::kNNdistplot(combiDist, 1)
-  
-  dbscan_res <- dbscan::dbscan(combiDist, 0.5, 2)
+  #browser()
+  dbscan_res <- dbscan::dbscan(combiDist, 0.1, 2)
   # message(sprintf("DBSCAN clustering for %i objects.
   #                 The clustering contains %i cluster(s) and %i noise points.",
   #                 nrow(altable), 

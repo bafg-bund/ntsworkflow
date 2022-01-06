@@ -3485,6 +3485,7 @@ server <- function(input, output, session) {
            main = "Histogram of cluster sizes", xlab = "Number of features per cluster")
     })
     grouped <<- aligTemp
+    FillAlignmentTable()
     p$close()
   })
   
