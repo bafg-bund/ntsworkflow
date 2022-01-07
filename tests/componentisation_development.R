@@ -1,6 +1,17 @@
 
 
-alig_componentisation(altable = grouped)
+## tests
+rts <- grouped[, "mean_RT"]
+grs <- grouped[, "Gruppe"]
+sds <- tapply(rts, grs, sd)
+max(sds[names(sds) != "0"])
+
+rts <- new_grouped[, "mean_RT"]
+grs <- new_grouped[, "Gruppe"]
+sds <- tapply(rts, grs, sd)
+max(sds[names(sds) != "0"])
+
+new_grouped <- alig_componentisation(altable = grouped)
 
 saveRDS(list(combiDist = combiDist, al = al), "~/projects/ntsworkflow/tests/test1.RDS")
 

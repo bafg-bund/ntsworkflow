@@ -527,7 +527,7 @@ ui <- fluidPage(
                              Will replace group column in the alignment table.")),
                   fluidRow(
                     column(2, numericInput("componen2mztol", "m/z tolerance (mDa)", 5, 1, 1000, 1)),
-                    column(2, numericInput("componen2rttol", "RT tolerance (s)", 5, 1, 60, 1)),
+                    column(2, numericInput("componen2rttol", "RT tolerance (s)", 3, 1, 60, 1)),
                     column(2, numericInput("componen2fracShape", "Min. frac. peak shape matches", 0.5, 0.1, 1, 0.05)),
                     column(2, numericInput("componen2corr", "Min. Pearson's r for inten. trend", 0.5, 0.1, 1, 0.05)),
                     column(2, radioButtons("componen2pol", "Polarity", choices = c("pos", "neg"), selected = "pos", inline = T)),
@@ -2136,10 +2136,12 @@ server <- function(input, output, session) {
     savep <- shiny::Progress$new(session, 0, 1)
     savep$set(1, message = "Saving...")
     save_var <- list()
+    if (exists("log_file")) {
+      log_file_save <- jsonlite::toJSON(log_file, pretty = TRUE)
+      write(log_file_save,file=paste0(gsub(".RDS","",speicherort,fixed=TRUE),"_log_file.json"))
+      save_var[["log_file"]] <- log_file
+    }
     
-    log_file_save <- jsonlite::toJSON(log_file, pretty = TRUE)
-    write(log_file_save,file=paste0(gsub(".RDS","",speicherort,fixed=TRUE),"_log_file.json"))
-    save_var[["log_file"]] <- log_file
     save_var[["sampleList"]] <- sampleList
     save_var[["peaklist"]] <- peaklist
     save_var[["peakPickSettings"]] <- peakPickSettings

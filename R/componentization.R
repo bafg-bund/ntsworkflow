@@ -387,7 +387,7 @@ alig_componentisation <- function(altable, rttols = 3, fracComponMatch = 0.5, mz
     if (std::abs(rt1 - rt2) <= %i) {
       answer = 0;
     } else {
-      answer = 2;  // rt must match, extra penalty if not
+      answer = 3;  // rt must match, extra penalty if not
     }
     return(answer);
   }", rttols), 
@@ -564,6 +564,6 @@ alig_componentisation <- function(altable, rttols = 3, fracComponMatch = 0.5, mz
   #clusterSize <- unname(table(dbscan_res$cluster)[-1])
   #hist(clusterSize, breaks = seq(2, max(clusterSizes), 2), 
   #     main = "Histogram of cluster sizes", xlab = "Number of features per cluster")
-  message("Completed 2nd stange componentisation")
+  message("Completed 2nd stage componentisation")
   return(altable)
 }
