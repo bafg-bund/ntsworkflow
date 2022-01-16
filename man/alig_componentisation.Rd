@@ -6,7 +6,7 @@
 \usage{
 alig_componentisation(
   altable,
-  rttols = 5,
+  rttols = 3,
   fracComponMatch = 0.5,
   mztol = 0.005,
   pearsonCorr = 0.5,

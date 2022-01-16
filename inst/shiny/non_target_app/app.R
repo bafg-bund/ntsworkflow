@@ -597,9 +597,10 @@ ui <- fluidPage(
                                   ticks = FALSE, step = 10)),
             column(1, sliderInput("annotCES", "CES", min = 0, max = 15, value = c(0,15), 
                                   ticks = FALSE, step = 1)),
-            column(2, shinyFilesButton("ms2Db", label="Choose database", 
+            column(1, shinyFilesButton("ms2Db", label="Choose DB", 
                                        title = "Please select a database", multiple = FALSE),
-                   textOutput("dbLoc"))
+                   textOutput("dbLoc")),
+            column(1, actionButton("dbHelp", "?"))
             
           ),
           fluidRow(
@@ -3856,7 +3857,43 @@ server <- function(input, output, session) {
   
   #### Annotation ####
   
-  shinyFileChoose(input, 'ms2Db', roots=home3, session=session, filetypes=c('db', 'yaml'))
+  observeEvent(input$dbHelp, {
+    showModal(modalDialog(
+      title = "Database files and formats",
+      p(
+        "There are several options for databases. The system will choose the
+        correct annotation method based on the format of the database file, or, 
+        in the case of no file, an adduct annotation is done."
+      ),
+      p(
+        "1: MS2 'Spektrendatenbank' SQLite database, E.g. MS2_db_v7.db. To add standards to 
+        DB, ask G2."
+      ),
+      p(
+        "2: Custom database in yaml format for MS2 search (incl. fragments and neutral-loss search) 
+        for fomating examples ask around G2. E.g. example_db.yaml"
+      ),
+      p(
+        "3: Custom database in csv format for only doing MS1 (m/z, RT) suspect 
+        screening (MS2 is ignored). Comma separated with headers: 
+        'name', 'mz', 'rt' in any order. RT in minutes and optional.
+        Warning: High number of errors expected. Estimate 
+        false positives and false negatives.
+        For examples ask around G2. E.g. example_sus_list.csv"
+      ),
+      p(
+        "4: Labelling database in SQLite format. Ask G2."
+      ),
+      p(
+        "5: No database file."
+      ),
+
+      easyClose = TRUE,
+      footer = NULL
+    ))
+  })
+  
+  shinyFileChoose(input, 'ms2Db', roots=home3, session=session, filetypes=c('db', 'yaml', 'csv'))
   
   output$dbLoc <- renderText(as.character(parseFilePaths(home, input$ms2Db)$datapath))
   
@@ -3874,18 +3911,26 @@ server <- function(input, output, session) {
       showNotification("No database chosen, annotating just with components")
       progress$set(detail = "Searching Peaklists...")
       
-      annotationTable <<- ntsworkflow::annotate_grouped_compononents(
+      annotationTableNew <- ntsworkflow::annotate_grouped_compononents(
         sampleListLocal = sampleList,
         peakListList = peaklist,
         alignmentTable = grouped,
         numcores = input$numcores
       )
-    } else if (input$annotAppend) {
+    } else if (grepl("\\.csv$", dbPath)) {  
+      # csv library: just do m/z-rt screening in alignment table
+      progress$set(detail = "Searching average m/z, rt")
+      annotationTableNew <- ntsworkflow::annotate_grouped_mz_rt(
+        grouped, dbPath, input$annotMzTolmDa / 1000, input$annotRtTolM
+      )
       
+      
+    } else if (grepl("\\.db$", dbPath) || grepl("\\.ya?ml$", dbPath)) {
+      # yaml or SQLite db: do MS2 searching
     # validate(need(length(dbPath) != 0, "Choose a database file"))
     # removeNotification("nothingFound")
-    
-      progress$set(detail = "Appending annotations...")
+      
+      progress$set(detail = "Searching MS2...")
       
       annotationTableNew <- ntsworkflow::annotate_grouped(  # instrument: default settings
         sampleListLocal = sampleList,
@@ -3904,55 +3949,44 @@ server <- function(input, output, session) {
         numcores = input$numcores,
         datenListLocal = datenList
       )
-      annotationTable <<- rbind(annotationTable, annotationTableNew)
     } else {
-      annotationTable <<- ntsworkflow::annotate_grouped(  # instrument: default settings
-        sampleListLocal = sampleList,
-        peakListList = peaklist,
-        alignmentTable = grouped,
-        db_path = dbPath,
-        threshold_score = input$annotThresh,
-        mztolu = input$annotMzTolmDa / 1000,
-        rttol = input$annotRtTolM,
-        polarity = input$annotPol,
-        CE = input$annotCE,
-        CES = input$annotCES,
-        mztolu_ms2 = input$annotDpWind / 1000,
-        rtoffset = input$annotRtOffset,
-        intCutData = input$annotIntCut,
-        numcores = input$numcores,
-        datenListLocal = datenList
-      )
+      showNotification("Unknown database file", type = "error", duration = NULL)
     }
     
-    
-    progress$set(detail = "Annotation complete, cleaning up...")
-    if (is.null(annotationTable)) {
+    if (is.null(annotationTableNew)) {
       showNotification("No compounds from the database were found in the alignment table.", 
                        duration = NULL, id = "nothingFound")
+      progress$close()
+    }
+    req(!is.null(annotationTableNew))
+    
+    if (input$annotAppend) {
+      progress$set(detail = "Appending annotations...")
+      annotationTable <<- rbind(annotationTable, annotationTableNew)
     } else {
-      # build annotation table
-      FillAnnotationTable()
-      # need to invalidate the aligR reactive so that it includes the annotations
-      updateReactive$v <- updateReactive$v + 1
-      if (exists("clusteringData"))
-        rm(clusteringData, pos = globalenv())
-      #create log_file
-      threshold_score <- input$annotThresh
-      mztolu <- input$annotMzTolmDa / 1000
-      rttol <- input$annotRtTolM
-      polarity <- input$annotPol
-      CE <- input$annotCE
-      CES <- input$annotCES
-      mztolu_ms2 <- input$annotDpWind / 1000
-      rtoffset <- input$annotRtOffset
-      log_file <<- create_log_file()
-      
-      FillAlignmentTable()  # to include annotations
-      
+      annotationTable <<- annotationTableNew
     }
     
-  
+    progress$set(detail = "Annotation complete, cleaning up...")
+
+    # build annotation table
+    FillAnnotationTable()
+    # need to invalidate the aligR reactive so that it includes the annotations
+    updateReactive$v <- updateReactive$v + 1
+    if (exists("clusteringData"))
+      rm(clusteringData, pos = globalenv())
+    #create log_file
+    threshold_score <- input$annotThresh
+    mztolu <- input$annotMzTolmDa / 1000
+    rttol <- input$annotRtTolM
+    polarity <- input$annotPol
+    CE <- input$annotCE
+    CES <- input$annotCES
+    mztolu_ms2 <- input$annotDpWind / 1000
+    rtoffset <- input$annotRtOffset
+    log_file <<- create_log_file()
+    
+    FillAlignmentTable()  # to include annotations
     gc()
    
     progress$close()

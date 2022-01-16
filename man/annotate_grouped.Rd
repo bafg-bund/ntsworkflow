@@ -2,7 +2,7 @@
 % Please edit documentation in R/suspect_screening.R
 \name{annotate_grouped}
 \alias{annotate_grouped}
-\title{Annotate alignment table from non-target app}
+\title{Annotate alignment table from non-target app by MS2 searching}
 \usage{
 annotate_grouped(
   sampleListLocal,

@@ -6,7 +6,83 @@
 # lists. 
 
 
-#' Annotate alignment table from non-target app
+#' Annotate alignment table based only on m/z and RT comparison
+#' 
+#' Enables also annotation based only on m/z. Uses a csv file substance
+#' library.
+#'
+#' @param alig alignment table from shiny app 
+#' @param compLibPath path to csv file
+#' @param mztol tolerance in u
+#' @param rttol tolerance in minutes
+#'
+#' @return Annotation table
+#' @export
+annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
+  #browser()
+  alig <- alig[, c("mean_mz", "mean_RT", "alignmentID")]
+  alig <- as.data.frame(alig)
+  alig$mean_RT <- round(alig$mean_RT / 60, 2)
+  compLib <- read.csv(compLibPath)
+  if (!all(c("mz", "name") %in% colnames(compLib)) ||
+      nrow(compLib) == 0 || !inherits(compLib$mz, "numeric") ||
+      !inherits(compLib$name, "character")) {
+    warning("Compound library format not recognized")
+    return(NULL)
+  }
+  
+  if (any(duplicated(compLib$name))) {
+    warning("There are duplicated compound names")
+    return(NULL)
+  }
+  
+  # filter alig
+  filter_alig <- function(compLibRow) {
+    stopifnot(nrow(compLibRow) == 1)
+    aligFilt <- alig[abs(alig$mean_mz - compLibRow$mz) <= mztol, ]
+    if (nrow(aligFilt) > 0) 
+      aligFilt$mzDB <- compLibRow$mz
+    
+    if (nrow(aligFilt) > 0 && is.element("rt", colnames(compLibRow))) {
+      stopifnot(inherits(compLibRow$rt, "numeric"))
+      aligFilt <- aligFilt[abs(aligFilt$mean_RT - compLibRow$rt) <= rttol, ]
+      if (nrow(aligFilt) > 0)
+        aligFilt$rtDB <- compLibRow$rt
+    }
+      
+    if (nrow(aligFilt) > 0)
+      aligFilt$name <- compLibRow$name
+    
+    aligFilt
+  }
+  
+  re <- do.call("rbind", by(compLib, compLib$name, filter_alig, simplify = FALSE))
+  rownames(re) <- NULL
+  
+  if (nrow(re) > 0) {
+    colnames(re) <- sub("mean_mz", "mzData", colnames(re))
+    colnames(re) <- sub("mean_RT", "rtData", colnames(re))
+    if (!is.element("rtDB", colnames(re))) 
+      re$rtDB <- NA
+    re$CAS <- NA
+    re$expID <- NA
+    re$formula <- NA
+    re$SMILES <- NA
+    re$adduct <- NA
+    re$isotope <- NA
+    re$score <- NA
+    re$db_available <- T
+    re$CE <- NA
+    re$CES <- NA
+    re$sample <- NA
+  } else {
+    message("Nothing found")
+    return(NULL)
+  }
+  re
+}
+
+#' Annotate alignment table from non-target app by MS2 searching
 #' 
 #' Function takes all the variables needed from non-target app and settings for 
 #' searching the database. It returns a table with the annotations for rows of 
