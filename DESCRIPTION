@@ -2,7 +2,7 @@ Package: ntsworkflow
 Type: Package
 Title: A Non-Target Screening Data Evaluation Tool. Federal Institute of Hydrology, Koblenz, Germany
 Version: 0.2.2
-Date: 2021-12-06
+Date: 2022-01-16
 Authors@R: c(
              person("Christian", "Dietrich", email = "Christian.Dietrich@bafg.de", role = c("aut"),
              comment = "Federal Institute of Hydrology (BfG) Koblenz, Germany"),

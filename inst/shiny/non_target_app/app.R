@@ -1056,7 +1056,7 @@ server <- function(input, output, session) {
       adduct <- adduct[zeileMult]
     }
     
-    stopifnot(length(dataId) == 1, length(formula) == 1, length(adduct) == 1)
+    req(length(dataId) == 1, length(formula) == 1, length(adduct) == 1)
     
     peakId <- grouped[zeile, paste0("PeakID_", dataId)]
     thisPl <- peaklist[[dataId]]
@@ -1129,8 +1129,8 @@ server <- function(input, output, session) {
       name <- atr[["name"]]
     }
     
-    stopifnot(length(dataId) == 1)
-    stopifnot(length(dbExpId) == 1)
+    req(length(dataId) == 1)
+    req(length(dbExpId) == 1)
     # get ms2 spec from data
     dataSpec <- xcms::getMsnScan(datenList[[dataId]], grouped[zeile, paste0("ms2scan_", dataId)])
     dataSpec <- as.data.frame(dataSpec)
