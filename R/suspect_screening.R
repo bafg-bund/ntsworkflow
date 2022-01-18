@@ -20,6 +20,9 @@
 #' @export
 annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
   #browser()
+  intCols <- alig[, c(grep("^Int_", colnames(alig)), 
+                      grep("alignmentID", colnames(alig)))]
+  intCols <- as.data.frame(intCols)
   alig <- alig[, c("mean_mz", "mean_RT", "alignmentID")]
   alig <- as.data.frame(alig)
   alig$mean_RT <- round(alig$mean_RT / 60, 2)
@@ -50,9 +53,23 @@ annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
         aligFilt$rtDB <- compLibRow$rt
     }
       
-    if (nrow(aligFilt) > 0)
+    if (nrow(aligFilt) > 0) {
+      #browser()
       aligFilt$name <- compLibRow$name
-    
+      # highest intensity of each row
+      aligFilt$sample <- numeric(nrow(aligFilt))
+      for (i in seq_len(nrow(aligFilt))) {
+        intens <- intCols[intCols$alignmentID == aligFilt$alignmentID[i],
+                          grep("^Int_", colnames(intCols))]
+        highSamp <- as.numeric(
+          stringr::str_match(
+            names(intens[which.max(intens)]), 
+            "^Int_(\\d+)$"
+          )[,2]
+        )
+        aligFilt[i, "sample"] <- highSamp 
+      }
+    }
     aligFilt
   }
   
@@ -74,7 +91,6 @@ annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
     re$db_available <- T
     re$CE <- NA
     re$CES <- NA
-    re$sample <- NA
   } else {
     message("Nothing found")
     return(NULL)

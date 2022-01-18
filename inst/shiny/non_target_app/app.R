@@ -1157,7 +1157,7 @@ server <- function(input, output, session) {
       }
     } else {
       dbSpec <- data.frame(mz = 0, int = 0) 
-      shiny::showNotification("Database format not known", type = "warning")
+      shiny::showNotification("No spectra available", type = "warning")
     }
     shiny::req(is.data.frame(dbSpec))
     
@@ -1485,6 +1485,7 @@ server <- function(input, output, session) {
   }
   
   fillMultiHitsTable <- function() {
+    #browser()
     az <- groupedWithAnnotation[input$AlignmentAnnotTable_rows_selected, "alignmentID"]
     multiHits <- annotationTable[annotationTable$alignmentID == az, ]
     groupedPlus <- as.data.frame(grouped)
@@ -2027,7 +2028,6 @@ server <- function(input, output, session) {
       
       updateSliderInput(session, "PeakPick_massrange",min=datenList[[selected]]@mzrange[1], max=datenList[[selected]]@mzrange[2])
       updateSliderInput(session, "PeakPick_RTrange",max=round(max(datenList[[selected]]@scantime)/60))
-      browser
       if (length(peakPickSettings) >= selected) { 
         settings <- peakPickSettings[[selected]]
         if (!is.null(settings$massrange)) {
@@ -4037,7 +4037,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$AlignmentAnnotTable_rows_selected, {
-     
+    #browser() 
     cr <- input$AlignmentAnnotTable_rows_selected
     alignmentIdSelected(groupedWithAnnotation[cr, "alignmentID"])
     if (groupedWithAnnotation[input$AlignmentAnnotTable_rows_selected, "multHits"])
