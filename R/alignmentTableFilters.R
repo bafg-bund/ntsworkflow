@@ -165,6 +165,7 @@ keepReps <- function(alignment, samples, reps, least) {
 #' @return alignment table with rows removed
 #' @export 
 removeRare <- function(alignment, minimum) {
+  # TODO this function should ignore blanks!
   stopifnot(minimum <= (ncol(alignment) - 4) / 6)  # check
   intensities <- alignment[, grep("^Int_", colnames(alignment))]
   keep <- apply(intensities, 1, function(x) sum(x != 0) >= minimum)
