@@ -3931,7 +3931,7 @@ server <- function(input, output, session) {
     # removeNotification("nothingFound")
       
       progress$set(detail = "Searching MS2...")
-      
+      #browser()
       annotationTableNew <- ntsworkflow::annotate_grouped(  # instrument: default settings
         sampleListLocal = sampleList,
         peakListList = peaklist,
@@ -3962,6 +3962,19 @@ server <- function(input, output, session) {
     
     if (input$annotAppend) {
       progress$set(detail = "Appending annotations...")
+      
+      # need to have unified column names
+      allColNm <- union(colnames(annotationTable), colnames(annotationTableNew))
+      newColAnT <- setdiff(allColNm, colnames(annotationTable))
+      newColAnTN <- setdiff(allColNm, colnames(annotationTableNew))
+
+      for (cn in newColAnT)
+        annotationTable[, cn] <<- vector(unlist(dplyr::summarise_all(annotationTableNew[, cn], class)), nrow(annotationTable))
+      for (cnn in newColAnTN)
+        annotationTableNew[, cnn] <- vector(unlist(dplyr::summarise_all(annotationTable[, cnn], class)), nrow(annotationTableNew))
+      
+      #browser()
+      stopifnot(setequal(colnames(annotationTable), colnames(annotationTableNew)))
       annotationTable <<- rbind(annotationTable, annotationTableNew)
     } else {
       annotationTable <<- annotationTableNew
