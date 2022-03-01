@@ -10,7 +10,8 @@ alig_componentisation(
   fracComponMatch = 0.5,
   mztol = 0.005,
   pearsonCorr = 0.5,
-  pol = "pos"
+  pol = "pos",
+  numcores = 6
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ alig_componentisation(
 \item{pearsonCorr}{minimum pearson's r for comparing intensity trends}
 
 \item{pol}{polarity, must be either "pos" or "neg"}
+
+\item{numcores}{number of cores to use for parallel distance matrix computations}
 }
 \value{
 Alignment table with the group column "Gruppe" replaced with the new values

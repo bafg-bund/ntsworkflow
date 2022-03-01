@@ -371,10 +371,12 @@ componentization_BfG <- function(Liste,
 #' @param mztol mz tolerance
 #' @param pearsonCorr minimum pearson's r for comparing intensity trends
 #' @param pol polarity, must be either "pos" or "neg" 
+#' @param numcores number of cores to use for parallel distance matrix computations
 #'
 #' @return Alignment table with the group column "Gruppe" replaced with the new values
 #' @export
-alig_componentisation <- function(altable, rttols = 3, fracComponMatch = 0.5, mztol = 0.005, pearsonCorr = 0.5, pol = "pos") {
+alig_componentisation <- function(altable, rttols = 3, fracComponMatch = 0.5, 
+                                  mztol = 0.005, pearsonCorr = 0.5, pol = "pos", numcores = 6) {
   stopifnot(pol %in% c("pos", "neg"))
   # RT difference
   
@@ -395,7 +397,7 @@ alig_componentisation <- function(altable, rttols = 3, fracComponMatch = 0.5, mz
   )
   
   rtDistT <- parallelDist::parDist(altable[, "mean_RT", drop = F], 
-                                   method = "custom", func = rt_comp)
+                                   method = "custom", func = rt_comp, threads = numcores)
   rtDist <- as.integer(rtDistT)
   attributes(rtDist) <- attributes(rtDistT)
   rm(rtDistT)
@@ -433,7 +435,7 @@ alig_componentisation <- function(altable, rttols = 3, fracComponMatch = 0.5, mz
     }", fracComponMatch, fracComponMatch / 2), depends = c("RcppArmadillo")
   )
   all_gruppe <- altable[, grep("^gruppe_\\d+$", colnames(altable)), drop = F]
-  groupDistT <- parallelDist::parDist(all_gruppe, method = "custom", func = group_comp)
+  groupDistT <- parallelDist::parDist(all_gruppe, method = "custom", func = group_comp, threads = numcores)
   
   shapeDist <- as.integer(groupDistT)
   attributes(shapeDist) <- attributes(groupDistT)
@@ -508,7 +510,7 @@ alig_componentisation <- function(altable, rttols = 3, fracComponMatch = 0.5, mz
                     }", mztol), depends = c("RcppArmadillo"))
   )
   mzDistT <- parallelDist::parDist(altable[, "mean_mz", drop = F],
-                                   method = "custom", func = mass_comp)
+                                   method = "custom", func = mass_comp, threads = numcores)
   
   mzDist <- as.integer(mzDistT)
   attributes(mzDist) <- attributes(mzDistT)
@@ -538,7 +540,7 @@ alig_componentisation <- function(altable, rttols = 3, fracComponMatch = 0.5, mz
   sumStat <- apply(intens, 1, max)
   intens <- sweep(intens, 1, sumStat, "/")
   intens <- as.matrix(intens)
-  distM <- parallelDist::parDist(intens, method = "custom", func = pearsonCompCustom)
+  distM <- parallelDist::parDist(intens, method = "custom", func = pearsonCompCustom, threads = numcores)
   
   corrDist <- ifelse(distM >= pearsonCorr, 0L, 1L)
   attributes(corrDist) <- attributes(distM)
