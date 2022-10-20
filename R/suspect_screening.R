@@ -152,7 +152,8 @@ annotate_grouped <- function(sampleListLocal,
                              rtoffset = 0,
                              intCutData = 0,
                              numcores = 1,
-                             datenListLocal) {
+                             datenListLocal,
+                             expGroups = "BfG") {
   # open database connection or open custom database (.yaml)
   #browser()
   if (grepl("\\.yaml$", db_path)) {
@@ -214,6 +215,14 @@ annotate_grouped <- function(sampleListLocal,
         select(experiment_id, compound_id, mz, adduct, isotope, CE, CES) %>% 
         left_join(compTable, by = "compound_id") %>% left_join(rtTable, by = "compound_id") %>% 
         select(-chrom_method, -ret_time_id, -chem_list_id, -compound_id) %>% dplyr::collect()
+      
+      # filter by experiment group (user source selection)
+      expIdsSource <- tbl(dbi, "experimentGroup") %>% filter(name %in% expGroups) %>% 
+        left_join(tbl(dbi, "expGroupExp"), by = "experimentGroup_id") %>% 
+        select(experiment_id) %>% collect() %>% .$experiment_id
+      #browser()
+      allExps <- allExps[allExps$experiment_id %in% expIdsSource, ]
+      
     }
     
     allExps$rt <- allExps$rt + rtoffset
@@ -221,6 +230,7 @@ annotate_grouped <- function(sampleListLocal,
   } else {
     stop("Database must be .yaml or .db")
   }
+  
   
   # first group the rows of the alignment table so that you check all the
   # features from one file at a time. that way you only need to load each file
@@ -560,10 +570,15 @@ ms2_search <- function(data_path, db_path,
   
   DBI::dbDisconnect(db)
   
+  # if searching for specific compounds, check that these are present
   if (!is.null(compounds)) {
-    if (!all(compounds %in% suspects$name))
-      stop("Chosen compounds not in DB")
     suspects <- filter(suspects, name %in% compounds)
+    if (nrow(suspects) == 0) {
+      warning("Chosen compounds and settings not available in DB")
+      return(NULL)
+    } else {
+      message("Searching compounds ", paste(unique(suspects$name), collapse = "; "))
+    }
   }
   
   # evaluate each sample

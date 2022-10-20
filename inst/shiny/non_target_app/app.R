@@ -601,11 +601,12 @@ ui <- fluidPage(
                                        title = "Please select a database", multiple = FALSE),
                    textOutput("dbLoc")),
             column(1, actionButton("dbHelp", "?"))
-            
           ),
           fluidRow(
-            column(7, hr()),
+            column(5, hr()),
             column(2, checkboxInput("annotAppend", "Append annotation")),
+            column(1, p(strong("Source select:"))),
+            column(1, selectInput("annotExpSource", NULL, "unknown", multiple = TRUE)),
             column(2, actionButton("annotGo", "Annotate", width = "100%")),
             column(1, shinySaveButton("annotationTableExport", "Export .csv", "Save file as...",
                                       filetype = list(csv = "csv")))
@@ -3866,7 +3867,7 @@ server <- function(input, output, session) {
         in the case of no file, an adduct annotation is done."
       ),
       p(
-        "1: MS2 'Spektrendatenbank' SQLite database, E.g. MS2_db_v7.db. To add standards to 
+        "1: MS2 'Spektrendatenbank' SQLite database, E.g. MS2_db_v9.db. To add standards to 
         DB, ask G2."
       ),
       p(
@@ -3896,6 +3897,24 @@ server <- function(input, output, session) {
   shinyFileChoose(input, 'ms2Db', roots=home3, session=session, filetypes=c('db', 'yaml', 'csv'))
   
   output$dbLoc <- renderText(as.character(parseFilePaths(home, input$ms2Db)$datapath))
+  
+  # populate source select list
+  observe({
+    dbPath <- as.character(parseFilePaths(home, input$ms2Db)$datapath)
+    req(length(dbPath) > 0)
+    if (grepl("\\.db$", dbPath)) {
+      con <- DBI::dbConnect(RSQLite::SQLite(), dbPath)
+      if ("experimentGroup" %in% DBI::dbListTables(con)) {
+        updateSelectInput(
+          session, 
+          "annotExpSource", 
+          choices = DBI::dbReadTable(con, "experimentGroup")$name,
+          selected = DBI::dbReadTable(con, "experimentGroup")$name[1]
+        )
+        DBI::dbDisconnect(con)
+      }
+    }
+  })
   
   observeEvent(input$annotGo, {
     # browser() 
@@ -3927,11 +3946,21 @@ server <- function(input, output, session) {
       
     } else if (grepl("\\.db$", dbPath) || grepl("\\.ya?ml$", dbPath)) {
       # yaml or SQLite db: do MS2 searching
-    # validate(need(length(dbPath) != 0, "Choose a database file"))
-    # removeNotification("nothingFound")
+      # validate(need(length(dbPath) != 0, "Choose a database file"))
+      # removeNotification("nothingFound")
+      
+      # first check
       
       progress$set(detail = "Searching MS2...")
+      # make sure the source is selected
+      expSource <- if (is.null(input$annotExpSource)) {
+        showNotification("No source chosen or none available, setting BfG as standard")
+        "BfG"
+      } else {
+        input$annotExpSource
+      }
       #browser()
+      
       annotationTableNew <- ntsworkflow::annotate_grouped(  # instrument: default settings
         sampleListLocal = sampleList,
         peakListList = peaklist,
@@ -3947,7 +3976,8 @@ server <- function(input, output, session) {
         rtoffset = input$annotRtOffset,
         intCutData = input$annotIntCut,
         numcores = input$numcores,
-        datenListLocal = datenList
+        datenListLocal = datenList,
+        expGroups = expSource
       )
     } else {
       showNotification("Unknown database file", type = "error", duration = NULL)

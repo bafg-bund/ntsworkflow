@@ -539,151 +539,150 @@ Report <- setRefClass(
           }
         }
         
-        #browser()
-        if (is.null(results))
-          next
-        
-        # clear features which are under the MS1 baseline
-        results <- results[results$int_h >= settings$baseline_noise_MS1, , drop = FALSE]
-
-        # check for duplicate detections
-        du <- results[, c("index", "samp")]
-        du <- du[duplicated(du), ]
-        if (nrow(du) == 0) {
-          results$duplicate <- NA 
-        } else {
-          # get current max duplicate id number from peakList
-          if (nrow(peakList) > 0)
-            maxId <- max(peakList$duplicate, na.rm = TRUE) else maxId <- 0
-          for (i in seq_len(nrow(du))) {
-            results[results$index == du$index[i] & 
-                      results$samp == du$samp[i], "duplicate"] <- maxId + i
+        # continue with this rest only if peaks are found
+        if (!is.null(results)) {
+          # clear features which are under the MS1 baseline
+          results <- results[results$int_h >= settings$baseline_noise_MS1, , drop = FALSE]
+          
+          # check for duplicate detections
+          du <- results[, c("index", "samp")]
+          du <- du[duplicated(du), ]
+          if (nrow(du) == 0) {
+            results$duplicate <- NA 
+          } else {
+            # get current max duplicate id number from peakList
+            if (nrow(peakList) > 0)
+              maxId <- max(peakList$duplicate, na.rm = TRUE) else maxId <- 0
+              for (i in seq_len(nrow(du))) {
+                results[results$index == du$index[i] & 
+                          results$samp == du$samp[i], "duplicate"] <- maxId + i
+              }
           }
-        }
-        # add peak IDs
-        results$peakID <- NA
-        for (i in seq_len(nrow(results))) {
-          results$peakID[i] <- currentPeakID
-          currentPeakID <<- currentPeakID + 1L
-        }
-        # need to clear class names so that rbind works
-        class(results) <- "data.frame"
-        results$int_a <- NA
-        results$peak_start <- NA
-        results$peak_end <- NA
-        results$s_to_n <- NA
-        results$real_rt_min <- NA
-        results$eic_extraction_width <- NA
-        
-        # bind results to existing results
-        # export peaklist ####
-        peakList <<- rbind(peakList, results)
-        #browser()
-
-        # get only results for this datafile
-        subres <- peakList[peakList$samp == basename(datFile), ]
-
-        if (nrow(subres) == 0) {
-          message("No compounds found")
-          next
-        }
-        #browser()
-        getMS2 <- function(thisID, thisIndex) {
-          if (is.na(thisIndex))
-            return(NULL)
-          ms2Spec <- xcms::getMsnScan(rawLink, thisIndex)
-          ms2Spec <- as.data.frame(ms2Spec)
-          colnames(ms2Spec) <- c("mz", "int")
-
-          ms2Spec$peakID <- thisID
-          ms2Spec
-        }
-
-        MS2List <- Map(getMS2, subres$peakID, subres$index)
-        MS2df <- do.call("rbind", MS2List)
-        
-        # export MS2 ####
-        MS2 <<- rbind(MS2, MS2df)
-
-        getMS1 <- function(thisID, thisRt, thisMz, thisInt) {
-          ind <- which.min(abs(rawLink@scantime - thisRt))
-          ms1Spec <- xcms::getSpec(rawLink, scanrange = c(ind - 1, ind, ind + 1))
-          ms1Spec <- as.data.frame(ms1Spec)
-          colnames(ms1Spec) <- c("mz", "int")
-          ms1Spec <- ms1Spec[ms1Spec$int >= settings$baseline_noise_MS1, ]
-          ms1Spec <- ms1Spec[ms1Spec$mz > thisMz - 2, ]
-          ms1Spec <- ms1Spec[ms1Spec$mz < thisMz + 8, ]
-          ms1Spec <- ms1Spec[ms1Spec$int >= thisInt * 0.05, ]  # remove anything less than 5% of int
-          ms1Spec$peakID <- thisID
-          ms1Spec <- ms1Spec[!is.na(ms1Spec$mz) & !is.na(ms1Spec$int), ]
-          ms1Spec
-        }
-        #browser()
-        MS1List <- Map(getMS1, subres$peakID, subres$rt, subres$real_mz, subres$int_h)
-        MS1df <- do.call("rbind", MS1List)
-        # export MS1 ####
-        MS1 <<- rbind(MS1, MS1df)
-
-        getEic <- function(thisID, thisRt, thisMz) {
-          ext <- settings$EIC_extraction
-          thisEic <- xcms::rawEIC(rawLink, mzrange = c(thisMz - ext/2, thisMz + ext/2))
-          thisEic <- as.data.frame(thisEic)
-          colnames(thisEic) <- c("scan", "int")
-          thisEic$time <- rawLink@scantime[thisEic$scan]
-          thisEic <- thisEic[thisEic$int >= settings$baseline_noise_MS1, ]
-          #browser(expr = thisID == 44)
-          thisEic <- thisEic[abs(thisEic$time - thisRt) <= 200, ]
-          
-          if (nrow(thisEic) == 0) 
-            thisEic <- data.frame(scan = NA, time = NA, int = NA)
-          
-          thisEic$peakID <- thisID
-          thisEic
-        }
-        EicList <- Map(getEic, subres$peakID, subres$rt, subres$real_mz)
-        Eicdf <- do.call("rbind", EicList)
-        # export eic ####
-        EIC <<- rbind(EIC, Eicdf)
-
-        # loop through all peaks and collect data ####
-        for (j in seq_len(nrow(subres))) {
-
-          thisID <- subres$peakID[j]
-          #browser(expr = thisID == 117)
-
-          minInd <- which.min(abs(rawLink@scantime - (subres$rt[j] - (settings$rtTolReinteg * 60)/2)))
-          maxInd <- which.min(abs(rawLink@scantime - (subres$rt[j] + (settings$rtTolReinteg * 60)/2)))
-
-          # calculate area for this peak
-          #browser(expr = subres$comp_name[j] == "9-Carboxymethoxymethylguanine")
-
-          comp_mz <- subres$real_mz[j]
-          comp_rt <- subres$rt_min[j]
-          
-          # Peak integration ####
-          # using the peak picking algorithm for this mass
-          res <- .self$getPeak(rawLink, comp_mz, comp_rt, minInd, maxInd, 
-                               settings$EIC_extraction,
-                               settings$mzTolReinteg,
-                               settings$rtTolReinteg)
-          # Add data to peak list
-          if (nrow(res) != 0) {
-            # choose largest peak, normally there should only be one remaining peak
-            res <- res[which.max(res$peakArea), ]
-            peakList[peakList$peakID == thisID, "real_rt_min"] <<- round(res$scantime / 60, 2)
-            peakList[peakList$peakID == thisID, "int_h"] <<- as.integer(round(res$peak_intens))
-            peakList[peakList$peakID == thisID, "int_a"] <<- as.integer(round(res$peakArea))
-            peakList[peakList$peakID == thisID, "peak_start"] <<- round(res$scantimeleft_end / 60, 2)
-            peakList[peakList$peakID == thisID, "peak_end"] <<- round(res$scantimeright_end / 60, 2)
-            peakList[peakList$peakID == thisID, "s_to_n"] <<- round(res$peak_intens / res$noisedeviation, 1)
-            peakList[peakList$peakID == thisID, "eic_extraction_width"] <<- res$e_width
+          # add peak IDs
+          results$peakID <- NA
+          for (i in seq_len(nrow(results))) {
+            results$peakID[i] <- currentPeakID
+            currentPeakID <<- currentPeakID + 1L
           }
-        }
-        # Remove any false positives
-        if (alsoDeleteFP && nrow(falsePos) >= 1) {
-          for (row in seq_len(nrow(falsePos))) {
-            if (falsePos[row, "sampNum"] == 0)
-              .self$deleteFP(falsePos[row, "name"], 0)
+          # need to clear class names so that rbind works
+          class(results) <- "data.frame"
+          results$int_a <- NA
+          results$peak_start <- NA
+          results$peak_end <- NA
+          results$s_to_n <- NA
+          results$real_rt_min <- NA
+          results$eic_extraction_width <- NA
+          
+          # bind results to existing results
+          # export peaklist ####
+          peakList <<- rbind(peakList, results)
+          #browser()
+          
+          # get only results for this datafile
+          subres <- peakList[peakList$samp == basename(datFile), ]
+          
+          if (nrow(subres) == 0) {
+            message("No compounds found")
+            next
+          }
+          #browser()
+          getMS2 <- function(thisID, thisIndex) {
+            if (is.na(thisIndex))
+              return(NULL)
+            ms2Spec <- xcms::getMsnScan(rawLink, thisIndex)
+            ms2Spec <- as.data.frame(ms2Spec)
+            colnames(ms2Spec) <- c("mz", "int")
+            
+            ms2Spec$peakID <- thisID
+            ms2Spec
+          }
+          
+          MS2List <- Map(getMS2, subres$peakID, subres$index)
+          MS2df <- do.call("rbind", MS2List)
+          
+          # export MS2 ####
+          MS2 <<- rbind(MS2, MS2df)
+          
+          getMS1 <- function(thisID, thisRt, thisMz, thisInt) {
+            ind <- which.min(abs(rawLink@scantime - thisRt))
+            ms1Spec <- xcms::getSpec(rawLink, scanrange = c(ind - 1, ind, ind + 1))
+            ms1Spec <- as.data.frame(ms1Spec)
+            colnames(ms1Spec) <- c("mz", "int")
+            ms1Spec <- ms1Spec[ms1Spec$int >= settings$baseline_noise_MS1, ]
+            ms1Spec <- ms1Spec[ms1Spec$mz > thisMz - 2, ]
+            ms1Spec <- ms1Spec[ms1Spec$mz < thisMz + 8, ]
+            ms1Spec <- ms1Spec[ms1Spec$int >= thisInt * 0.05, ]  # remove anything less than 5% of int
+            ms1Spec$peakID <- thisID
+            ms1Spec <- ms1Spec[!is.na(ms1Spec$mz) & !is.na(ms1Spec$int), ]
+            ms1Spec
+          }
+          #browser()
+          MS1List <- Map(getMS1, subres$peakID, subres$rt, subres$real_mz, subres$int_h)
+          MS1df <- do.call("rbind", MS1List)
+          # export MS1 ####
+          MS1 <<- rbind(MS1, MS1df)
+          
+          getEic <- function(thisID, thisRt, thisMz) {
+            ext <- settings$EIC_extraction
+            thisEic <- xcms::rawEIC(rawLink, mzrange = c(thisMz - ext/2, thisMz + ext/2))
+            thisEic <- as.data.frame(thisEic)
+            colnames(thisEic) <- c("scan", "int")
+            thisEic$time <- rawLink@scantime[thisEic$scan]
+            thisEic <- thisEic[thisEic$int >= settings$baseline_noise_MS1, ]
+            #browser(expr = thisID == 44)
+            thisEic <- thisEic[abs(thisEic$time - thisRt) <= 200, ]
+            
+            if (nrow(thisEic) == 0) 
+              thisEic <- data.frame(scan = NA, time = NA, int = NA)
+            
+            thisEic$peakID <- thisID
+            thisEic
+          }
+          EicList <- Map(getEic, subres$peakID, subres$rt, subres$real_mz)
+          Eicdf <- do.call("rbind", EicList)
+          # export eic ####
+          EIC <<- rbind(EIC, Eicdf)
+          
+          # loop through all peaks and collect data ####
+          for (j in seq_len(nrow(subres))) {
+            
+            thisID <- subres$peakID[j]
+            #browser(expr = thisID == 117)
+            
+            minInd <- which.min(abs(rawLink@scantime - (subres$rt[j] - (settings$rtTolReinteg * 60)/2)))
+            maxInd <- which.min(abs(rawLink@scantime - (subres$rt[j] + (settings$rtTolReinteg * 60)/2)))
+            
+            # calculate area for this peak
+            #browser(expr = subres$comp_name[j] == "9-Carboxymethoxymethylguanine")
+            
+            comp_mz <- subres$real_mz[j]
+            comp_rt <- subres$rt_min[j]
+            
+            # Peak integration ####
+            # using the peak picking algorithm for this mass
+            res <- .self$getPeak(rawLink, comp_mz, comp_rt, minInd, maxInd, 
+                                 settings$EIC_extraction,
+                                 settings$mzTolReinteg,
+                                 settings$rtTolReinteg)
+            # Add data to peak list
+            if (nrow(res) != 0) {
+              # choose largest peak, normally there should only be one remaining peak
+              res <- res[which.max(res$peakArea), ]
+              peakList[peakList$peakID == thisID, "real_rt_min"] <<- round(res$scantime / 60, 2)
+              peakList[peakList$peakID == thisID, "int_h"] <<- as.integer(round(res$peak_intens))
+              peakList[peakList$peakID == thisID, "int_a"] <<- as.integer(round(res$peakArea))
+              peakList[peakList$peakID == thisID, "peak_start"] <<- round(res$scantimeleft_end / 60, 2)
+              peakList[peakList$peakID == thisID, "peak_end"] <<- round(res$scantimeright_end / 60, 2)
+              peakList[peakList$peakID == thisID, "s_to_n"] <<- round(res$peak_intens / res$noisedeviation, 1)
+              peakList[peakList$peakID == thisID, "eic_extraction_width"] <<- res$e_width
+            }
+          }
+          # Remove any false positives
+          if (alsoDeleteFP && nrow(falsePos) >= 1) {
+            for (row in seq_len(nrow(falsePos))) {
+              if (falsePos[row, "sampNum"] == 0)
+                .self$deleteFP(falsePos[row, "name"], 0)
+            }
           }
         }
         
@@ -1137,8 +1136,11 @@ Report <- setRefClass(
         }
         y
       }
-      eicl <- by(EIC, EIC$peakID, shrinkEic, simplify = FALSE)
-      EIC <<- do.call("rbind", eicl)
+      
+      if (nrow(EIC) > 0) {
+        eicl <- by(EIC, EIC$peakID, shrinkEic, simplify = FALSE)
+        EIC <<- do.call("rbind", eicl)
+      }
     },
 
     deleteBackground = function(indicesData, indicesBlank, includeIS = FALSE) {
