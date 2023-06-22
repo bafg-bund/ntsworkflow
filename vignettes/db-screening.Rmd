@@ -42,6 +42,11 @@ Load some raw files, either interactively by running:
 test$addRawFiles()
 ```
 
+...or you can load a file locations interactively by running: 
+```{r}
+test$addRawFilesDir()
+```
+
 ...or you can type in the file locations, e.g. 
 ```{r}
 listOfFiles <- c(
@@ -129,15 +134,26 @@ To view all the results in an interactive environment run the visualisation app 
 
 There are several tabs:
 
-## Peak list
-![The Peaklist tab](images/peaklist.png){#id .class width=300px}
+## Overview
+![The Overview tab](images/overview.png)
 
-You can select a compound and then click on the view tab to see the spectra. These images are from a full data evaluation and not the example shown above.
+You can see your uploaded files and some metadata about your current dbscreening. These images are from a full data evaluation and not the example shown above.
+
+## Peak list
+![The Peaklist tab](images/peaklist2.png)
+
+You can select a compound and then click on the view tab to see the spectra.
 
 ## View
 Here you can see the EIC, MS^1^ and MS^2^ spectrum of the selected peak from the peak list tab. You can also directly enter peak ID at the top or scroll through all the peaks using the mouse.
 
-![The View tab](images/spectra.png){#id .class width=300px}
+![The View tab](images/view2.png)
+
+You can see a comparison between the MS^1^ spectrum of the selected peak and the database...
+
+![The View tab second part](images/view3.png)
+
+... and the comparison between the MS^2^ spectrum and the database
 
 ## IS
 Here the results of the IS integration are displayed.
@@ -148,7 +164,12 @@ The peak area, peak width and RT stability are given for all IS in all samples.
 ## Trend
 This tab shows the intensity (area or height) changes of all the compounds in all samples. There is also the option to show normalized values according to a specific IS. Dark blue means the compound was identified in this sample by MS^2^. Light blue means this peak area is obtained by reintegration (see below). Red means there is no IS found in this sample so the IS area is estimated based on previous analysis. By zooming into the chart a peak is selected (yellow background), this peak can then be viewed in the view tab.
 
-![The Trend tab](images/trend.png){#id .class width=300px}
+![The Trend tab](images/trend2.png)
+
+## Settings
+The last tab shows the settings of this dbscreening
+
+![The settings tab](images/settings.png)
 
 # False positives
 
