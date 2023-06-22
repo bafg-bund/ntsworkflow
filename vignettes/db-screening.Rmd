@@ -240,4 +240,3 @@ To save any table in the report object as a csv file, use `write.csv`. For Germa
 write.csv(test$peakList, file = "new_peaklist.csv")
 ```
 
-this is a test
