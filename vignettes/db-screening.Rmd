@@ -238,7 +238,5 @@ newName <- ntsworkflow::loadReport("example_test.report")
 To save any table in the report object as a csv file, use `write.csv`. For German Excel, use `write.csv2`.
 ```{r, eval=FALSE}
 write.csv(test$peakList, file = "new_peaklist.csv")
-
-This is a test
 ```
 
