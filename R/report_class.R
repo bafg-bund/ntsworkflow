@@ -1121,11 +1121,19 @@ Report <- setRefClass(
       
       shrinkEic <- function(x) {
         thisId <- x$peakID[1]
-        #browser(expr = thisId == 2)
+        
         oo <- zoo::zoo(cbind(x$scan, x$int), x$time)
-        oor <- zoo::rollapply(oo, 3, mean, by = 3)
-        y <- data.frame(scan = round(oor[,1]), int = oor[,2], time = attr(oor, "index"),
-                        peakID = thisId, stringsAsFactors = F)
+        if (nrow(oo) > 20) {
+          oor <- zoo::rollapply(oo, 3, mean, by = 3)
+        } else {
+          oor <- oo
+        }
+
+        #browser(expr = all.equal(oo, oor))
+        y <- data.frame(
+          scan = round(oor[,1]), int = oor[,2], time = attr(oor, "index"),
+          peakID = thisId, stringsAsFactors = F
+        )
         # if a peak was found, remove averaged points within peak and replace with originals
         plrow <- peakList[peakList$peakID == thisId, , drop = F]
         if (!is.na(plrow[1, "int_a"])) {

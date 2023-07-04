@@ -90,7 +90,7 @@ ui <- fluidPage(
       ),
       hr(),
       DT::dataTableOutput("sampleTable"),
-      shinyFilesButton("load", "Load", "Please select an ntr file", FALSE),
+      shinyFilesButton("load", "Load", "Please select an RDS file", FALSE),
       shinySaveButton("save","Save", "Save file as...", filetype = list(RDS = ".RDS")),
       actionButton("loadEnv", "Load env.")
     ),
@@ -603,9 +603,11 @@ ui <- fluidPage(
             column(1, actionButton("dbHelp", "?"))
           ),
           fluidRow(
-            column(5, hr()),
+            column(3, hr()),
             column(2, checkboxInput("annotAppend", "Append annotation")),
-            column(1, p(strong("Source select:"))),
+            column(1, p(strong("Ret. times:"))),
+            column(1, selectInput("annotChromMeth", NULL, "unknown", multiple = FALSE)),
+            column(1, p(strong("Spec. Source:"))),
             column(1, selectInput("annotExpSource", NULL, "unknown", multiple = TRUE)),
             column(2, actionButton("annotGo", "Annotate", width = "100%")),
             column(1, shinySaveButton("annotationTableExport", "Export .csv", "Save file as...",
@@ -3898,7 +3900,7 @@ server <- function(input, output, session) {
   
   output$dbLoc <- renderText(as.character(parseFilePaths(home, input$ms2Db)$datapath))
   
-  # populate source select list
+  # populate source select list and chrom method list
   observe({
     dbPath <- as.character(parseFilePaths(home, input$ms2Db)$datapath)
     req(length(dbPath) > 0)
@@ -3911,8 +3913,16 @@ server <- function(input, output, session) {
           choices = DBI::dbReadTable(con, "experimentGroup")$name,
           selected = DBI::dbReadTable(con, "experimentGroup")$name[1]
         )
-        DBI::dbDisconnect(con)
       }
+      if ("retention_time" %in% DBI::dbListTables(con)) {
+        updateSelectInput(
+          session, 
+          "annotChromMeth", 
+          choices = DBI::dbReadTable(con, "retention_time")$chrom_method,
+          selected = DBI::dbReadTable(con, "retention_time")$chrom_method[1]
+        )
+      }
+      DBI::dbDisconnect(con)
     }
   })
   
@@ -3952,12 +3962,20 @@ server <- function(input, output, session) {
       # first check
       
       progress$set(detail = "Searching MS2...")
-      # make sure the source is selected
+      # make sure the source and retention time is selected
       expSource <- if (is.null(input$annotExpSource)) {
         showNotification("No source chosen or none available, setting BfG as standard")
         "BfG"
       } else {
         input$annotExpSource
+      }
+      chromMethod <- if (is.null(input$annotChromMeth)) {
+        showNotification(
+          "No retention times chosen or none available, setting BfG method as standard"
+        )
+        "dx.doi.org/10.1016/j.chroma.2015.11.014"
+      } else {
+        input$annotChromMeth
       }
       #browser()
       
@@ -3977,7 +3995,8 @@ server <- function(input, output, session) {
         intCutData = input$annotIntCut,
         numcores = input$numcores,
         datenListLocal = datenList,
-        expGroups = expSource
+        expGroups = expSource,
+        chrom_method = chromMethod
       )
     } else {
       showNotification("Unknown database file", type = "error", duration = NULL)
