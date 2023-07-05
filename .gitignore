@@ -38,3 +38,8 @@ vignettes/*.pdf
 sqlite_local
 /doc/
 /Meta/
+
+# binary files created by c++
+*.o
+*.so
+
