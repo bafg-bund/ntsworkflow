@@ -25,8 +25,6 @@ forIdentExport(
 }
 \value{
 A txt file with each found mass, retention time and MS2 spectrum (if available).
-
-
 }
 \description{
 For batch processing in For-Ident, txt file is created for import on For-Ident platform. MS2 

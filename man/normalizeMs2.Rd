@@ -9,9 +9,6 @@ normalizeMs2(x)
 \arguments{
 \item{x}{spectrum as data.frame columns mz, int}
 }
-\value{
-
-}
 \description{
 Prepare Spectrum For Comparison
 }

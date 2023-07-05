@@ -25,9 +25,6 @@ get_ids(
 \arguments{
 \item{chrom_method}{}
 }
-\value{
-
-}
 \description{
 Can't include ExpGroupNames due to stack overflow, so this parameter doesn't
 do anything yet

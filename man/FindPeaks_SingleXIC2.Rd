@@ -19,9 +19,6 @@ FindPeaks_SingleXIC2(
 \arguments{
 \item{precursormzTol}{}
 }
-\value{
-
-}
 \description{
 Christian's FindPeaks algorithm
 }

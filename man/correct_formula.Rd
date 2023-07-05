@@ -9,9 +9,6 @@ correct_formula(formula, adduct)
 \arguments{
 \item{adduct}{}
 }
-\value{
-
-}
 \description{
 Adjust a formula to an adduct
 }

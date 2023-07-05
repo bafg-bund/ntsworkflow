@@ -5,9 +5,6 @@
 \alias{Report-class}
 \alias{Report}
 \title{A reference class for database screening.}
-\value{
-
-}
 \description{
 This is a class for conducting non-target screening data evaluation based on database searching by m/z, retention time and MS2 spectral comparison. View the vignette "Database screening with Report in ntsworkflow" for a step-by-step guide on how to use this function.
 }
