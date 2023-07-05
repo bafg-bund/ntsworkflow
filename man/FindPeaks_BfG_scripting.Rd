@@ -47,9 +47,6 @@ FindPeaks_BfG_scripting(
 
 \item{maxPeaksPerSignal}{}
 }
-\value{
-
-}
 \description{
 The original peak picking function can only be used together with the app.
 This function can be used in a scripting environment. Results are the same.

@@ -63,9 +63,6 @@ Several files containing various GenForm outputs.
 This is a wrapper function for GenForm, requiring MS, MS/MS, ion settings
 and directories.
 }
-\examples{
-
-}
 \references{
 GenForm on Source Forge: https://sourceforge.net/projects/GenForm/
 }

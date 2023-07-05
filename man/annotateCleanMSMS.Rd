@@ -29,9 +29,6 @@ Returns annotated peaks for further use
 This takes the output from \code{\link{RunGenForm}} and creates a peaklist with the
 annotations for further use.
 }
-\examples{
-
-}
 \author{
 Emma Schymanski (\code{\link{emma.schymanski@uni.lu}})
 }

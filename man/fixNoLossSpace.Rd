@@ -19,9 +19,6 @@ File name of the "fixed" file.
 This takes a filename with e.g. the output from \code{\link{annotateCleanMSMS}} and
 removes a space in the \code{"no loss"} annotation to allow for easier handling.
 }
-\examples{
-
-}
 \seealso{
 \code{\link{annotateCleanMSMS}}
 }

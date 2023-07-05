@@ -15,8 +15,8 @@ annotate_grouped(
   polarity = "pos",
   CE = c(30, 40),
   CES = c(0, 15),
-  instrument = c("LC-ESI-QTOF TripleTOF 5600 SCIEX",
-    "LC-ESI-QTOF TripleTOF 6600 SCIEX", "LC-ESI-Orbitrap QExactive"),
+  instrument = c("LC-ESI-QTOF TripleTOF 5600 SCIEX", "LC-ESI-QTOF TripleTOF 6600 SCIEX",
+    "LC-ESI-Orbitrap QExactive"),
   chrom_method = "dx.doi.org/10.1016/j.chroma.2015.11.014",
   ndp_m = 2,
   ndp_n = 1,
@@ -24,7 +24,8 @@ annotate_grouped(
   rtoffset = 0,
   intCutData = 0,
   numcores = 1,
-  datenListLocal
+  datenListLocal,
+  expGroups = "BfG"
 )
 }
 \arguments{
@@ -59,9 +60,6 @@ annotate_grouped(
 \item{rtoffset}{Note: Offset the database to make it match your values}
 
 \item{numcores}{Number of cores for parallelization}
-}
-\value{
-
 }
 \description{
 Function takes all the variables needed from non-target app and settings for 
