@@ -204,8 +204,8 @@ annotate_grouped <- function(sampleListLocal,
       sampTable <- tbl(dbi, "sample")
       paraTable <- tbl(dbi, "parameter") %>%
         filter(
-          chrom_method == chrom_method_i, polarity == polarity_i, CE %in% allCe, CES %in% allces,
-          instrument %in% instrument_i
+          chrom_method == chrom_method_i, polarity == polarity_i, CE %in% allCe, 
+          CES %in% allces, instrument %in% instrument_i
         )
 
       allExps <- expTable %>%
@@ -276,9 +276,7 @@ annotate_grouped <- function(sampleListLocal,
 
 
   # reorder alignment table by max samples
-  # intMax <- unlist(intMax)
   alignmentTable <- cbind(alignmentTable, intMax)
-  # alignmentTable <- alignmentTable[order(intMax, na.last = FALSE), ]
   alignmentTableDf <- as.data.frame(alignmentTable)
 
   # NAs are ignored, but that doesnt matter anyway
@@ -365,7 +363,6 @@ annotate_grouped <- function(sampleListLocal,
         viabExp$db_available <- TRUE
         stopifnot(all(!is.null(db_spectra)))
       } else {
-        # 211204
         db_spectra <- lapply(
           viabExp$experiment_id,
           ntsworkflow::get_spectrum_preloaded,
@@ -388,7 +385,8 @@ annotate_grouped <- function(sampleListLocal,
       # get MS2 from file
       ms2spektrum <- xcms::getMsnScan(currentDataFile, ms2_scan_highest)
       ms2spektrum <- as.data.frame(ms2spektrum)
-      attr(ms2spektrum, "comp_name") <- sprintf("Sample%i_%.4f_%.2f", sample_highest, peakMz, peakRt)
+      attr(ms2spektrum, "comp_name") <- sprintf("Sample%i_%.4f_%.2f", sample_highest, 
+                                                peakMz, peakRt)
       attr(ms2spektrum, "precursor_mz") <- peakMz
       colnames(ms2spektrum) <- c("mz", "int")
       ms2spektrumNorm <- ntsworkflow::normalizeMs2(ms2spektrum)
@@ -405,7 +403,8 @@ annotate_grouped <- function(sampleListLocal,
 
       # compare with data spectrum with DB spectra
       custom_calc_ndp <- function(d_spec, db_spec) {
-        ntsworkflow::calc_ndp(d_spec, db_spec, ndp_m = ndp_m, ndp_n = ndp_n, mztolu_ms2 = mztolu_ms2)
+        ntsworkflow::calc_ndp(d_spec, db_spec, ndp_m = ndp_m, ndp_n = ndp_n, 
+                              mztolu_ms2 = mztolu_ms2)
       }
       # prepare spec for neutral loss search, returns vector of all differences
       # spec must be normalized already!!
@@ -429,7 +428,8 @@ annotate_grouped <- function(sampleListLocal,
         # normal comparison
         hasSpec <- sapply(db_spectra, is.matrix)
         normal <- which(hasSpec)
-        viabExp[normal, "score"] <- vapply(db_spectra[normal], custom_calc_ndp, numeric(1), d_spec = ms2spektrumNorm)
+        viabExp[normal, "score"] <- vapply(db_spectra[normal], custom_calc_ndp,
+                                           numeric(1), d_spec = ms2spektrumNorm)
 
         # okay now the complicated cases
         provided <- lapply(customdb[viabExp$name], names)
@@ -438,20 +438,24 @@ annotate_grouped <- function(sampleListLocal,
         # just simple frag
         justFrag <- which(hasFragments & !hasNl & !hasSpec)
         if (length(justFrag) != 0) {
-          found <- vapply(db_spectra[justFrag], simpleSearch, logical(1), d_spec = ms2spektrumNorm)
+          found <- vapply(db_spectra[justFrag], simpleSearch, logical(1), 
+                          d_spec = ms2spektrumNorm)
           viabExp[justFrag, "score"] <- ifelse(found, 1000, 0)
         }
         # just nl
         justNl <- which(!hasFragments & hasNl & !hasSpec)
         if (length(justNl) != 0) {
-          found <- vapply(db_spectra[justNl], simpleSearch, logical(1), d_spec = get_nl(ms2spektrumNorm))
+          found <- vapply(db_spectra[justNl], simpleSearch, logical(1), 
+                          d_spec = get_nl(ms2spektrumNorm))
           viabExp[justNl, "score"] <- ifelse(found, 1000, 0)
         }
         # combined search, frag and nl
         combi <- which(hasFragments & hasNl & !hasSpec)
         if (length(combi) != 0) {
-          found_frags <- vapply(lapply(db_spectra[combi], "[[", "frags"), simpleSearch, logical(1), d_spec = ms2spektrumNorm)
-          found_losses <- vapply(lapply(db_spectra[combi], "[[", "losses"), simpleSearch, logical(1), d_spec = get_nl(ms2spektrumNorm))
+          found_frags <- vapply(lapply(db_spectra[combi], "[[", "frags"), simpleSearch, 
+                                logical(1), d_spec = ms2spektrumNorm)
+          found_losses <- vapply(lapply(db_spectra[combi], "[[", "losses"), simpleSearch, 
+                                 logical(1), d_spec = get_nl(ms2spektrumNorm))
           viabExp[combi, "score"] <- ifelse(found_frags & found_losses, 1000, 0)
         }
       } else { # for normal db search
@@ -600,7 +604,6 @@ ms2_search <- function(data_path, db_path,
     dplyr::collect() %>%
     distinct()
 
-  # 211204
   exptbl <- tbl(db, "experiment") %>% collect()
   comptbl <- tbl(db, "compound") %>%
     select(-chem_list_id) %>%
@@ -690,7 +693,7 @@ ms2_search <- function(data_path, db_path,
       stopifnot(nrow(inf) == length(data_specs))
 
       # Collect spectra from database
-      # db <- DBI::dbConnect(RSQLite::SQLite(), db_path)  # parallel cores can not read db
+      # parallel cores can not read db
       exptt <- exptbl %>% select(experiment_id, compound_id, mz)
       compt <- comptbl %>% select(compound_id, CAS, name)
       spectra <- filter(fragtbl, experiment_id %in% !!compound$experiment_id) %>%
@@ -698,7 +701,6 @@ ms2_search <- function(data_path, db_path,
         left_join(exptt, by = "experiment_id") %>%
         left_join(compt, by = "compound_id")
 
-      # DBI::dbDisconnect(db)
       db_specs <- split(spectra, spectra$experiment_id)
       db_specs <- lapply(db_specs, function(sp) {
         res <- sp[, c("mz.x", "int")]
@@ -746,7 +748,7 @@ ms2_search <- function(data_path, db_path,
       inf$mz_ok <- NA
       inf$real_mz <- NA
       inf$int_h <- NA
-      for (i in 1:nrow(inf)) { # i <- 1
+      for (i in 1:nrow(inf)) { 
         ind <- which.min(abs(raw_data@scantime - inf$rt[i]))
         ms1 <- xcms::getScan(
           raw_data, ind,
@@ -866,8 +868,8 @@ ms2_search <- function(data_path, db_path,
     all_comps <- do.call("rbind", all_comps)
     all_comps
   }
-  # 211204
-  all_samps <- lapply(data_path, eval_samp, exptbl = exptbl, comptbl = comptbl, fragtbl = fragtbl)
+  all_samps <- lapply(data_path, eval_samp, exptbl = exptbl, comptbl = comptbl, 
+                      fragtbl = fragtbl)
   all_samps <- compact(all_samps)
   if (length(all_samps) == 0) {
     message("no compounds found in sample(s)")
@@ -1041,9 +1043,6 @@ id_to_name_preloaded <- function(id, expTable, compTable) {
 }
 
 
-
-
-
 #' Get Experiment IDs From DB By Mz and Rt
 #'
 #' Can't include ExpGroupNames due to stack overflow, so this parameter doesn't
@@ -1104,7 +1103,6 @@ get_ids <- function(db, mz, rt, mztolu = 0.005,
   ExpGroupNames <- c(ExpGroupNames, "spam")
   compGroupNames <- c(compGroupNames, "spam")
 
-  # TODO ####
   # add the possibility of giving a CE and CES range
 
   exp_ids <- filter(
@@ -1134,9 +1132,7 @@ get_ids <- function(db, mz, rt, mztolu = 0.005,
 }
 
 
-
 # spectral comparison functions ####
-
 
 #' Calculate Normalized Dot-Product
 #'
@@ -1195,8 +1191,6 @@ calc_ndp <- function(d_spec, db_spec, ndp_m = 2, ndp_n = 1, mztolu_ms2 = 0.015) 
 
   r_ndp * 1000
 }
-
-
 
 
 # Misc and helper functions ####
