@@ -92,7 +92,7 @@ annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
     re$adduct <- NA
     re$isotope <- NA
     re$score <- NA
-    re$db_available <- T
+    re$db_available <- TRUE
     re$CE <- NA
     re$CES <- NA
   } else {
@@ -180,7 +180,7 @@ annotate_grouped <- function(sampleListLocal,
       SMILES = NA,
       name = names(customdb),
       rt = sapply(customdb, getValue, n = "rt"),
-      stringsAsFactors = F
+      stringsAsFactors = FALSE
     )
   } else if (grepl("\\.db$", db_path)) {
     useCustom <- FALSE
@@ -261,7 +261,7 @@ annotate_grouped <- function(sampleListLocal,
       return(NA)
     }
     x <- cbind(seq_along(rowInt), rowInt, rowMs2)
-    x <- x[order(x[, 2], decreasing = T), ]
+    x <- x[order(x[, 2], decreasing = TRUE), ]
     x <- x[x[, 3] != 0, , drop = FALSE]
     if (nrow(x) == 0) {
       return(NA)
@@ -317,7 +317,7 @@ annotate_grouped <- function(sampleListLocal,
       value <- value[row, ]
       file <- as.numeric(stringr::str_match(names(value), "_(\\d+)$")[, 2])
       type <- stringr::str_match(names(value), "^(\\w+)_")[, 2]
-      feature <- data.frame(type, file, value = as.numeric(value), stringsAsFactors = F)
+      feature <- data.frame(type, file, value = as.numeric(value), stringsAsFactors = FALSE)
 
       # get sample MS2 scan number from most intense peak with an MS2
       hasMS2 <- feature[feature$type == "ms2scan" & feature$value != 0, "file"]
@@ -737,7 +737,7 @@ ms2_search <- function(data_path, db_path,
       # if any of the proposed db spectra give score over treshold, keep this
       # feature
       inf <- inf[inf$score >= threshold, , drop = FALSE]
-      # inf <- inf[apply(scorA, 1, function(x) any(x >= threshold)), , drop = F]
+      # inf <- inf[apply(scorA, 1, function(x) any(x >= threshold)), , drop = FALSE]
       if (nrow(inf) == 0) {
         return(NULL)
       }
@@ -790,7 +790,7 @@ ms2_search <- function(data_path, db_path,
         return(NULL)
       }
       # keep only matching masses
-      inf <- inf[inf$mz_ok, , drop = F]
+      inf <- inf[inf$mz_ok, , drop = FALSE]
 
       # Of all peaks which match, cluster according to retention time, find
       # the most intense in each cluster and keep these only
@@ -809,7 +809,7 @@ ms2_search <- function(data_path, db_path,
         }
         good <- by(inf, inf$peak,
           function(x) x[which.max(x$int_h), ],
-          simplify = F
+          simplify = FALSE
         )
         if (length(good) == 1) {
           inf <- good[[1]]
