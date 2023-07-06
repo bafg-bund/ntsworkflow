@@ -1,12 +1,18 @@
 
 
-
-
+#' annotate_grouped_components
+#' 
+#' 
+#' 
+#' @param sampleListLocal (list of processed samples)
+#' @param peakListList (result of peakpicking)
+#' @param alignmentTable (result of the alignment)
+#' @param numcores (number of CPU cores to be used)
+#'
 #' @export
-annotate_grouped_compononents <- function(sampleListLocal,
+annotate_grouped_components <- function(sampleListLocal,
                                           peakListList,
                                           alignmentTable, numcores) {
-  # browser()
   # prepare data
   alig <- as.data.frame(alignmentTable)
   stopifnot(length(peakListList) == nrow(sampleListLocal))
@@ -22,6 +28,7 @@ annotate_grouped_compononents <- function(sampleListLocal,
   ap <- alig[, grep("^PeakID_", colnames(alig))]
   apl <- split(ap, seq_len(nrow(ap)))
   apl <- lapply(apl, as.numeric)
+  
   # loop through ap, in each row, collect all available annotations from pl
   rowAnnot <- parallel::mclapply(apl, function(x) { # x <- as.numeric(ap[1, ])
     subpl <- pl[pl$peak_id_all %in% x, ]
@@ -75,7 +82,17 @@ annotate_grouped_compononents <- function(sampleListLocal,
   res
 }
 
-
+#' componentization_BfG
+#'
+#' @param Liste 
+#' @param daten 
+#' @param ppm (mass deviation in ppm)
+#' @param Grenzwert_RT (Threshold value for the retention time)
+#' @param Grenzwert_FWHM_left (Limit value for the retention time of the left FWHM)
+#' @param Grenzwert_FWHM_right (Limit value for the retention time of the right FWHM)
+#' @param Summe_all (Threshold value for the sum of the three retention times (apex, FWHM left, FWHM right)
+#' @param adjust_tolerance 
+#'
 #' @export
 componentization_BfG <- function(Liste,
                                  daten,
@@ -103,12 +120,6 @@ componentization_BfG <- function(Liste,
   
   
   Liste$Gruppe <- 0
-  
-  #Grenzwert_RT <- 10
-  #Grenzwert_FWHM_left <- 10
-  #Grenzwert_FWHM_right <- 10
-  #Summe_all <- 10
-  
   Liste <- Liste[order(Liste$Intensity,decreasing = T), ] 
   i <- 1
   g <- 0
@@ -121,13 +132,13 @@ componentization_BfG <- function(Liste,
   
   zaehler <- NULL
   
-  int_min <- min(Liste$Intensity) #das beim PeakPicking gewählte Intensitäts-Minimum
+  int_min <- min(Liste$Intensity) #intensity minimum selected for peak picking
  
   mzDiff13C <- 1.00335
   mzNa <- 21.98194
   
   while(any(Liste$Gruppe == 0)) {
-    g <- g+1  #nächste Gruppe
+    g <- g+1  # next group
     
     groupleader <- c(groupleader,which(Liste$Gruppe == 0)[1])
     
@@ -138,15 +149,15 @@ componentization_BfG <- function(Liste,
     while (!abbruch) {
       
       C13 <- which((abs(Liste$mz-Liste$mz[groupleader[g]]-mzDiff13C*n) < Liste$mz[groupleader[g]]/1000000*ppm) & (Liste$Intensity/Liste$Intensity[groupleader[g]]*100 <= Liste$mz[groupleader[g]]/12^n) &
-                     abs(Liste$RT[groupleader[g]]-Liste$RT)<Grenzwert_RT[groupleader[g]] &                          # RT im Limit?
-                     abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left)<Grenzwert_FWHM_left[groupleader[g]] &     # FWHM_left im Limit?
-                     abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right)<Grenzwert_FWHM_right[groupleader[g]] &  # FWHM_right im Limit?
-                     (abs(Liste$RT[groupleader[g]]-Liste$RT) +
-                        abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left) +
-                        abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right))<Summe_all[groupleader[g]])
-      if (length(C13) > 1) { #es gibt mehrere Kandidaten
-        C13 <- C13[which(Liste$Intensity[C13]/Liste$Intensity[groupleader[g]] > 0.01)] #ein Kohlenstoff sollte schon mindestens drin sein :)
-        C13 <- C13[which.min(abs(Liste$RT[C13]-Liste$RT[groupleader[g]]))] #nimm den, der gemessen an der RT am besten passt
+                    abs(Liste$RT[groupleader[g]]-Liste$RT)<Grenzwert_RT[groupleader[g]] &                          # RT in the Limit?
+                    abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left)<Grenzwert_FWHM_left[groupleader[g]] &     # FWHM_left in the Limit?
+                    abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right)<Grenzwert_FWHM_right[groupleader[g]] &  # FWHM_right in the Limit?
+                    (abs(Liste$RT[groupleader[g]]-Liste$RT) +
+                      abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left) +
+                      abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right))<Summe_all[groupleader[g]])
+      if (length(C13) > 1) { # Several candidates are possible
+        C13 <- C13[which(Liste$Intensity[C13]/Liste$Intensity[groupleader[g]] > 0.01)] 
+        C13 <- C13[which.min(abs(Liste$RT[C13]-Liste$RT[groupleader[g]]))] # Take the one that fits best in terms of the RT
       }
       if (length(C13) < 1) abbruch <- TRUE
       Liste$C13[C13] <- groupleader[g]
@@ -193,34 +204,30 @@ componentization_BfG <- function(Liste,
   
   
   for (g in 1:length(groupleader)) {
-    #if (nrow(Liste[Liste$Gruppe == g,]) > 0) {  
     Cl2_Gruppe <- NULL
     for (n in 1:2) {
       if (Liste$Intensity[groupleader[g]]*isotopePattern[n] >= int_min & length(Cl2_Gruppe) == n-1) { 
-        #die zu erwartendene Intensität muss über Threshold liegen und
-        #alle vorherigen Isotope müssen gefunden worden sein
-        # This line and others like it take a very long time for long peak lists
-        Cl2_isotop <- which((abs(Liste$mz[groupleader]-Liste$mz[groupleader[g]]-mzDiffCl*n) < Liste$mz[groupleader[g]]/1000000*ppm) & (abs(Liste$Intensity[groupleader]/Liste$Intensity[groupleader[g]]-isotopePattern[n]) <= patternTol) &
-                              abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader])<Grenzwert_RT[groupleader[g]] &                          # RT im Limit?
-                              abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader])<Grenzwert_FWHM_left[groupleader[g]] &     # FWHM_left im Limit?
-                              abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader])<Grenzwert_FWHM_right[groupleader[g]] &  # FWHM_right im Limit?
-                              (abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader]) +
-                                 abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader]) +
-                                 abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader]))<Summe_all[groupleader[g]])
+        Cl2_isotop <- which((abs(Liste$mz[groupleader]-Liste$mz[groupleader[g]]-mzDiffCl*n) < Liste$mz[groupleader[g]]/1000000*ppm) &
+                            (abs(Liste$Intensity[groupleader]/Liste$Intensity[groupleader[g]]-isotopePattern[n]) <= patternTol) &
+                             abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader])<Grenzwert_RT[groupleader[g]] &                          # RT in the Limit?
+                             abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader])<Grenzwert_FWHM_left[groupleader[g]] &     # FWHM_left in the Limit?
+                             abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader])<Grenzwert_FWHM_right[groupleader[g]] &  # FWHM_right in the Limit?
+                             (abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader]) +
+                                abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader]) +
+                                abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader])) < Summe_all[groupleader[g]])
         if (length(Cl2_isotop) > 1) Cl2_isotop <- Cl2_isotop[which.min(abs(Liste$RT[groupleader[Cl2_isotop]]-Liste$RT[groupleader[g]]))]
         Cl2_Gruppe <- c(Cl2_Gruppe, Cl2_isotop)
       }
     }
     if (length(Cl2_Gruppe) > 0) {
-      if (Liste$Cl2[groupleader[Cl2_Gruppe[1]]] == 0) { #wenn noch nicht als Cl2-Isotop zugeordnet
+      if (Liste$Cl2[groupleader[Cl2_Gruppe[1]]] == 0) { # if not yet assigned as Cl2 isotope
         Liste$Cl2[groupleader[Cl2_Gruppe]] <- groupleader[g]
         Liste$Gruppe[Liste$Gruppe == Liste$Gruppe[groupleader[Cl2_Gruppe[1]]]] <- Liste$Gruppe[groupleader[g]]
         if (length(Cl2_Gruppe) > 1) Liste$Gruppe[Liste$Gruppe == Liste$Gruppe[groupleader[Cl2_Gruppe[2]]]] <- Liste$Gruppe[groupleader[g]]
-      } else { #wenn schon vorher als Cl2-Isotop zugeordnet, prüfen, welches besser passt
+      } else { # if already assigned as Cl2 isotope before, check which one fits better
         if (abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader[Cl2_Gruppe]]) <= abs(Liste$RT[groupleader[Liste$Gruppe[groupleader[Cl2_Gruppe]]]]-Liste$RT[groupleader[Cl2_Gruppe]]) |
             abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader[Cl2_Gruppe]]) <= abs(Liste$FWHM_left[groupleader[Liste$Gruppe[groupleader[Cl2_Gruppe]]]]-Liste$FWHM_left[groupleader[Cl2_Gruppe]]) |
             abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader[Cl2_Gruppe]]) <= abs(Liste$FWHM_right[groupleader[Liste$Gruppe[groupleader[Cl2_Gruppe]]]]-Liste$FWHM_right[groupleader[Cl2_Gruppe]])) {
-          #wenn RT, FWHM_left oder FWHM-right in der vorherigen Gruppe besser passen, bleibt es auch dort. Nur wenn alles besser passt kommt es in die neue Gruppe mit der niedrigeren Intensität.
           Liste$Cl2[groupleader[Cl2_Gruppe]] <- groupleader[g]
           Liste$Gruppe[Liste$Gruppe == Liste$Gruppe[groupleader[Cl2_Gruppe[1]]]] <- Liste$Gruppe[groupleader[g]]
           if (length(Cl2_Gruppe) > 1) Liste$Gruppe[Liste$Gruppe == Liste$Gruppe[groupleader[Cl2_Gruppe[2]]]] <- Liste$Gruppe[groupleader[g]]
@@ -239,7 +246,6 @@ componentization_BfG <- function(Liste,
   
   
   for (g in 1:length(groupleader)) {
-    #if (nrow(Liste[Liste$Gruppe == g,]) > 0) {  
     Cl1_Gruppe  <- which((abs(Liste$mz[groupleader]-Liste$mz[groupleader[g]]-mzDiffCl) < Liste$mz[groupleader[g]]/1000000*ppm) & (abs(Liste$Intensity[groupleader]/Liste$Intensity[groupleader[g]]-isotopePattern) <= patternTol) &
                            abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader])<Grenzwert_RT[groupleader[g]] &                          # RT im Limit?
                            abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader])<Grenzwert_FWHM_left[groupleader[g]] &     # FWHM_left im Limit?
@@ -250,14 +256,13 @@ componentization_BfG <- function(Liste,
     if (length(Cl1_Gruppe) > 1) Cl1_Gruppe <- Cl1_Gruppe[which.min(abs(Liste$RT[groupleader[Cl1_Gruppe]]-Liste$RT[groupleader[g]]))]
     
     if (length(Cl1_Gruppe) > 0) {
-      if (Liste$Cl1[groupleader[Cl1_Gruppe[1]]] == 0) { #wenn noch nicht als Cl1-Isotop zugeordnet
+      if (Liste$Cl1[groupleader[Cl1_Gruppe[1]]] == 0) { # if not yet assigned as Cl1 isotope
         Liste$Cl1[groupleader[Cl1_Gruppe]] <- groupleader[g]
         Liste$Gruppe[Liste$Gruppe == Liste$Gruppe[groupleader[Cl1_Gruppe[1]]]] <- Liste$Gruppe[groupleader[g]]
-      } else { #wenn schon vorher als Cl2-Isotop zugeordnet, prüfen, welches besser passt
+      } else { # if already assigned as Cl2 isotope before, check which one fits better
         if (abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader[Cl1_Gruppe]]) <= abs(Liste$RT[groupleader[Liste$Gruppe[groupleader[Cl1_Gruppe]]]]-Liste$RT[groupleader[Cl1_Gruppe]]) |
             abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader[Cl1_Gruppe]]) <= abs(Liste$FWHM_left[groupleader[Liste$Gruppe[groupleader[Cl1_Gruppe]]]]-Liste$FWHM_left[groupleader[Cl1_Gruppe]]) |
             abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader[Cl1_Gruppe]]) <= abs(Liste$FWHM_right[groupleader[Liste$Gruppe[groupleader[Cl1_Gruppe]]]]-Liste$FWHM_right[groupleader[Cl1_Gruppe]])) {
-          #wenn RT, FWHM_left oder FWHM-right in der vorherigen Gruppe besser passen, bleibt es auch dort. Nur wenn alles besser passt kommt es in die neue Gruppe mit der niedrigeren Intensität.
           Liste$Cl1[groupleader[Cl1_Gruppe]] <- groupleader[g]
           Liste$Gruppe[Liste$Gruppe == Liste$Gruppe[groupleader[Cl1_Gruppe]]] <- Liste$Gruppe[groupleader[g]]
         }
@@ -271,33 +276,31 @@ componentization_BfG <- function(Liste,
   
   
   
-  # Na-Addukte
+  # Na-Adducts
   Liste$NaAddukt <- 0
   
   
   for (g in 1:length(groupleader)) {
     
-    #if (nrow(Liste[Liste$Gruppe == g,]) > 0) {  
     NaAdduktGruppe <- which((abs(Liste$mz[groupleader]-Liste$mz[groupleader[g]]-mzNa) < Liste$mz[groupleader[g]]/1000000*ppm) &
-                              abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader])<Grenzwert_RT[groupleader[g]] &                          # RT im Limit?
-                              abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader])<Grenzwert_FWHM_left[groupleader[g]] &     # FWHM_left im Limit?
-                              abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader])<Grenzwert_FWHM_right[groupleader[g]] &  # FWHM_right im Limit?
+                              abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader])<Grenzwert_RT[groupleader[g]] &                          # RT in the Limit?
+                              abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader])<Grenzwert_FWHM_left[groupleader[g]] &     # FWHM_left in the Limit?
+                              abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader])<Grenzwert_FWHM_right[groupleader[g]] &  # FWHM_right in the Limit?
                               (abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader]) +
                                  abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader]) +
                                  abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader]))<Summe_all[groupleader[g]])
     if (length(NaAdduktGruppe) > 0)  {
       
-      #wenn mehrere in Frage kommen, nimm den, der gemessen an der RT am besten passt:
+      # If several are considered, pick the one that fits best as measured by RT:
       if (length(NaAdduktGruppe) > 1) NaAdduktGruppe <- NaAdduktGruppe[which.min(abs(Liste$RT[groupleader[NaAdduktGruppe]]-Liste$RT[groupleader[g]]))]
       
-      if (Liste$NaAddukt[groupleader[NaAdduktGruppe]] == 0) { #wenn noch nicht als Na-Addukt zugeordnet
+      if (Liste$NaAddukt[groupleader[NaAdduktGruppe]] == 0) { # if not yet assigned as Na adduct
         Liste$NaAddukt[groupleader[NaAdduktGruppe]] <- groupleader[g]
         Liste$Gruppe[Liste$Gruppe == Liste$Gruppe[groupleader[NaAdduktGruppe]]] <- Liste$Gruppe[groupleader[g]]
-      } else { #wenn schon vorher als 13C zugeordnet, prüfen, welches besser passt
+      } else { # if already assigned as 13C before, check which one fits better
         if (abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader[NaAdduktGruppe]]) <= abs(Liste$RT[groupleader[Liste$Gruppe[groupleader[NaAdduktGruppe]]]]-Liste$RT[groupleader[NaAdduktGruppe]]) |
             abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader[NaAdduktGruppe]]) <= abs(Liste$FWHM_left[groupleader[Liste$Gruppe[groupleader[NaAdduktGruppe]]]]-Liste$FWHM_left[groupleader[NaAdduktGruppe]]) |
             abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader[NaAdduktGruppe]]) <= abs(Liste$FWHM_right[groupleader[Liste$Gruppe[groupleader[NaAdduktGruppe]]]]-Liste$FWHM_right[groupleader[NaAdduktGruppe]])) {
-          #wenn RT, FWHM_left oder FWHM-right in der vorherigen Gruppe besser passen, bleibt es auch dort. Nur wenn alles besser passt kommt es in die neue Gruppe mit der niedrigeren Intensität.
           Liste$NaAddukt[groupleader[NaAdduktGruppe]] <- groupleader[g]
           Liste$Gruppe[Liste$Gruppe == Liste$Gruppe[groupleader[NaAdduktGruppe]]] <- Liste$Gruppe[groupleader[g]]
         }
@@ -307,18 +310,18 @@ componentization_BfG <- function(Liste,
     
     #}
   }
-  # Ende Na-Addukte
+
   groupleader <- groupleader[Liste$NaAddukt[groupleader] == 0]
   
   Liste$groupleader <- FALSE
   
   for (g in 1:length(groupleader)) {
     
-    if (!any(Liste$groupleader[Liste$Gruppe == Liste$Gruppe[groupleader[g]]])) {  #nur wenn nicht schon einem anderen groupleader zugeordnet
+    if (!any(Liste$groupleader[Liste$Gruppe == Liste$Gruppe[groupleader[g]]])) {  # only if not already assigned to another groupleader
       KandidatenGruppen <- which(Liste$Gruppe[groupleader] > Liste$Gruppe[groupleader[g]] &
-                                   abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader])<Grenzwert_RT[groupleader[g]] &                # RT im Limit?
-                                   abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader])<Grenzwert_FWHM_left[groupleader[g]] &     # FWHM_left im Limit?
-                                   abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader])<Grenzwert_FWHM_right[groupleader[g]] &  # FWHM_right im Limit?
+                                   abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader])<Grenzwert_RT[groupleader[g]] &                # RT in the Limit?
+                                   abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader])<Grenzwert_FWHM_left[groupleader[g]] &     # FWHM_left in the Limit?
+                                   abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader])<Grenzwert_FWHM_right[groupleader[g]] &  # FWHM_right in the Limit?
                                    (abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader]) +
                                       abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader]) +
                                       abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader]))<Summe_all[groupleader[g]])

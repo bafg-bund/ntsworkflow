@@ -3940,7 +3940,7 @@ server <- function(input, output, session) {
       showNotification("No database chosen, annotating just with components")
       progress$set(detail = "Searching Peaklists...")
       
-      annotationTableNew <- ntsworkflow::annotate_grouped_compononents(
+      annotationTableNew <- ntsworkflow::annotate_grouped_components(
         sampleListLocal = sampleList,
         peakListList = peaklist,
         alignmentTable = grouped,
