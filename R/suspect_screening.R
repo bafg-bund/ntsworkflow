@@ -19,7 +19,6 @@
 #' @return Annotation table
 #' @export
 annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
-  #browser()
   intCols <- alig[, c(grep("^Int_", colnames(alig)), 
                       grep("alignmentID", colnames(alig)))]
   intCols <- as.data.frame(intCols)
@@ -54,7 +53,6 @@ annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
     }
       
     if (nrow(aligFilt) > 0) {
-      #browser()
       aligFilt$name <- compLibRow$name
       # highest intensity of each row
       aligFilt$sample <- numeric(nrow(aligFilt))
@@ -80,7 +78,7 @@ annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
     colnames(re) <- sub("mean_mz", "mzData", colnames(re))
     colnames(re) <- sub("mean_RT", "rtData", colnames(re))
     if (!is.element("rtDB", colnames(re))) 
-      re$rtDB <- NA
+    re$rtDB <- NA
     re$CAS <- NA
     re$expID <- NA
     re$formula <- NA
@@ -155,7 +153,6 @@ annotate_grouped <- function(sampleListLocal,
                              datenListLocal,
                              expGroups = "BfG") {
   # open database connection or open custom database (.yaml)
-  #browser()
   if (grepl("\\.yaml$", db_path)) {
     useCustom <- TRUE
     customdb <- yaml::read_yaml(db_path)
@@ -174,7 +171,6 @@ annotate_grouped <- function(sampleListLocal,
                           rt = sapply(customdb, getValue, n = "rt"),
                           stringsAsFactors = F)
   } else if (grepl("\\.db$", db_path)) {
-    # browser()
     useCustom <- FALSE
     dbi <- DBI::dbConnect(RSQLite::SQLite(), db_path)
     # produce table of all possible experiments
@@ -220,7 +216,6 @@ annotate_grouped <- function(sampleListLocal,
       expIdsSource <- tbl(dbi, "experimentGroup") %>% filter(name %in% expGroups) %>% 
         left_join(tbl(dbi, "expGroupExp"), by = "experimentGroup_id") %>% 
         select(experiment_id) %>% collect() %>% .$experiment_id
-      #browser()
       allExps <- allExps[allExps$experiment_id %in% expIdsSource, ]
       
     }
@@ -270,7 +265,6 @@ annotate_grouped <- function(sampleListLocal,
   
   # Process list of alignmentTables
   hitsBySample <- parallel::mclapply(alignmentTableDfList, function(aligSamp) {
-    #browser()
     sample_highest <- aligSamp[, "intMax"]
     sample_highest <- unique(sample_highest)
     stopifnot(length(sample_highest) == 1, !is.na(sample_highest), is.numeric(sample_highest))
@@ -366,7 +360,6 @@ annotate_grouped <- function(sampleListLocal,
       attr(ms2spektrum, "precursor_mz") <- peakMz
       colnames(ms2spektrum) <- c("mz", "int")
       ms2spektrumNorm <- ntsworkflow::normalizeMs2(ms2spektrum)
-      # browser()
       # cut off low intensity fragments if desired
       if (intCutData != 0) {
         ms2spektrumNorm <- ms2spektrumNorm[ms2spektrumNorm$int >= intCutData, ]
@@ -435,13 +428,11 @@ annotate_grouped <- function(sampleListLocal,
       if (all(viabExp$score < threshold_score, na.rm = TRUE))
         return(NULL)
       
-      #browser()
       # get matching compounds from DB
       # for those above threshold save names and CAS in a table, link this with peaklist table
       # by "Zeile"
       viabExp <- viabExp[viabExp$score >= threshold_score, ]
       # for each compound found, select the highest score
-      #browser()
       if (any(is.na(viabExp$name))) {viabExp$name[is.na(viabExp$name)] <- "unknown compound"}
       uniques <- by(viabExp, viabExp$name, function(r) r[which.max(r$score), ], simplify = TRUE)
       viabExp <- Reduce(rbind, uniques)
@@ -461,7 +452,6 @@ annotate_grouped <- function(sampleListLocal,
   hits <- do.call("rbind", hitsBySample)
   
   # reformat the hits table
-  #browser()
   if (is.null(hits))
     return(NULL)
   
@@ -551,7 +541,6 @@ ms2_search <- function(data_path, db_path,
   paraTable <- tbl(db, "parameter")
   rtTable <- tbl(db, "retention_time")
   compTable <- tbl(db, "compound")
-  #browser()
   suspects <- compTable %>% left_join(rtTable, by = "compound_id") %>%
     filter(chrom_method == chromatography || is.na(chrom_method)) %>%
     left_join(expTable, by = "compound_id") %>%
@@ -594,9 +583,7 @@ ms2_search <- function(data_path, db_path,
     # for each compound in db, search raw data to find ms2 spectra with the
     # correct precursor mass and correct rt
     eval_comp <- function(compound, exptbl, comptbl, fragtbl) {
-      #browser(expr = compound$name == "Carbamazepine")
-      
-      inf <- data.frame(
+            inf <- data.frame(
         mz = raw_data@msnPrecursorMz,
         rt = raw_data@msnRt,
         index = seq_along(raw_data@msnPrecursorMz)
@@ -619,7 +606,6 @@ ms2_search <- function(data_path, db_path,
       
       if (nrow(inf) == 0)
         return(NULL)
-      #browser()
       data_specs <- lapply(inf[, "index"], xcms::getMsnScan, object = raw_data)
       # run dot product comparison on all spectra
       data_specs <- lapply(data_specs, as.data.frame)
@@ -681,7 +667,6 @@ ms2_search <- function(data_path, db_path,
       custom_calc_ndp <- function(d_spec, db_spec) {
         calc_ndp(d_spec, db_spec, ndp_m = ndp_m, ndp_n = ndp_n, mztolu_ms2 = mztolu_ms2)
       }
-      # browser()
       # perform comparison, each db_spec with each data_spec, result as matrix
       scorA <- outer(data_specs, db_specs, Vectorize(custom_calc_ndp))
       
@@ -748,7 +733,6 @@ ms2_search <- function(data_path, db_path,
       # collect all matching peaks and name
       # these A, B etc. if there is only one match, this becomes peak "A"
       if (nrow(inf) > 1) {
-        #browser()
         inf <- inf[order(inf$rt), ]
         peakNum <- 1
         inf$peak <- LETTERS[peakNum]
@@ -784,12 +768,10 @@ ms2_search <- function(data_path, db_path,
       } else {
         inf$rt_error_min <- round(abs(compound$rt[1] - inf$rt / 60), 2)
       }
-      #browser()
       if (inherits(inf, "try-error"))
         return(NULL)
       inf
     }
-    #browser()
     splitByComp <- split(suspects, suspects$compound_id)
     
     all_comps <- lapply(
