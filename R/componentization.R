@@ -2,17 +2,19 @@
 
 #' annotate_grouped_components
 #' 
-#' 
+#' If no db is chosen, annotate alignmentTable with peaklist component info (Cl and Br)
 #' 
 #' @param sampleListLocal (list of processed samples)
 #' @param peakListList (result of peakpicking)
 #' @param alignmentTable (result of the alignment)
 #' @param numcores (number of CPU cores to be used)
 #'
+#' @return alignmentTable with annotated isotopologues based on componentization 
 #' @export
 annotate_grouped_components <- function(sampleListLocal,
-                                          peakListList,
-                                          alignmentTable, numcores) {
+                                        peakListList,
+                                        alignmentTable,
+                                        numcores) {
   # prepare data
   alig <- as.data.frame(alignmentTable)
   stopifnot(length(peakListList) == nrow(sampleListLocal))
@@ -84,15 +86,21 @@ annotate_grouped_components <- function(sampleListLocal,
 
 #' componentization_BfG
 #'
-#' @param Liste 
-#' @param daten 
+#' Componentization/ Grouping of adducts, isotopologues, in-source fragments, etc.
+#' Either by:
+#'  fixed thresholds for RT, RT_FWHM_left and RT_FWHM_right or
+#'  automatically adjusted thresholds based on the 13C isotopologue.
+#'
+#' @param Liste (peaklist)
+#' @param daten (datenList)
 #' @param ppm (mass deviation in ppm)
 #' @param Grenzwert_RT (Threshold value for the retention time)
 #' @param Grenzwert_FWHM_left (Limit value for the retention time of the left FWHM)
 #' @param Grenzwert_FWHM_right (Limit value for the retention time of the right FWHM)
 #' @param Summe_all (Threshold value for the sum of the three retention times (apex, FWHM left, FWHM right)
-#' @param adjust_tolerance 
+#' @param adjust_tolerance (adjust thresholds with 13C isotopologue)
 #'
+#' @return peaklist with added cols groupleader and group for each component 
 #' @export
 componentization_BfG <- function(Liste,
                                  daten,
@@ -193,8 +201,6 @@ componentization_BfG <- function(Liste,
     })
   }
   
-  
-  
   groupleader <- groupleader[Liste$C13[groupleader] == 0]
   
   mzDiffCl <- 1.99705
@@ -234,7 +240,6 @@ componentization_BfG <- function(Liste,
         }
       }
     }
-    #}
   }
   
   groupleader <- groupleader[Liste$Cl2[groupleader] == 0]
@@ -268,12 +273,10 @@ componentization_BfG <- function(Liste,
         }
       }
     }
-    #}
   }
   
   
   groupleader <- groupleader[Liste$Cl1[groupleader] == 0]
-  
   
   
   # Na-Adducts
@@ -305,10 +308,7 @@ componentization_BfG <- function(Liste,
           Liste$Gruppe[Liste$Gruppe == Liste$Gruppe[groupleader[NaAdduktGruppe]]] <- Liste$Gruppe[groupleader[g]]
         }
       }
-      #}
     }
-    
-    #}
   }
 
   groupleader <- groupleader[Liste$NaAddukt[groupleader] == 0]
@@ -319,17 +319,16 @@ componentization_BfG <- function(Liste,
     
     if (!any(Liste$groupleader[Liste$Gruppe == Liste$Gruppe[groupleader[g]]])) {  # only if not already assigned to another groupleader
       KandidatenGruppen <- which(Liste$Gruppe[groupleader] > Liste$Gruppe[groupleader[g]] &
-                                   abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader])<Grenzwert_RT[groupleader[g]] &                # RT in the Limit?
-                                   abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader])<Grenzwert_FWHM_left[groupleader[g]] &     # FWHM_left in the Limit?
-                                   abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader])<Grenzwert_FWHM_right[groupleader[g]] &  # FWHM_right in the Limit?
-                                   (abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader]) +
-                                      abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader]) +
-                                      abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader]))<Summe_all[groupleader[g]])
+                                 abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader])<Grenzwert_RT[groupleader[g]] &                # RT in the Limit?
+                                 abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader])<Grenzwert_FWHM_left[groupleader[g]] &     # FWHM_left in the Limit?
+                                 abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader])<Grenzwert_FWHM_right[groupleader[g]] &  # FWHM_right in the Limit?
+                                 (abs(Liste$RT[groupleader[g]]-Liste$RT[groupleader]) +
+                                    abs(Liste$FWHM_left[groupleader[g]]-Liste$FWHM_left[groupleader]) +
+                                    abs(Liste$FWHM_right[groupleader[g]]-Liste$FWHM_right[groupleader]))<Summe_all[groupleader[g]])
       Liste$Gruppe[Liste$Gruppe %in% Liste$Gruppe[groupleader[KandidatenGruppen]]] <- Liste$Gruppe[groupleader[g]]
       Liste$groupleader[groupleader[g]] <- TRUE 
       
     }
-    
   }
   
   reihenfolge <- order(Liste$mz)
@@ -378,11 +377,16 @@ componentization_BfG <- function(Liste,
 #'
 #' @return Alignment table with the group column "Gruppe" replaced with the new values
 #' @export
-alig_componentisation <- function(altable, rttols = 3, fracComponMatch = 0.5, 
-                                  mztol = 0.005, pearsonCorr = 0.5, pol = "pos", numcores = 6) {
-  stopifnot(pol %in% c("pos", "neg"))
-  # RT difference
+alig_componentisation <- function(altable, rttols = 3,
+                                  fracComponMatch = 0.5, 
+                                  mztol = 0.005,
+                                  pearsonCorr = 0.5,
+                                  pol = "pos",
+                                  numcores = 6) {
   
+  stopifnot(pol %in% c("pos", "neg"))
+  
+  # RT difference
   message("Computing RT distance matrix")
   rt_comp <- RcppXPtrUtils::cppXPtr(
     sprintf("double customDist(const arma::mat &A, const arma::mat &B) {
@@ -557,18 +561,8 @@ alig_componentisation <- function(altable, rttols = 3, fracComponMatch = 0.5,
   attributes(combiDist) <- attributes(corrDist)
   rm(mzDist, corrDist, shapeDist, rtDist)
   
-  #dbscan::kNNdistplot(combiDist, 1)
-  #browser()
   dbscan_res <- dbscan::dbscan(combiDist, 0.1, 2)
-  # message(sprintf("DBSCAN clustering for %i objects.
-  #                 The clustering contains %i cluster(s) and %i noise points.",
-  #                 nrow(altable), 
-  #                 length(table(dbscan_res$cluster))-1, 
-  #                 table(dbscan_res$cluster)["0"]))
   altable[, "Gruppe"] <- dbscan_res$cluster
-  #clusterSize <- unname(table(dbscan_res$cluster)[-1])
-  #hist(clusterSize, breaks = seq(2, max(clusterSizes), 2), 
-  #     main = "Histogram of cluster sizes", xlab = "Number of features per cluster")
   message("Completed 2nd stage componentisation")
   return(altable)
 }
