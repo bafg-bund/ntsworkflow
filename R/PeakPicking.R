@@ -1,62 +1,114 @@
 
 
-#' Pick peaks
+
+#' Peakpeaking algorithm using c++
 #' 
+#' This function wraps the c++ peakpicking algorithm. The function picks peaks
+#' in a specific mz range (defined by i and mz_step). Used by the function
+#' FindPeaks_BfG.
+#'
+#' @param i lower mz for extracted ion chromatogram
+#' @param rawData 
+#' @param mz_step mz width for extracted ion chromatogram
+#' @param rt_min_scan 
+#' @param rt_max_scan 
+#' @param sn 
+#' @param int_threshold 
+#' @param NoiseScans 
+#' @param peakwidth_min 
+#' @param peakwidth_max 
+#' @param precursormzTol 
+#' @param maxPeaksPerSignal 
+#'
+#' @return matrix of peaks detected in the extracted ion chromatogram, each peak
+#' is one row with the columns representing various parameters for the peak.
 #' @export
-peakpicking_BfG_cpp <- function(i, rawData, mz_step, rt_min_scan, rt_max_scan, sn, int_threshold, 
-                                NoiseScans, peakwidth_min, peakwidth_max, precursormzTol, maxPeaksPerSignal) {
+peakpicking_BfG_cpp <- function(
+    i, rawData, mz_step, rt_min_scan, rt_max_scan, 
+    sn, int_threshold, NoiseScans, peakwidth_min, peakwidth_max,
+    precursormzTol, maxPeaksPerSignal) {
   
   maxima <- NULL
   
   XIC <- xcms::rawEIC(rawData, mzrange = c(i,i+mz_step))
   XIC <- XIC$intensity
   
-  maxima <- peakPickingBfGC(mz = i, mz_step = mz_step, XIC, scantime = rawData@scantime, 
-                            min_intensity = int_threshold, sn = sn, noisescans = NoiseScans, 
-                            peakwidth_min = peakwidth_min, peakwidth_max = peakwidth_max, 
-                            maxPeaksPerSignal = maxPeaksPerSignal)
-  #browser(expr = abs(i - 269.17) < 0.1)
-  if (nrow(maxima) > 0) {
+  maxima <- peakPickingBfGC(
+    mz = i, mz_step = mz_step, XIC, scantime = rawData@scantime, 
+    min_intensity = int_threshold, sn = sn, noisescans = NoiseScans, 
+    peakwidth_min = peakwidth_min, peakwidth_max = peakwidth_max, 
+    maxPeaksPerSignal = maxPeaksPerSignal
+  )
+
+    if (nrow(maxima) > 0) {
     for (j in 1:nrow(maxima)) {
       mass_spectrum <- xcms::getScan(rawData, maxima[j,5], mzrange = c(i,i+mz_step))
       exactmass <- 0
       if (nrow(mass_spectrum) > 0) {
         exactmass <- mass_spectrum[which.max(mass_spectrum[,2]),1]
         maxima[j,3] <- max(mass_spectrum[,2])
-        if (nrow(mass_spectrum) == 1) maxima[j,3] <- maxima[j,3]-maxima[j,14]
+        if (nrow(mass_spectrum) == 1) 
+          maxima[j,3] <- maxima[j,3]-maxima[j,14]
       }
-      if ((exactmass == 0) | (exactmass < i+mz_step/4) | (exactmass > i+mz_step/4*3)) exactmass = 0 
+      if ((exactmass == 0) | (exactmass < i+mz_step/4) | (exactmass > i+mz_step/4*3)) 
+        exactmass <- 0 
       maxima[j,1] <- exactmass
-      ms2 <- which((rawData@msnRt > maxima[j,6]) & (rawData@msnRt < maxima[j,7]) & (abs(rawData@msnPrecursorMz-exactmass) <= exactmass/1000000*precursormzTol))
-      if (length(ms2) > 0) maxima[j,16] <- ms2[which.min(abs(rawData@msnRt[ms2]-maxima[j,2]))]
+      ms2 <- which(
+        (rawData@msnRt > maxima[j,6]) & 
+        (rawData@msnRt < maxima[j,7]) & 
+        (abs(rawData@msnPrecursorMz-exactmass) <= exactmass/1000000*precursormzTol)
+      )
+      if (length(ms2) > 0) 
+        maxima[j,16] <- ms2[which.min(abs(rawData@msnRt[ms2]-maxima[j,2]))]
     }
   }
   maxima <- maxima[maxima[,1] > 0,,drop = FALSE]
-  if (nrow(maxima) > 0) return(maxima)
+  if (nrow(maxima) > 0) 
+    return(maxima)
 }
 
+#' Find Pearson's correlation between intensity trends
+#' 
+#' Wrapper for the cpp function correlates_with. Takes a matrix of intensities
+#' (each row representing one feature) and a row, returns which rows have
+#' correlation coefficients within threshold
+#' 
+#' @param aligned_intensities Matrix of intensities
+#' @param zeile Reference row of matrix
+#' @param koeffizient Pearson correlation coefficient 
+#' 
+#' @return Boolean. True for those rows of the matrix which have a correlation 
+#' coefficient higher than the threshold. 
+#' 
 #' @export
 correlates_with_r <- function(aligned_intensities, zeile, koeffizient){
   return(correlates_with(aligned_intensities, zeile, koeffizient))
 }
 
-#' Alignment function
+
+#' Alignment of peaks from difference samples
 #' 
-#' This function is central to the entire workflow. The main function is programmed in cpp
-#' make sure to also do the summarize_groups function afterwards 
+#' This a wrapper for the cpp function alignmentBfGC. It takes a list of peaklists
+#' and produces an alignment table. 
+#' 
+#' @param peaklists list of peaklists
+#' @param mz_dev mz tolerance
+#' @param DeltaRT rt tolerance in s
+#' @param mz_dev_unit units for mz tolerance (ppm or mDa)
+#' 
+#' @return matrix of aligned peaks, one aligned feature per row
+#' 
 #' @export
 alignment_BfG_cpp <- function(peaklists, mz_dev, DeltaRT, mz_dev_unit){
   peaklistC <- list()
   for (i in 1:length(peaklists)) {
     peaklistC[[i]] <- as.matrix(peaklists[[i]][,1:3])
   }
-  # browser()
   # set mz_dev_unit to integer 1 or 2, 1 for ppm, 2 for mDa
   stopifnot(mz_dev_unit %in% c("ppm", "mDa"))
   mz_dev_unit <- switch(mz_dev_unit, ppm = 1, mDa = 2)
   
   alignedtable <- alignmentBfGC(peaklistC, mz_dev, DeltaRT, mz_dev_unit)
-  # browser()
   grouped2 <- matrix(0,nrow=nrow(alignedtable-1),ncol=length(peaklists)*6+4)
   
   Gruppe <- numeric(nrow(grouped2))
@@ -64,7 +116,16 @@ alignment_BfG_cpp <- function(peaklists, mz_dev, DeltaRT, mz_dev_unit){
   spaltennamen <- c("mean_mz","mean_RT","MS2Fit", "Gruppe")
   
   for (i in 1:ncol(alignedtable)) {
-    spaltennamen <- c(spaltennamen,paste0("PeakID_",as.character(i)),paste0("mz_",as.character(i)),paste0("RT_",as.character(i)),paste0("Int_",as.character(i)),paste0("ms2scan_",as.character(i)),paste0("gruppe_",as.character(i)))
+    spaltennamen <- c(
+      spaltennamen,
+      paste0("PeakID_",as.character(i)),
+      paste0("mz_",as.character(i)),
+      paste0("RT_",as.character(i)),
+      paste0("Int_",as.character(i)),
+      paste0("ms2scan_",as.character(i)),
+      paste0("gruppe_",as.character(i))
+    )
+    
     for (j in 1:(nrow(alignedtable))) {
       if (alignedtable[j,i] > 0) {
         grouped2[j,i*6-1] <- peaklists[[i]]$peak_id_all[alignedtable[j,i]]
@@ -74,20 +135,27 @@ alignment_BfG_cpp <- function(peaklists, mz_dev, DeltaRT, mz_dev_unit){
         grouped2[j,i*6+3] <- peaklists[[i]]$MS2scan[alignedtable[j,i]]
         grouped2[j,i*6+4] <- peaklists[[i]]$Gruppe[alignedtable[j,i]]
       }
+      
       if (i == (ncol(alignedtable))) {
         grouped2[j,1] <- mean(grouped2[j,which(alignedtable[j,] > 0)*6])
         grouped2[j,2] <- mean(grouped2[j,which(alignedtable[j,] > 0)*6+1])
       }
     }
   }
+  
   colnames(grouped2) <- spaltennamen
 
   grouped2
 }
 
-#' Summarise groups into one column (very experimental feature)
+#' Summarize componentization groups into one column 
 #' 
-#' Spalte Gruppe (Zusammenfassung der Gruppen über die gesamte Alignmenttabelle) wird hier ausgefüllt 
+#' Will take the componentization information from each sample in the
+#' alignment table and attempt to summerize this into one column named "Gruppe".
+#' 
+#' @param alig Alignment table
+#' 
+#' @return Matrix. Alignment table with additional column Gruppe
 #' @export
 summarize_groups <- function(alig) {
   gruppenzaehler <- 1
@@ -107,7 +175,7 @@ summarize_groups <- function(alig) {
       next
     maxGrupCol <- paste0("gruppe_", maxSamp[i])
     # b = rows with Gruppe == 0 AND same groups found in first samples of a
-    b <- which(newGruppe == 0 & alig[[maxGrupCol]] == maxGrup[i])  # this line takes the most time
+    b <- which(newGruppe == 0 & alig[[maxGrupCol]] == maxGrup[i])  
     newGruppe[b] <- gruppenzaehler  
     gruppenzaehler <- gruppenzaehler + 1
   }
@@ -130,12 +198,27 @@ summarize_groups <- function(alig) {
   alig
 }
 
-#' Alignment parallel (wrapper)
+
+#' Align peaks with parallel processing
+#' 
+#' To align very large datasets it is necessary to split the alignment process
+#' into parallel jobs. This function slips the peak lists and runs the
+#' alignment_BfG_cpp on each chunk in parallel. The results are combined. Uses
+#' forking therefore not available on Windows.
+#'
+#' @param peaklists list of peaklists
+#' @param ppm_dev mz tolerance
+#' @param DeltaRT rt tolerance in s
+#' @param mz_dev_unit units for mz tolerance (ppm or mDa)
+#' @param mDa_split mz gap between chunks
+#' @param numSplits Number parallel chunks to create
+#'
+#' @return matrix of aligned peaks, one aligned feature per row
 #' @export
+#'
 alignment_BfG_cpp_par <- function(peaklists, ppm_dev, DeltaRT, mz_dev_unit, 
                                   mDa_split = 100, numSplits = 16) {
-  # browser()
-  # split that shit
+  # split the peaks
   plTemp <- do.call("rbind", peaklists)
   plTemp <- plTemp[order(plTemp$mz), ]
   splitMz <- plTemp$mz[(plTemp$mz - dplyr::lag(plTemp$mz))*1000 > mDa_split][-1]
@@ -153,7 +236,6 @@ alignment_BfG_cpp_par <- function(peaklists, ppm_dev, DeltaRT, mz_dev_unit,
     ind[numSplits+1] <- max(mzGroups)
   # collect new groups together
 
-  # browser()
   for (i in 1:numSplits) { 
     if (i == 1) {
       mzGroups[mzGroups %in% ind[i]:ind[i+1]] <- i
@@ -161,7 +243,6 @@ alignment_BfG_cpp_par <- function(peaklists, ppm_dev, DeltaRT, mz_dev_unit,
       mzGroups[mzGroups %in% (ind[i]+1):ind[i+1]] <- i
     }
   }
-  # browser()
   plnew <- split(plTemp, mzGroups)
   plnew2 <- lapply(plnew, function(x) split(x, x$sample_id))
   
@@ -189,12 +270,7 @@ alignment_BfG_cpp_par <- function(peaklists, ppm_dev, DeltaRT, mz_dev_unit,
     ntsworkflow::alignment_BfG_cpp(x, ppm_dev, DeltaRT, mz_dev_unit)
   })
   result <- do.call("rbind", result)
-  # cl <- parallel::makeForkCluster(numSplits)  # fork cluster only works on linux
-  # doParallel::registerDoParallel(cl)
-  # result <- foreach(x = plnew2, .combine = rbind) %dopar% {
-  #   
-  # }
-  # parallel::stopCluster(cl)
+
   # remove the dummy rows
   result <- result[result[, "mean_mz"] != 0, ]
   
@@ -202,431 +278,31 @@ alignment_BfG_cpp_par <- function(peaklists, ppm_dev, DeltaRT, mz_dev_unit,
   result[order(result[, 1]), ]
 }
 
+
+
+#### I AM HERE ####
+
+#' Peakpicking algorithm
+#' 
+#' 
+#' 
+#' @param daten from xcms
+#' @param mz_min 
+#' @param mz_max 
+#' @param mz_step 
+#' @param rt_min 
+#' @param rt_max 
+#' @param sn 
+#' @param int_threshold 
+#' @param peak_NoiseScans 
+#' @param precursormzTol 
+#' @param peakwidth_min 
+#' @param peakwidth_max 
+#' @param maxPeaksPerSignal 
+#'
+#' @return data.frame of the peak inventory list
 #' @export
-spektraVergleichen <- function(spectra, ppm){
-  ende <- FALSE
-  spaltenlaenge <- 1 #nrow der l?ngsten Peaklist
-  SuchStart <- 1
-  #ppm <- 10
-  vergleich <- matrix(,nrow=0,ncol=length(spectra)*2)
-  masse <- 0
-  #DeltaRT <- 30
-  ii <- 0
-  overall_intensity <- vector()
-  
-  for (i in 1:length(spectra)) {
-    if (is.null(nrow(spectra[[i]]))) spectra[[i]] <- rbind(spectra[[2]],spectra[[2]])
-    
-    if (spaltenlaenge < nrow(spectra[[i]])) spaltenlaenge <- nrow(spectra[[i]])
-    spectra[[i]] <- cbind(spectra[[i]],0)
-    #spectra[[i]][,2] <- spectra[[i]][,2]/sum(spectra[[i]][,2])
-    spectra[[i]][,2] <- spectra[[i]][,2]/max(spectra[[i]][,2])
-  }
-  
-  while (ende == FALSE) {
-    ende <- TRUE
-    iii <- SuchStart - 1
-    ii <- ii+1
-    vergleich <- rbind(vergleich,0)
-    abbruch <- FALSE
-    
-    while (abbruch == FALSE) {
-      iii <- iii + 1
-      for (i in 1:length(spectra)) {
-        if (iii <= nrow(spectra[[i]])) {
-          if ((spectra[[i]][iii,3] == 0) & (abbruch == FALSE)) {
-            masse <- spectra[[i]][iii,1]
-            RT <- spectra[[i]][iii,2]
-            abbruch <- TRUE
-            ende <- FALSE
-          }  
-        }
-        if (iii > spaltenlaenge) abbruch <- TRUE
-      }
-      SuchStart <- iii
-      
-    }#end while abbruch == false
-    
-    abbruch <- FALSE
-    
-    while (abbruch == FALSE) {
-      abbruch <- TRUE
-      for (i in 1:length(spectra)) {
-        if (iii <= nrow(spectra[[i]])) {
-          if (spectra[[i]][iii,1] < (masse+masse*ppm/1000000))  {
-            abbruch <- FALSE
-            if ((spectra[[i]][iii,1] > (masse-masse*ppm/1000000)) & (spectra[[i]][iii,3] == 0)) {
-              vergleich[ii,i*2-1] <- spectra[[i]][iii,1]
-              vergleich[ii,i*2] <- spectra[[i]][iii,2]
-              spectra[[i]][iii,3] <- 1
-            }
-          }  
-        }
-      }
-      iii <- iii+1
-    }#end while abbruch == false
-    overall_intensity[ii] <- max(vergleich[ii,seq(2,ncol(vergleich),by=2)])
-  }#end while ende == false
-  mean_mz <- vector()
-  max_Int_Difference <- vector()
-  #wichtung <- vector()
-  for (i in 1:nrow(vergleich)) {
-    mean_mz[i] <- mean(vergleich[i,which(vergleich[i,seq(1,ncol(vergleich),by=2)] > 0)*2-1])
-    max_Int_Difference[i] <- (max(vergleich[i,seq(2,ncol(vergleich),by=2)])-min(vergleich[i,seq(2,ncol(vergleich),by=2)]))
-  }
-  vergleich <- cbind(mean_mz,max_Int_Difference,overall_intensity,vergleich)
-  vergleich <- vergleich[1:(nrow(vergleich)-1),]
-  #return(vergleich)
-  if (is.null(nrow(vergleich))) {
-    #return(1-vergleich[2]/2)
-    return(1-(vergleich[2]*vergleich[2])/(vergleich[3])*(vergleich[3]))
-  }
-  else {
-    #return(1-sum(vergleich[,2])/2)
-    
-    #Intensitätsdifferenz quadriert zum Wichten der höheren Peaks, normiert auf maximal mögliche Differenz (wenn kein Peak passen würde)
-    return(1-sum((vergleich[,2])*(vergleich[,2]))/sum((vergleich[,3])*(vergleich[,3])))  
-  }  
-}
-
-#' @export
-datenLaden <- function() {
-  daten <- datenList[[2]] 
-  i <- 109.09
-  mz_step <- 0.02
-  rt_min_scan <- 100
-  rt_max_scan <- 3000
-  sn <- 10
-  int_threshold <- 10
-  peak_NoiseScans <- 30
-  precursormzTol <- 20
-}
-
-#' @export
-FindPeaks_SingleXIC <- function(i, 
-                                rawData,
-                                mz_step,
-                                rt_min_scan,
-                                rt_max_scan,
-                                sn,
-                                int_threshold,
-                                NoiseScans,
-                                peakwidth_min,
-                                peakwidth_max,
-                                precursormzTol) {
-  peaklist_singleXIC <- matrix(,nrow = 0, ncol = 16)
-  XIC <- rawEIC(rawData, mzrange = c(i,i+mz_step))
-  
-  maxPeaksPerSignal <- 10
-  deleteZeroIntensityNoise <- TRUE
-
-  #convert XIC into a matrix
-  XIC <- cbind(XIC$scan,XIC$intensity)
-  
-  derivative <- cbind(XIC[2:nrow(XIC),1], diff(XIC[,2]))
-  
-  maxima <- derivative[(derivative[(2:(nrow(derivative)-1)-1),2] > 0) & (derivative [(2:(nrow(derivative)-1)),2] <= 0),1]
-  
-  #int_threshold2 <- quantile(XIC[,2],probs=0.99)
-  int_threshold2 <- quantile(XIC[rt_min_scan:rt_max_scan,2],probs=0.9)
-  if ((int_threshold2 == 0) | (int_threshold2 > int_threshold)) {
-    #if (int_threshold2 == 0) {
-    maxima <- maxima[XIC[maxima,2] >= int_threshold]
-  } else {
-    maxima <- maxima[XIC[maxima,2] >= int_threshold2]
-  }
-  
-  maxima <- maxima[(maxima > rt_min_scan) & (maxima < rt_max_scan)]
-  left_end <- maxima
-  right_end <- maxima
-  noiselevel <- maxima
-  amountofpeaks <- rep(1,length(maxima))
-  
-  if (length(maxima) > 0) { 
-    for (n in 1:length(maxima)) {
-      #for (n in 1:488) {
-      #We need to determine the peak boundaries (i.e. the broadness) in terms of left_end and right_end within the range given by "NoiseScans". 
-      #To find these points, we need to be sure not to dig into negative scans (when the scan of the maximum is smaller than Noisescans),
-      #or into too big scan numbers, which don't exist:
-      left_end[n] <- max(XIC[which(derivative[1:(maxima[n]-1),2] <= 0),1])+1
-      if (maxima[n] != nrow(derivative)) right_end[n] <- min(XIC[(which(derivative[(maxima[n]+1):nrow(derivative),2] >= 0)),1])+maxima[n]
-      if (is.infinite(left_end[n])) {left_end[n] <- XIC[1,1]}
-      if (is.infinite(right_end[n])) {right_end[n] <- XIC[nrow(derivative),1]}
-      
-      if (maxima[n]<=NoiseScans) {
-        
-        #left_end[n] <- max(XIC[which(derivative[1:(maxima[n]-1),2] <= 0),1])+1
-        #right_end[n] <- min(XIC[(which(derivative[(maxima[n]+1):(maxima[n]+NoiseScans),2] >= 0)),1])+maxima[n]
-        
-        #if (is.infinite(left_end[n])) {left_end[n] <- XIC[1,1]}
-        #if (is.infinite(right_end[n])) {right_end[n] <- XIC[(maxima[n]+NoiseScans),1]}
-        
-        noiselevel[n] <- mean(XIC[1:(left_end[n]-1),2])
-        
-      } else {
-        if (maxima[n]>(length(XIC[,1])-NoiseScans-1)) {
-          
-          #left_end[n] <- max(XIC[which(derivative[(maxima[n]-NoiseScans):(maxima[n]-1),2] <= 0),1])+maxima[n]-NoiseScans
-          #if (maxima[n] != nrow(derivative)) right_end[n] <- min(XIC[(which(derivative[(maxima[n]+1):nrow(derivative),2] >= 0)),1])+maxima[n]
-          
-          #if (is.infinite(left_end[n])) {left_end[n] <- XIC[(maxima[n]-NoiseScans),1]}
-          #if (is.infinite(right_end[n])) {right_end[n] <- XIC[nrow(derivative),1]}
-          
-          noiselevel[n] <- mean(XIC[(left_end[n]-NoiseScans):nrow(XIC),2])
-        }
-        else {
-          
-          #left_end[n] <- max(XIC[which(derivative[(maxima[n]-NoiseScans):(maxima[n]-1),2] <= 0),1])+maxima[n]-NoiseScans
-          #right_end[n] <- min(XIC[(which(derivative[(maxima[n]+1):(maxima[n]+NoiseScans),2] >= 0)),1])+maxima[n]
-          
-          #if (is.infinite(left_end[n])) {left_end[n] <- XIC[(maxima[n]-NoiseScans),1]}
-          #if (is.infinite(right_end[n])) {right_end[n] <- XIC[(maxima[n]+NoiseScans),1]}
-          
-          
-          if (left_end[n] > NoiseScans) {
-            noiselevel[n] <- mean(XIC[(left_end[n]-NoiseScans):(left_end[n]-1),2])
-          } else {
-            noiselevel[n] <- mean(XIC[1:(left_end[n]-1),2])  
-          }
-        }
-      }
-      
-      
-      
-      #check if two peaks belong together (right_end of the former one and left_end of this maximum are the same or overlapping)
-      if ((n > 1) & (maxima[n] > 0)){
-        if ((right_end[n-1] >= (left_end[n])) & (maxima[n-1] > 0))  {
-          if ((XIC[left_end[n],2]-noiselevel[n-1]) > (min(c(XIC[maxima[n],2],XIC[maxima[n-1],2]))-noiselevel[n-1])/2) {
-            #if (((XIC[left_end[n],2]-noiselevel[n-1]) > (min(c(XIC[maxima[n],2],XIC[maxima[n-1],2]))-noiselevel[n-1])/2) &
-            #    (min(c(XIC[maxima[n],2],XIC[maxima[n-1],2]))-noiselevel[n-1]) > (max(c(XIC[maxima[n],2],XIC[maxima[n-1],2]))-min(c(XIC[maxima[n],2],XIC[maxima[n-1],2])))){  
-            #if (min(c(XIC[maxima[n-1],2],XIC[maxima[n],2])) > max(c(XIC[maxima[n-1],2],XIC[maxima[n],2]))/2) {
-            if (min(c(XIC[maxima[n-1],2],XIC[maxima[n],2]))-noiselevel[n-1] > (max(c(XIC[maxima[n-1],2],XIC[maxima[n],2]))-noiselevel[n-1])/2) {
-              #more or less the same height -> might be background noise
-              amountofpeaks[n] <- amountofpeaks[n]+amountofpeaks[n-1]
-            } else {
-              #check if the maxima before are noise (too many maxima, amountofpeaks > maxPeaksPerSignal)
-              #if so, it has to be regarded as noiselevel
-              if (amountofpeaks[n-1] > maxPeaksPerSignal) {
-                noiselevel[n-1] <- XIC[maxima[n-1],2]
-                left_end[n-1] <- left_end[n] #seems weird but since left_end[n] will be left_end[n-1] afterwards in all cases, we make sure, that it stays the same here
-              }
-              #main peak at (n-1) and there are further peaks after this one?
-              if ((XIC[maxima[n-1],2] > XIC[maxima[n],2]) & (length(maxima) > n)) {
-                #is the next peak about the same height, then the main peak formerly at (n-1) / now at n ends at left_end of this one 
-                if (min(c(XIC[maxima[n],2],XIC[maxima[n+1],2])) > (max(c(XIC[maxima[n],2],XIC[maxima[n+1],2])))/2) right_end[n] <- right_end[n-1]
-              }
-            }
-            maxima[n] <- maxima[which.max(XIC[c(maxima[n-1],maxima[n]),2])+n-2]
-            noiselevel[n] <- noiselevel[n-1] 
-            left_end[n] <- left_end[n-1]
-            maxima[n-1] <- 0
-            left_end[n-1] <- 0
-            right_end[n-1] <- 0
-            noiselevel[n-1] <- 0
-            amountofpeaks[n-1] <- 0
-          }
-          else { 
-            if (amountofpeaks[n-1] < maxPeaksPerSignal) noiselevel[n] <- noiselevel[n-1]
-          }
-        }
-      }
-    }
-    
-    left_end <- left_end[maxima[]>0]
-    right_end <- right_end[maxima[]>0]
-    noiselevel <- noiselevel[maxima[]>0]
-    amountofpeaks <- amountofpeaks[maxima[]>0]
-    maxima <- maxima[maxima[]>0]
-    
-    #und nun diejenigen rauswerfen, die unter int_threshold sind: (geht leider irgendwie nicht in einem Schritt)
-    maxima[(XIC[maxima,2] < int_threshold)] <- 0
-    left_end <- left_end[maxima[]>0]
-    right_end <- right_end[maxima[]>0]
-    noiselevel <- noiselevel[maxima[]>0]
-    amountofpeaks <- amountofpeaks[maxima[]>0]
-    maxima <- maxima[maxima[]>0]
-  }
-  
-  
-  
-  #check if there are peak clusters (most probably noise):
-  if (length(maxima) > 1) {
-    peaksectionstartid <- 1
-    for (n in 2:length(maxima)) {
-      #go through all maxima until 
-      # 1.) you find one, which is not directly neighboring the one before or, 
-      # 2.) the larger peak is higher than 2 times the smaller one or,
-      # 3.) if the distance of both peaks is larger than the region to determine the noise (NoiseScans)
-      # 4.) we reached the last maximum:
-      if ((right_end[n-1] < left_end[n]) | (min(c(XIC[maxima[n],2],XIC[maxima[n-1],2])) < max(c(XIC[maxima[n-1],2],XIC[maxima[n],2]))/2) | ((maxima[n]-maxima[n-1]) > NoiseScans) | (n==length(maxima))) {
-        #check if the sum of all peaks from the selection before (n-1) is too high (one maxima might already consist of several peaks). Exception: one single signal with a lot of peaks is fine
-        if ((sum(amountofpeaks[peaksectionstartid:(n-1)]) > maxPeaksPerSignal) & (peaksectionstartid != n)) {
-          maxima[peaksectionstartid:(n-1)] <- 0
-        }
-        #next round start from here:
-        peaksectionstartid <- n 
-      }
-    }
-    left_end <- left_end[maxima[]>0]
-    right_end <- right_end[maxima[]>0]
-    noiselevel <- noiselevel[maxima[]>0]
-    amountofpeaks <- amountofpeaks[maxima[]>0]
-    maxima <- maxima[maxima[]>0]
-  }
-  
-  maxima[rawData@scantime[right_end]-rawData@scantime[left_end] <= peakwidth_min] <- 0
-  left_end <- left_end[maxima[]>0]
-  right_end <- right_end[maxima[]>0]
-  noiselevel <- noiselevel[maxima[]>0]
-  amountofpeaks <- amountofpeaks[maxima[]>0]
-  maxima <- maxima[maxima[]>0]
-  
-  #accurate noise calculation:
-  noisedeviation <- maxima
-  
-  if (length(maxima) > 0) {
-    for (n in 1:length(maxima)) {
-      if ((right_end[n]+NoiseScans) > nrow(XIC)) {
-        if ((left_end[n]-NoiseScans) < 1) {
-          noiseRegion <- XIC[1:(nrow(XIC)),]
-        } else {
-          noiseRegion <- XIC[(left_end[n]-NoiseScans):(nrow(XIC)),]
-        }  
-      } else {
-        if ((left_end[n]-NoiseScans) < 1) {
-          noiseRegion <- XIC[1:(right_end[n]+NoiseScans),]
-        } else {
-          noiseRegion <- XIC[(left_end[n]-NoiseScans):(right_end[n]+NoiseScans),]
-        }
-      }
-      
-      noiseRegion <- noiseRegion[-((left_end[n]:right_end[n])-left_end[n]+NoiseScans+1),]
-      noise <- noiseRegion
-      
-      for (m in 1:length(maxima)) {
-        noise <- noise[which(noise[,1] %in% XIC[(left_end[m]:right_end[m]),1] == FALSE),,drop = FALSE]
-      }
-      
-      if (deleteZeroIntensityNoise) noise <- noise[noise[,2] != 0,,drop=FALSE]
-      #if (nrow(noise) == 0) noise <- XIC[c(left_end[n],right_end[n]),]
-      
-      if (nrow(noise) == 0) {
-        noiselevel[n] <- 0
-        noisedeviation[n] <- 0
-      } else {
-        noiselevel[n] <- mean(noise[,2]) 
-        
-        #correct steadily increasing or decreasing noise
-        #slope <- (max(noise[,2])-min(noise[,2]))/(noise[which.max(noise[,2]),1]-noise[which.min(noise[,2]),1])
-        slope <- (noise[which.max(noise[,1]),2]-noise[which.min(noise[,1]),2])/(max(noise[,1])-min(noise[,1]))
-        if (is.na(slope)) slope <- 0
-        
-        #noiselevel[n] <- mean(abs(noise[,2]-(noise[,1]-noise[1,1])*slope+noise[ceiling(nrow(noise)/2),2]))
-        
-        noise[,2] <- abs(noise[,2]-noise[,1]*slope)
-        noisedeviation[n] <- (quantile(noise[,2],probs=0.9)-quantile(noise[,2],probs=0.1))/2
-      }
-      
-      
-      #noisedeviation[n] <- (quantile(noise[,2],probs=0.9)-quantile(noise[,2],probs=0.1))/2
-      
-      
-      if ((XIC[maxima[n],2]-noiselevel[n]) < noisedeviation[n]*sn) {
-        maxima[n] <- 0
-        #left_end[n] <- 0
-        #right_end[n] <- 0
-        #noiselevel[n] <- 0
-        #amountofpeaks[n] <- 0
-        #noisedeviation[n] <- 0
-      }
-      
-    }
-    
-    left_end <- left_end[maxima[]>0]
-    right_end <- right_end[maxima[]>0]
-    noiselevel <- noiselevel[maxima[]>0]
-    noisedeviation <- noisedeviation[maxima[]>0]
-    amountofpeaks <- amountofpeaks[maxima[]>0]
-    maxima <- maxima[maxima[]>0]
-  }
-  
-  
-  
-  
-  if (length(maxima) > 0) {
-    
-    exactmass <- maxima
-    peak_intens <- maxima
-    
-    for (n in 1:length(maxima)) {
-      spektrum <- xcms::getScan(rawData,maxima[n])
-      spektrum <- spektrum[(spektrum[,1] >= (i+mz_step/4)) & (spektrum[,1] <= (i+mz_step/4*3)),,drop=FALSE]
-      spektrum <- spektrum[spektrum[,2] > (int_threshold+noiselevel[n]),,drop=FALSE]
-      spektrum <- spektrum[spektrum[,2] > (noisedeviation[n]*sn),,drop=FALSE]
-      
-      
-      if (length(spektrum)>2) { #if there is more than one mass, take the most intense one (if there are two or more most intense ones, take the one closest to the center of the m/z-range)
-        #exactmass[n] <- spektrum[which.min(abs(spektrum[spektrum[,2] == max(spektrum[,2]),1]-(i+mz_step/2))),1]
-        #peak_intens[n] <- spektrum[which.min(abs(spektrum[spektrum[,2] == max(spektrum[,2]),1]-(i+mz_step/2))),2]-noiselevel[n]
-        exactmass[n] <- spektrum[spektrum[,2] == max(spektrum[,2]),1]
-        peak_intens[n] <- max(spektrum[,2])
-      } 
-      if (length(spektrum)==2) { #only one mass in this mz-range
-        exactmass[n] <- spektrum[1]
-        peak_intens[n] <- spektrum[2]-noiselevel[n]
-      }
-      if (length(spektrum)==0) { #no exact mass found in mass spectrum
-        exactmass[n] <- 0
-        peak_intens[n] <- 0
-      }
-      
-      
-      #calculate FWHM:
-      peakspektrum <- XIC[right_end[n]:left_end[n],,drop=FALSE]
-      FWHM_left_scan <- min(peakspektrum[(peakspektrum[,2]-noiselevel[n]) > (peak_intens[n]/2),1])
-      if (is.infinite(FWHM_left_scan)) FWHM_left_scan <- min(peakspektrum[peakspektrum[,2] > (peak_intens[n]/2),1])
-      if (FWHM_left_scan == 1) FWHM_left_scan <- 2
-      FWHM_right_scan <- max(peakspektrum[(peakspektrum[,2]-noiselevel[n]) > (peak_intens[n]/2),1])
-      if (is.infinite(FWHM_right_scan)) FWHM_right_scan <- max(peakspektrum[peakspektrum[,2] > (peak_intens[n]/2),1])
-      if (FWHM_right_scan == nrow(XIC)) FWHM_right_scan <- FWHM_right_scan-1
-      slope <- (XIC[FWHM_left_scan,2] - XIC[FWHM_left_scan-1,2])/(rawData@scantime[FWHM_left_scan]-rawData@scantime[FWHM_left_scan-1])
-      if (is.na(slope)) slope <- 0
-      if (slope == 0) {
-        FWHM_left <- rawData@scantime[FWHM_left_scan]
-      } else {
-        FWHM_left <- rawData@scantime[FWHM_left_scan-1]+(peak_intens[n]/2-XIC[FWHM_left_scan-1,2]+noiselevel[n])/slope
-      }
-      
-      slope <- (XIC[FWHM_right_scan+1,2] - XIC[FWHM_right_scan,2])/(rawData@scantime[FWHM_right_scan+1]-rawData@scantime[FWHM_right_scan])
-      if (is.na(slope)) slope <- 0
-      if (slope == 0) {
-        FWHM_right <- rawData@scantime[FWHM_right_scan]
-      } else {
-        FWHM_right <- rawData@scantime[FWHM_right_scan]+(peak_intens[n]/2-XIC[FWHM_right_scan,2]+noiselevel[n])/slope
-      }
-      #calculate area:
-      peakArea <- auc(x = rawData@scantime[peakspektrum[,1]], y = peakspektrum[,2],thresh = noiselevel[n])
-      
-      #Get MS2 scan:
-      ms2scan <- 0 #in case there is no MS2 we make sure that there will be an entry
-      #check which MS2 scans were performed with a suitable parent mass:
-      ms2candidates <- which(abs(rawData@msnPrecursorMz-exactmass[n])<exactmass[n]/1000000*precursormzTol)
-      #select the candidate, whose RT is closest to the one of the MS1 maximum:
-      if (length(ms2candidates) > 0) ms2scan <- ms2candidates[which.min(abs(rawData@msnRt[ms2candidates]-rawData@scantime[maxima[n]]))]
-      
-      #if ((peak_intens[n] >= int_threshold) & (peak_intens[n] >= noisedeviation[n]*sn)) peaklist_singleXIC <- rbind(peaklist_singleXIC,c(exactmass[n],rawData@scantime[maxima[n]],peak_intens[n],maxima[n],rawData@scantime[left_end[n]],rawData@scantime[right_end[n]],left_end[n],right_end[n],noisedeviation[n],0,FWHM_left,FWHM_right,noiselevel[n],i,0))
-      #if ((abs((i+mz_step/2)-exactmass[n]) <= mz_step/4) & ((FWHM_right-FWHM_left) < peakwidth_max/2) & (peak_intens[n] >= int_threshold) & (peak_intens[n] >= noisedeviation[n]*sn)) peaklist_singleXIC <- rbind(peaklist_singleXIC,c(exactmass[n],rawData@scantime[maxima[n]],peak_intens[n],maxima[n],rawData@scantime[left_end[n]],rawData@scantime[right_end[n]],left_end[n],right_end[n],noisedeviation[n],peakArea,FWHM_left,FWHM_right,noiselevel[n],i,ms2scan))
-      if ((exactmass[n] > 0) & (FWHM_right-FWHM_left) < peakwidth_max/2) peaklist_singleXIC <- rbind(peaklist_singleXIC,c(exactmass[n],rawData@scantime[maxima[n]],peak_intens[n],XIC[maxima[n],2],maxima[n],rawData@scantime[left_end[n]],rawData@scantime[right_end[n]],left_end[n],right_end[n],noisedeviation[n],peakArea,FWHM_left,FWHM_right,noiselevel[n],i,ms2scan))
-      
-    }
-  }
-
-  #} #end if median
-  return(peaklist_singleXIC)
-}
-
-#' @export
-FindPeaks_BfG <- function(daten,  # from xcms
+FindPeaks_BfG <- function(daten,  
                           mz_min, 
                           mz_max, 
                           mz_step,
@@ -665,20 +341,6 @@ FindPeaks_BfG <- function(daten,  # from xcms
                maxPeaksPerSignal = maxPeaksPerSignal)
   
   pl <- do.call("rbind", plrows)
-  # peaklist <- foreach(X = seq(mz_min, mz_max, by = mz_step*0.5), 
-  #                     .packages = "xcms", .combine = rbind) %do% {
-  #                       peakpicking_BfG_cpp(i = X, rawData = daten, mz_step = mz_step,
-  #                                           rt_min_scan = rt_min_scan,
-  #                                           rt_max_scan = rt_max_scan, 
-  #                                           sn=sn,
-  #                                           int_threshold=int_threshold,
-  #                                           NoiseScans=peak_NoiseScans,
-  #                                           precursormzTol = precursormzTol,
-  #                                           peakwidth_min=peakwidth_min,
-  #                                           peakwidth_max=peakwidth_max,
-  #                                           maxPeaksPerSignal=maxPeaksPerSignal
-  #                                           )
-  #                     }
 
   cn <- c(
     "mz",
