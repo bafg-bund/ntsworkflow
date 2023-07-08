@@ -2465,6 +2465,7 @@ server <- function(input, output, session) {
     settings$displayStart <- 0
     settings$maxPeaks <- maxNumPeaks
     settings$componentization_dynamic_tolerance <- componentization_dynamic_tolerance
+    
     # PP single sample ####
     if (input$PPRadioSingleAll == "one" && is.numeric(selected) && !sampleList[selected, "deleted"]) {
     
@@ -2490,7 +2491,6 @@ server <- function(input, output, session) {
 
       overallp$set(0.7, detail = "Componentization")
       if (nrow(peaklist[[selected]]) > 0) {#run
-        #browser()
         peaklist[[selected]] <<- componentization_BfG(
           peaklist[[selected]], 
           daten = datenList[[selected]], 

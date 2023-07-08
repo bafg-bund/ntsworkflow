@@ -29,41 +29,13 @@ annotate_grouped(
 )
 }
 \arguments{
-\item{peakListList}{}
-
-\item{alignmentTable}{}
-
-\item{db_path}{}
-
-\item{threshold_score}{}
-
-\item{mztolu}{}
-
-\item{rttol}{}
-
-\item{polarity}{}
-
-\item{CE}{}
-
-\item{CES}{}
-
-\item{instrument}{}
-
-\item{chrom_method}{}
-
-\item{ndp_m}{}
-
-\item{ndp_n}{}
-
-\item{mztolu_ms2}{}
-
 \item{rtoffset}{Note: Offset the database to make it match your values}
 
 \item{numcores}{Number of cores for parallelization}
 }
 \description{
-Function takes all the variables needed from non-target app and settings for 
-searching the database. It returns a table with the annotations for rows of 
+Function takes all the variables needed from non-target app and settings for
+searching the database. It returns a table with the annotations for rows of
 the alignment table.
 }
 \details{
