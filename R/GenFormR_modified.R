@@ -9,7 +9,8 @@
 #' Run GenForm with various Commands
 #'
 #' @description This is a wrapper function for GenForm, requiring MS, MS/MS, ion settings
-#' and directories.
+#' and directories. Original function Copyright Emma Schymanski (schymane/GenFormR). 
+#' Modified to work on CentOS.
 #'
 #' @usage RunGenForm(ms_file, msms_file, ion, GenFormDir, ResultsDir,ppm=5, acc=15,
 #' elements="CHNOPS",ff="", dbe=TRUE, oei=TRUE, mz=0, exist=TRUE, an_loss=TRUE,an_loss_limit=500,

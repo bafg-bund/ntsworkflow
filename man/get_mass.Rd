@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities.R
 \name{get_mass}
 \alias{get_mass}
-\title{Calculate the mass/charge for proton adduct from molecular formula}
+\title{Calculate the mass/charge from molecular formula and adduct form}
 \usage{
 get_mass(formula, charge, adduct = "[M]")
 }
@@ -11,12 +11,21 @@ get_mass(formula, charge, adduct = "[M]")
 numbers}
 
 \item{charge}{Integer}
+
+\item{adduct}{}
 }
 \value{
 Mass/charge ratio
 }
 \description{
-If adduct is not given or [M] assumes a [M+H]+ or [M-H]- adduct if charge is not 0.
+If adduct is not given or [M] assumes a [M+H]+ or [M-H]- adduct if 
+charge is not 0. Adduct must be one of "[M+H]+", "[M-H]-", "[M]+", "[M]-", "[M]".
+}
+\details{
+Uses a modification of the OrgMassSpecR Function Copyright 2017 Nathan Dodder 
+(2-clause-BSD). The modification allows for the addition of isotopes 2H, 13C
+15N and 37Cl (a whitespace charachter must precede the isotope in order to separate it from
+the other elements).
 }
 \examples{
 # [M+H]+ Mass of Carbamazepine-13C15N

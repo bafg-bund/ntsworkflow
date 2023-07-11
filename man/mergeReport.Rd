@@ -6,9 +6,15 @@
 \usage{
 mergeReport(report1, report2)
 }
+\arguments{
+\item{report1}{a Report object}
+
+\item{report2}{a second Report object}
+}
 \value{
 a Report object
 }
 \description{
-Merge two Report objects
+The function will combine 2 report objects into one. The peak ids of the first
+object are followed by the second.
 }

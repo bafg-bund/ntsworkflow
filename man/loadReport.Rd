@@ -6,6 +6,11 @@
 \usage{
 loadReport(dialog = TRUE, path = NULL)
 }
+\arguments{
+\item{dialog}{logical should a dialog window open to select the file (only works in rstudio)}
+
+\item{path}{if dialog is false a path to the file must be given}
+}
 \description{
-Load a report file using a dialog box or by giving the path to the file
+readRDS can be used directly to open saved Report objects.
 }

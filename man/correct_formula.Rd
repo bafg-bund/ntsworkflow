@@ -2,13 +2,19 @@
 % Please edit documentation in R/utilities.R
 \name{correct_formula}
 \alias{correct_formula}
-\title{Adjust a formula to an adduct}
+\title{Combine a formula with the adduct}
 \usage{
 correct_formula(formula, adduct)
 }
 \arguments{
-\item{adduct}{}
+\item{formula}{Chemical formula as a string}
+
+\item{adduct}{adduct as a string, must be one of [M+H]+, [M+Na]+, [M]+,
+[M-H]-, [M+NH4]+, [M+H2CO2-H]-, [M-H2O+H]+}
+}
+\value{
+List with two elements: formula with the adduct added to it and charge
 }
 \description{
-Adjust a formula to an adduct
+Combine a formula with the adduct
 }

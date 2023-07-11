@@ -21,19 +21,3 @@ peakPickingBfGC <- function(mz, mz_step, XIC, scantime, min_intensity, sn, noise
     .Call(`_ntsworkflow_peakPickingBfGC`, mz, mz_step, XIC, scantime, min_intensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal)
 }
 
-rcpparma_hello_world <- function() {
-    .Call(`_ntsworkflow_rcpparma_hello_world`)
-}
-
-rcpparma_outerproduct <- function(x) {
-    .Call(`_ntsworkflow_rcpparma_outerproduct`, x)
-}
-
-rcpparma_innerproduct <- function(x) {
-    .Call(`_ntsworkflow_rcpparma_innerproduct`, x)
-}
-
-rcpparma_bothproducts <- function(x) {
-    .Call(`_ntsworkflow_rcpparma_bothproducts`, x)
-}
-
