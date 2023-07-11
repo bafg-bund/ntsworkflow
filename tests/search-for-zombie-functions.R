@@ -1,7 +1,7 @@
 
 library(glue)
 
-tosearch <- "FindPeaks_BfG_scripting"
+tosearch <- "trueInaRow"
 
 system(glue("grep -rn '{tosearch}' tests"))
 system(glue("grep -rn '{tosearch}' R"))

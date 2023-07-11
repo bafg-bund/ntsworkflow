@@ -4,14 +4,21 @@
 
 
 
-#' Calculate the mass/charge for proton adduct from molecular formula
+#' Calculate the mass/charge from molecular formula and adduct form
 #'
-#' If adduct is not given or [M] assumes a [M+H]+ or [M-H]- adduct if charge is not 0.
+#' If adduct is not given or [M] assumes a [M+H]+ or [M-H]- adduct if 
+#' charge is not 0. Adduct must be one of "[M+H]+", "[M-H]-", "[M]+", "[M]-", "[M]".
+#' 
+#' Uses a modification of the OrgMassSpecR Function Copyright 2017 Nathan Dodder 
+#' (2-clause-BSD). The modification allows for the addition of isotopes 2H, 13C
+#' 15N and 37Cl (a whitespace charachter must precede the isotope in order to separate it from
+#' the other elements).
 #'
 #'
 #' @param formula String of molecular formula, insert space before  atomic
 #'   numbers
 #' @param charge Integer
+#' @param adduct
 #'
 #' @return Mass/charge ratio
 #' @export
@@ -162,15 +169,15 @@ wind <- function(value, tol) {
 } 
 
 
-#' Adjust a formula to an adduct
+#' Combine a formula with the adduct
+#' 
 #'
-#' @param formula
-#' @param adduct
+#' @param formula Chemical formula as a string
+#' @param adduct adduct as a string, must be one of [M+H]+, [M+Na]+, [M]+,
+#'  [M-H]-, [M+NH4]+, [M+H2CO2-H]-, [M-H2O+H]+   
 #'
-#' @return
+#' @return List with two elements: formula with the adduct added to it and charge
 #' @export
-#'
-#' @examples
 correct_formula <- function(formula, adduct) {
 
   if (adduct == "[M+H]+") {
@@ -184,7 +191,6 @@ correct_formula <- function(formula, adduct) {
   } else if (adduct == "[M-H]-") {
     thisCharge <- -1
     # adjust number of protons
-    #browser()
     noProt <- as.numeric(stringr::str_match(formula, "\\SH(\\d+)")[, 2]) - 1
     formula <- if (is.na(noProt) && grepl("H", formula)) {
       stringr::str_replace(formula, "H([A-Z])", "\\1")
@@ -201,17 +207,17 @@ correct_formula <- function(formula, adduct) {
     formula <- paste0(formula, "HCO2")
   } else if (adduct == "[M-H2O+H]+") {
     thisCharge <- 1
-    # adjust number of protons
+    # Adjust number of protons
     noProt <- as.numeric(stringr::str_match(formula, "H(\\d+)")[, 2]) - 1
     formula <- paste0(stringr::str_match(formula, "(.*H)\\d+")[, 2],
                       noProt, stringr::str_match(formula, ".*H\\d+(.*)")[, 2])
-    #check number oxygen atoms
+    # Check number oxygen atoms
     oxform <- as.numeric(stringr::str_match(formula, "O(\\d+)")[, 2])
     if (is.na(oxform)) {
-      #only one oxygen atom delete O from formular
+      # Only one oxygen atom delete O from formular
       formula <- paste0(stringr::str_replace(formula,"O",""))
     } else if(oxform1 > 1) {
-      #more oxygen atoms reduce number of atoms
+      # more oxygen atoms reduce number of atoms
       oxform <- as.numeric(stringr::str_match(formula, "O(\\d+)")[, 2]) - 1
       formula <- paste0(stringr::str_match(formula, "(.*O)\\d+")[, 2],
                         oxform, stringr::str_match(formula, ".*O\\d+(.*)")[, 2])
@@ -231,7 +237,7 @@ correct_formula <- function(formula, adduct) {
 
 compact <- function(x) {
   Filter(Negate(is.null), x)
-  }
+}
 
 
 #' Export Function to For-Ident.
@@ -251,10 +257,8 @@ compact <- function(x) {
 #'   
 #' @return A txt file with each found mass, retention time and MS2 spectrum (if available).
 #'   
-#' @return
 #' @export
 #' 
-#' @examples
 forIdentExport <- function(align_matrix, sampleList, rawDataList, intThreshRel = 0.01, report_nm) {
   
   # change sample_list_save to dataframe with real variables
@@ -309,33 +313,15 @@ forIdentExport <- function(align_matrix, sampleList, rawDataList, intThreshRel =
   
 }
 
-#' Search for trues in a row
-#'
-#' @param set logical 
-#' @param in_a_row 
-#'
-#' @return Logical of length 1 
-#' 
-#' @export
-#'
-#' @examples
-trueInaRow<- function(set, in_a_row = 2) { # set <- c(T,F,T,T,T,F,T,F,T,T)
-  # need to make the set multiple of pattern
-  #browser()
-  pattern = rep(T, in_a_row)
-  left_over <- length(set) %% length(pattern)
-  set <- append(set, rep(F, left_over))
-  # split set at every position from 1 to pattern length - 1 (the last subset goes to end of set) 
-  step_size <- length(pattern) - 1
-  start_pos <- 1:(length(set) - step_size)
-  subsets <- list()
-  for (i in start_pos)
-    subsets[[i]] <- unname(set[i:(i + step_size)])
-  any(vapply(subsets, identical, logical(1), y = pattern))
-}
+
 
 #' Load a report file using a dialog box or by giving the path to the file
 #' 
+#' readRDS can be used directly to open saved Report objects. 
+#' 
+#' @param dialog logical should a dialog window open to select the file (only works in rstudio)
+#' @param path if dialog is false a path to the file must be given
+#'  
 #' @export
 loadReport <- function(dialog = TRUE, path = NULL) {
   if (dialog)
@@ -345,6 +331,13 @@ loadReport <- function(dialog = TRUE, path = NULL) {
 }
 
 #' Merge two Report objects
+#' 
+#' The function will combine 2 report objects into one. The peak ids of the first
+#' object are followed by the second.
+#' 
+#' @param report1 a Report object
+#' @param report2 a second Report object
+#' 
 #' @return a Report object
 #' @export
 mergeReport <- function(report1, report2) {

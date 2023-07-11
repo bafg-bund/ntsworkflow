@@ -2,8 +2,7 @@
 
 # functions Label_DB ####
 
-# Includes functions to create json-files for storaging Data and insert Data to the Label_DB
-
+# Includes functions to create json-files for storing and inserting data to the Label_DB
 
 
 #' create_DB_json
