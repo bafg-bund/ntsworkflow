@@ -1,7 +1,7 @@
 
 library(glue)
 
-tosearch <- "trueInaRow"
+tosearch <- "PeakPickXIC_plotten"
 
 system(glue("grep -rn '{tosearch}' tests"))
 system(glue("grep -rn '{tosearch}' R"))

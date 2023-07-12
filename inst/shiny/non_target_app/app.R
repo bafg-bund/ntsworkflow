@@ -1,6 +1,6 @@
 # Non-Target App
 # written by: Christian Dietrich, Kevin Jewell, Toni Köppe
-# Last update: 2021-11-20
+# Last update: 2023-07-11
 
 library(shiny)
 library(shinyBS)
@@ -25,7 +25,6 @@ if (exists("datenList") && length(datenList) > 0) {
                             RAM = logical(), deleted = logical(), 
                             stringsAsFactors = F)
   datenList <<- list()
-  #headerList <<- list()  # deprecated
   peaklist <<- list()
   peakPickSettings <<- list()
   grouped <<- NULL
@@ -34,8 +33,10 @@ if (exists("datenList") && length(datenList) > 0) {
   multiHitsTable <<- NULL
   selected<<- NULL
   selectedcell <<- NULL
-  MS2 <<- list() #für die gleichzeitige Darstellung der MS2-Spektren im Alignment
-  MS2selected <<- 1 #Auswahl des MS2, welches im Alignment angezeigt werden soll
+  # For the MS2 overlay in the alignment tab
+  MS2 <<- list() 
+  # MS2 selection to be shown in the overlay
+  MS2selected <<- 1 
   MS2_max_intensity <<- vector()
   peaklist_NeutralLoss <<- list()
   peaklist_FragmentIons <<- list()
@@ -64,7 +65,6 @@ if (exists("datenList") && length(datenList) > 0) {
 
 #### UI ####
 ui <- fluidPage(
-  
   sidebarLayout(
     sidebarPanel(
       width = 2,
@@ -648,6 +648,8 @@ server <- function(input, output, session) {
   options(shiny.maxRequestSize = 3000 * 1024^2)
   
   `%notin%` <- function(x, y) !(x %in% y)
+  
+  # Genform is a command line program
   GENFORM_LOC <- "/usr/local/bin/"
   
   # reactive values
@@ -662,8 +664,7 @@ server <- function(input, output, session) {
   
   # update ui
   
-  # number of threads
-  
+  # Number of threads needs to be kept low due to very high memory demands
   observeEvent(NA, updateNumericInput(
     session, "numcores",
     value = min(round(parallel::detectCores()/3), 6),
@@ -671,13 +672,21 @@ server <- function(input, output, session) {
     ), 
     once = TRUE)
   
-  ##
-  #### Plotting functions ####
-  ##
+  # Plotting functions ####
   
   MSplot_plotten <- function() {
     output$MSPlot <- renderPlot({
-      plot(spektrum, type = "h", xlim = MSplot_ranges$x, ylim = MSplot_ranges$y, main = "MS Spectrum", xlab="m/z",ylab="Intensity",xaxs = "i",yaxs="i")
+      plot(
+        spektrum,
+        type = "h",
+        xlim = MSplot_ranges$x,
+        ylim = MSplot_ranges$y,
+        main = "MS Spectrum",
+        xlab = "m/z",
+        ylab = "Intensity",
+        xaxs = "i",
+        yaxs = "i"
+      )
       text(x=masse$mz,y=masse$y,label=round(masse$mz,4),pos=4,offset=0.2)
       
     })
@@ -686,12 +695,25 @@ server <- function(input, output, session) {
   XICplot_plotten <- function() {
     output$XICplot <- renderPlot({
       delta <- input$EIC_mass*input$EIC_mass_delta/1000000 
-      #if (is.null(datenList[[selected]]@env$intensity)) {
       if (length(datenList[[selected]]@env$intensity) == 1) {
         plot(x=0,y=0)
       } else {
-        XIC <- xcms::rawEIC(datenList[[selected]],mzrange=c(input$EIC_mass-delta/2,input$EIC_mass+delta/2))
-        plot(x=datenList[[selected]]@scantime/60,y=XIC$intensity, type = "l", xlim = XICplot_ranges$x, ylim = XICplot_ranges$y,main = "XIC",xlab="RT",ylab="Intensity",xaxs = "i",yaxs="i")
+        XIC <- xcms::rawEIC(
+          datenList[[selected]],
+          mzrange = c(input$EIC_mass - delta / 2, input$EIC_mass + delta / 2)
+        )
+        plot(
+          x = datenList[[selected]]@scantime / 60,
+          y = XIC$intensity,
+          type = "l",
+          xlim = XICplot_ranges$x,
+          ylim = XICplot_ranges$y,
+          main = "XIC",
+          xlab = "RT",
+          ylab = "Intensity",
+          xaxs = "i",
+          yaxs = "i"
+        )
       }  
       counter <<- counter + 1
     })
@@ -706,52 +728,169 @@ server <- function(input, output, session) {
     
     if ((peaklist[[dataSel]]$Leftendscan[zeile]-peakPickSettings[[dataSel]]$NoiseScans) > 0) 
       noiseRTleft <- datenList[[dataSel]]@scantime[peaklist[[dataSel]]$Leftendscan[zeile]-peakPickSettings[[dataSel]]$NoiseScans]/60
+    
     if ((peaklist[[dataSel]]$Rightendscan[zeile]+peakPickSettings[[dataSel]]$NoiseScans) < length(datenList[[dataSel]]@scantime)) 
       noiseRTright <- datenList[[dataSel]]@scantime[peaklist[[dataSel]]$Rightendscan[zeile]+peakPickSettings[[dataSel]]$NoiseScans]/60
+    
     infotext <- ""
+    
     if (!peaklist[[dataSel]]$RealPeak[zeile]) 
       infotext <- "FALSE POSITIVE"
-    XIC <- xcms::rawEIC(datenList[[dataSel]],mzrange=c(peaklist[[dataSel]]$mz[zeile]-mz_step/2,peaklist[[dataSel]]$mz[zeile]+mz_step/2))
     
-    plot(x=datenList[[dataSel]]@scantime/60,y=XIC$intensity, type = "l", xlim = PPXIC_ranges$x, ylim = PPXIC_ranges$y,  main = paste0("XIC (",round(peaklist[[dataSel]]$mz[zeile]-mz_step/2,4),"-",round(peaklist[[dataSel]]$mz[zeile]+mz_step/2,4),")"),xlab="RT",ylab="Intensity",xaxs = "i",yaxs="i")
-    lines(x = c(peaklist[[dataSel]]$LeftendRT[zeile]/60,peaklist[[dataSel]]$LeftendRT[zeile]/60), y = c(peaklist[[dataSel]]$Baseline[zeile],(peaklist[[dataSel]]$Intensity[zeile])+peaklist[[dataSel]]$Baseline[zeile]), type = "l", col = "red")
-    lines(x = c(peaklist[[dataSel]]$RightendRT[zeile]/60,peaklist[[dataSel]]$RightendRT[zeile]/60), y = c(peaklist[[dataSel]]$Baseline[zeile],(peaklist[[dataSel]]$Intensity[zeile])+peaklist[[dataSel]]$Baseline[zeile]), type = "l", col = "red")
-    lines(x = c(noiseRTleft,noiseRTright), y=c(peaklist[[dataSel]]$Baseline[zeile],peaklist[[dataSel]]$Baseline[zeile]), type = "l", col = "red")
-    lines(x = c(noiseRTleft,noiseRTright), y=c(peaklist[[dataSel]]$Baseline[zeile]+peaklist[[dataSel]]$NoiseDeviation[zeile]/2,peaklist[[dataSel]]$Baseline[zeile]+peaklist[[dataSel]]$NoiseDeviation[zeile]/2), type = "l", col = "blue")
-    lines(x = c(noiseRTleft,noiseRTright), y=c(peaklist[[dataSel]]$Baseline[zeile]-peaklist[[dataSel]]$NoiseDeviation[zeile]/2,peaklist[[dataSel]]$Baseline[zeile]-peaklist[[dataSel]]$NoiseDeviation[zeile]/2), type = "l", col = "blue")
-    lines(x = c(peaklist[[dataSel]]$FWHM_left[zeile]/60,peaklist[[dataSel]]$FWHM_left[zeile]/60), y = c(peaklist[[dataSel]]$Baseline[zeile],(peaklist[[dataSel]]$Intensity[zeile]/2)+peaklist[[dataSel]]$Baseline[zeile]), type = "l", col = "green")
-    lines(x = c(peaklist[[dataSel]]$FWHM_right[zeile]/60,peaklist[[dataSel]]$FWHM_right[zeile]/60), y = c(peaklist[[dataSel]]$Baseline[zeile],(peaklist[[dataSel]]$Intensity[zeile]/2)+peaklist[[dataSel]]$Baseline[zeile]), type = "l", col = "green")
-    mtext(infotext,side = 3, line = 0, col = "red")
+    XIC <- xcms::rawEIC(
+      datenList[[dataSel]],
+      mzrange = c(
+        peaklist[[dataSel]]$mz[zeile] - mz_step / 2, 
+        peaklist[[dataSel]]$mz[zeile] + mz_step / 2
+      )
+    )
     
+    plot(
+      x = datenList[[dataSel]]@scantime / 60,
+      y = XIC$intensity,
+      type = "l",
+      xlim = PPXIC_ranges$x,
+      ylim = PPXIC_ranges$y,
+      main = paste0(
+        "XIC (",
+        round(peaklist[[dataSel]]$mz[zeile] - mz_step / 2, 4),
+        "-",
+        round(peaklist[[dataSel]]$mz[zeile] + mz_step / 2, 4),
+        ")"
+      ),
+      xlab = "RT",
+      ylab = "Intensity",
+      xaxs = "i",
+      yaxs = "i"
+    )
+    lines(
+      x = c(peaklist[[dataSel]]$LeftendRT[zeile] / 60, peaklist[[dataSel]]$LeftendRT[zeile] / 60),
+      y = c(
+        peaklist[[dataSel]]$Baseline[zeile],
+        (peaklist[[dataSel]]$Intensity[zeile]) + peaklist[[dataSel]]$Baseline[zeile]
+      ),
+      type = "l",
+      col = "red"
+    )
+    lines(
+      x = c(peaklist[[dataSel]]$RightendRT[zeile] / 60, peaklist[[dataSel]]$RightendRT[zeile] / 60),
+      y = c(
+        peaklist[[dataSel]]$Baseline[zeile],
+        (peaklist[[dataSel]]$Intensity[zeile]) + peaklist[[dataSel]]$Baseline[zeile]
+      ),
+      type = "l",
+      col = "red"
+    )
+    lines(
+      x = c(noiseRTleft, noiseRTright),
+      y = c(peaklist[[dataSel]]$Baseline[zeile], peaklist[[dataSel]]$Baseline[zeile]),
+      type = "l",
+      col = "red"
+    )
+    lines(
+      x = c(noiseRTleft, noiseRTright),
+      y = c(
+        peaklist[[dataSel]]$Baseline[zeile] + peaklist[[dataSel]]$NoiseDeviation[zeile] / 2,
+        peaklist[[dataSel]]$Baseline[zeile] + peaklist[[dataSel]]$NoiseDeviation[zeile] / 2
+      ),
+      type = "l",
+      col = "blue"
+    )
+    lines(
+      x = c(noiseRTleft, noiseRTright),
+      y = c(
+        peaklist[[dataSel]]$Baseline[zeile] - peaklist[[dataSel]]$NoiseDeviation[zeile] / 2,
+        peaklist[[dataSel]]$Baseline[zeile] - peaklist[[dataSel]]$NoiseDeviation[zeile] / 2
+      ),
+      type = "l",
+      col = "blue"
+    )
+    lines(
+      x = c(peaklist[[dataSel]]$FWHM_left[zeile] / 60, peaklist[[dataSel]]$FWHM_left[zeile] / 60),
+      y = c(
+        peaklist[[dataSel]]$Baseline[zeile],
+        (peaklist[[dataSel]]$Intensity[zeile] / 2) + peaklist[[dataSel]]$Baseline[zeile]
+      ),
+      type = "l",
+      col = "green"
+    )
+    lines(
+      x = c(peaklist[[dataSel]]$FWHM_right[zeile] / 60, peaklist[[dataSel]]$FWHM_right[zeile] / 60),
+      y = c(
+        peaklist[[dataSel]]$Baseline[zeile],
+        (peaklist[[dataSel]]$Intensity[zeile] / 2) + peaklist[[dataSel]]$Baseline[zeile]
+      ),
+      type = "l",
+      col = "green"
+    )
+    mtext(
+      infotext,
+      side = 3,
+      line = 0,
+      col = "red"
+    )
   }
   
-  ComponentXIC_plotten <- function(zeile){
+  ComponentXIC_plotten <- function(zeile) {
     req(selectedR())
     selected <- selectedR()
     mz_step <- input$PeakPick_mzstep 
     noiseRTleft <- 0
     noiseRTright <- length(datenList[[selected]]@scantime)
-    if ((peaklist[[selected]]$Leftendscan[zeile]-peakPickSettings[[selected]]$NoiseScans) > 0) noiseRTleft <- datenList[[selected]]@scantime[peaklist[[selected]]$Leftendscan[zeile]-peakPickSettings[[selected]]$NoiseScans]/60
-    if ((peaklist[[selected]]$Rightendscan[zeile]+peakPickSettings[[selected]]$NoiseScans) < length(datenList[[selected]]@scantime)) noiseRTright <- datenList[[selected]]@scantime[peaklist[[selected]]$Rightendscan[zeile]+peakPickSettings[[selected]]$NoiseScans]/60
+    
+    if ((peaklist[[selected]]$Leftendscan[zeile]-peakPickSettings[[selected]]$NoiseScans) > 0) 
+      noiseRTleft <- datenList[[selected]]@scantime[peaklist[[selected]]$Leftendscan[zeile]-peakPickSettings[[selected]]$NoiseScans]/60
+    
+    if ((peaklist[[selected]]$Rightendscan[zeile]+peakPickSettings[[selected]]$NoiseScans) < length(datenList[[selected]]@scantime)) 
+      noiseRTright <- datenList[[selected]]@scantime[peaklist[[selected]]$Rightendscan[zeile]+peakPickSettings[[selected]]$NoiseScans]/60
+    
     XIC <- list()
     Komponenten <- which(peaklist[[selected]]$Gruppe == peaklist[[selected]]$Gruppe[zeile])
     Komponenten <- Komponenten[order(peaklist[[selected]]$Intensity[Komponenten])]
     farben <- rainbow(length(Komponenten))
     
     for (i in 1:length(Komponenten)) {
-      XIC[[i]] <- xcms::rawEIC(datenList[[selected]],mzrange=c(peaklist[[selected]]$mz[Komponenten[i]]-mz_step/2,peaklist[[selected]]$mz[Komponenten[i]]+mz_step/2))
+      XIC[[i]] <- xcms::rawEIC(
+        datenList[[selected]],
+        mzrange = c(
+          peaklist[[selected]]$mz[Komponenten[i]] - mz_step / 2,
+          peaklist[[selected]]$mz[Komponenten[i]] + mz_step / 2
+        )
+      )
     }
-    #output$ComponentsXIC <- renderPlot({
-      plot(x=datenList[[selected]]@scantime/60,y=XIC[[1]]$intensity, type = "l", xlim = ComponentXIC_ranges$x, ylim = ComponentXIC_ranges$y, xlab="RT",ylab="Intensity",xaxs = "i",yaxs="i",col=farben[1], axes = FALSE)
+    plot(
+      x    = datenList[[selected]]@scantime / 60,
+      y    = XIC[[1]]$intensity,
+      type = "l",
+      xlim = ComponentXIC_ranges$x,
+      ylim = ComponentXIC_ranges$y,
+      xlab = "RT",
+      ylab = "Intensity",
+      xaxs = "i",
+      yaxs = "i",
+      col  = farben[1],
+      axes = FALSE
+    )
       if (length(XIC) > 1) {
         for (i in 2:length(XIC)) {
           par(new=TRUE)
-          plot(x=datenList[[selected]]@scantime/60,y=XIC[[i]]$intensity, type = "l", xlim = ComponentXIC_ranges$x, ylim = ComponentXIC_ranges$y, xlab="",ylab="", xaxs = "i",yaxs="i",col=farben[i], axes=FALSE)
+          plot(
+            x    = datenList[[selected]]@scantime / 60,
+            y    = XIC[[i]]$intensity,
+            type = "l",
+            xlim = ComponentXIC_ranges$x,
+            ylim = ComponentXIC_ranges$y,
+            xlab = "",
+            ylab = "",
+            xaxs = "i",
+            yaxs = "i",
+            col  = farben[i],
+            axes = FALSE
+          )
         }
       }
       axis(side=1)
       axis(side=2)
-  #  })
   }
   
   PeakPickMSPlotten <- function(zeile) {
@@ -760,7 +899,6 @@ server <- function(input, output, session) {
     spektrum_PP <- xcms::getScan(datenList[[selected]],peaklist[[selected]]$Scan[zeile])
     output$PeakPickMS <- renderPlot({
        
-      #validate(need(nrow(peaklist[[selected]]) >= 1, "Select feature"))
       spektrum_PP <- as.data.frame(spektrum_PP)
       masse <- peaklist[[selected]]$mz[zeile]
       RT <- peaklist[[selected]]$RT[zeile]
@@ -768,7 +906,7 @@ server <- function(input, output, session) {
       spektrum_PP <- spektrum_PP[spektrum_PP$mz > masse - 15 & spektrum_PP$mz < masse + 15, ]
       plotme <- ggplot(spektrum_PP, aes(mz, intensity, label = round(mz,4))) +
         geom_segment(aes(x = mz, xend = mz, y = 0, yend = intensity),
-                     stat = "identity", size = .5, alpha = .5) +
+                     stat = "identity", linewidth = .5, alpha = .5) +
         theme_bw(base_size = 14) +
         ggtitle(paste0("MS1 of ", round(masse, 4), " @ ", round(RT/60,1), " min")) +
         geom_text(data = spektrum_PP[spektrum_PP$intensity > inten / 10, ], 
@@ -784,47 +922,67 @@ server <- function(input, output, session) {
       
       if (peaklist[[selected]]$C13[zeile] > 0) 
         infotext <- paste0(infotext, "! 13C of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$C13[zeile]],4)," !")
+      
       if (peaklist[[selected]]$NaAddukt[zeile] > 0) 
         infotext <- paste0(infotext,"! Na adduct of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$NaAddukt[zeile]],4)," !")
+      
       if (peaklist[[selected]]$NH4Addukt[zeile] > 0) 
         infotext <- paste0(infotext,"! NH4 adduct of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$NH4Addukt[zeile]],4)," !")
+      
       if ((peaklist[[selected]]$Cl1[zeile] > 0) & (peaklist[[selected]]$Cl1[zeile] != zeile)) 
         infotext <- paste0(infotext,"! Cl Isotope (1 Cl) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$Cl1[zeile]],4)," !")
+      
       if (peaklist[[selected]]$Cl1[zeile] == zeile) 
         infotext <- paste0(infotext,"! Shows Cl Isotope Pattern (1 Cl) !")
+      
       if ((peaklist[[selected]]$Cl2[zeile] > 0) & (peaklist[[selected]]$Cl2[zeile] != zeile)) 
         infotext <- paste0(infotext,"! Cl Isotope (2 Cl) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$Cl2[zeile]],4)," !")
+      
       if (peaklist[[selected]]$Cl2[zeile] == zeile) 
         infotext <- paste0(infotext,"! Shows Cl Isotope Pattern (2 Cl) !")
+      
       if ((peaklist[[selected]]$Cl3[zeile] > 0) & (peaklist[[selected]]$Cl3[zeile] != zeile)) 
         infotext <- paste0(infotext,"! Cl Isotope (3 Cl) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$Cl3[zeile]],4)," !")
+      
       if (peaklist[[selected]]$Cl3[zeile] == zeile) 
         infotext <- paste0(infotext,"! Shows Cl Isotope Pattern (3 Cl) !")
+      
       if ((peaklist[[selected]]$Cl4[zeile] > 0) & (peaklist[[selected]]$Cl4[zeile] != zeile))  
         infotext <- paste0(infotext,"! Cl Isotope (4 Cl) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$Cl4[zeile]],4)," !")
+      
       if (peaklist[[selected]]$Cl4[zeile] == zeile) 
         infotext <- paste0(infotext,"! Shows Cl Isotope Pattern (4 Cl) !")
+      
       if (peaklist[[selected]]$Br1[zeile] > 0) 
         infotext <- paste0(infotext,"! Br Isotope (1 Br) of ",
                            round(peaklist[[selected]]$mz[peaklist[[selected]]$Br1[zeile]],4)," !")
+      
       if (peaklist[[selected]]$Br2[zeile] > 0) 
         infotext <- paste0(infotext,"! Br Isotope (2 Br) of ",
                            round(peaklist[[selected]]$mz[peaklist[[selected]]$Br2[zeile]],4)," !")
+      
       if (peaklist[[selected]]$Br3[zeile] > 0) 
         infotext <- paste0(infotext,"! Br Isotope (3 Br) of ",
                            round(peaklist[[selected]]$mz[peaklist[[selected]]$Br3[zeile]],4)," !")
+      
       if (peaklist[[selected]]$Br4[zeile] > 0) 
         infotext <- paste0(infotext,"! Br Isotope (4 Br) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$Br4[zeile]],4)," !")
+      
       if (peaklist[[selected]]$KAddukt[zeile] > 0) 
         infotext <- paste0(infotext,"! K adduct of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$KAddukt[zeile]],4)," !")
+      
       if ((peaklist[[selected]]$S1[zeile] > 0) & (peaklist[[selected]]$S1[zeile] != zeile)) 
         infotext <- paste0(infotext,"! S Isotope (1 S) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$S1[zeile]],4)," !")
+      
       if ((peaklist[[selected]]$S2[zeile] > 0) & (peaklist[[selected]]$S2[zeile] != zeile)) 
         infotext <- paste0(infotext,"! S Isotope (2 S) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$S2[zeile]],4)," !")
+      
       if (peaklist[[selected]]$S1[zeile] == zeile) 
         infotext <- paste0(infotext,"! Shows S Isotope Pattern (1 S) !")
+      
       if (peaklist[[selected]]$S2[zeile] == zeile) 
         infotext <- paste0(infotext,"! Shows S Isotope Pattern (2 S) !")
+      
       if (peaklist[[selected]]$InSourceFragmentOf[zeile] > 0) 
         infotext <- paste0(infotext,"! Source Fragment of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$InSourceFragmentOf[zeile]],4)," !")
       
@@ -849,7 +1007,6 @@ server <- function(input, output, session) {
       zeile <- nrow(peaklist[[selectedR()]])
     
     if (peaklist[[selectedR()]]$MS2scan[zeile] > 0) {
-      # browser()
       mz <- peaklist[[selectedR()]]$mz[zeile]
       specTable <- xcms::getMsnScan(datenList[[selectedR()]],peaklist[[selectedR()]]$MS2scan[zeile])
       specTable <- specTable[specTable[, "mz"] < mz + 1, ]
@@ -861,7 +1018,6 @@ server <- function(input, output, session) {
  
   PeakPickMS2Plotten <- function(zeile) {
     
-    #output$PeakPickMS2 <- renderPlot({
       req(zeile)
       req(ms2spektrumR())
       req(selectedR())
@@ -874,7 +1030,7 @@ server <- function(input, output, session) {
       ms2spektrum_ <- ms2spektrum_[ms2spektrum_$mz < comp_mz + 10, ]
       plotme <- ggplot(ms2spektrum_, aes(mz, intensity, label = round(mz,4))) +
         geom_segment(aes(x = mz, xend = mz, y = 0, yend = intensity),
-                     stat = "identity", size = .5, alpha = .5) +
+                     stat = "identity", linewidth = .5, alpha = .5) +
         theme_bw(base_size = 14) +
         ggtitle(paste0("MS2 of ",round(masse,4)," @ ",round(RT/60,1)," min")) +
         geom_text(data = ms2spektrum_[ms2spektrum_$intensity > 0.01, ], check_overlap = TRUE, vjust = -0.5) +
@@ -906,6 +1062,7 @@ server <- function(input, output, session) {
   }
   
   aligXICranges <- reactiveValues(x = NULL, y = NULL)
+  
   alignmentXICsPlotten <- function(ID) {
     XIC <- list()
     sl <- sampleListR()
@@ -940,12 +1097,12 @@ server <- function(input, output, session) {
     XIC$samp <- as.factor(XIC$samp)
     XIC <- XIC[XIC$intensity != 0,]  # remove row with intensity 0 to reduce length and increase speed
     # overlay plot
-    # browser()
     ggplot(XIC, aes(scanTime, intensity, color = samp)) + geom_line() + guides(color = "none") +
       xlab("Time (min.)") + ylab("Inten. (cps)") + 
       geom_vline(xintercept = grouped[zeile, "mean_RT"]/60, color = "red", alpha = .2) + 
       theme_bw(14) + coord_cartesian(xlim = aligXICranges$x, ylim = aligXICranges$y, expand = F)
   }
+  
   observeEvent(input$aligXIC_dblclick, {
     brush <- input$aligXIC_brush
     if (!is.null(brush)) {
@@ -959,6 +1116,7 @@ server <- function(input, output, session) {
   })
   
   aligMs2R <- reactiveValues(options = 0, current = 1)
+  
   alignmentMS2Plotten <- function(ID, selection = 0) {
     # which row has this ID?
     zeile <- which(grouped[, "alignmentID"] == ID)
@@ -979,7 +1137,6 @@ server <- function(input, output, session) {
         MS2[i] <- list(NULL)
       }
     }
-    # browser()
     # get samples which had MS2 available
     samplesWithMS2 <- which(Negate(sapply)(MS2, is.null))
     if (length(samplesWithMS2) == 0)
@@ -998,7 +1155,6 @@ server <- function(input, output, session) {
      
     MS2$samp <- as.factor(MS2$samp)
     # 10 most intense fragments for text labels
-    # topFrags <- MS2[order(MS2$intensity, decreasing = T)[1:10], ]
     ggplot(MS2, aes(mz, intensity, color = samp)) +
       geom_segment(aes(x = mz, xend = mz, y = 0, yend = intensity),
                    stat = "identity", size = .5, alpha = .5) +
@@ -1016,7 +1172,10 @@ server <- function(input, output, session) {
     output$AlignmentMS2 <- renderPlot(
       alignmentMS2Plotten(alignmentIdSelected(), aligMs2R$options[aligMs2R$current]))
   })
-  simTrenInten <- reactiveVal()  # store table used to make plot in order to use this for hover
+  
+  # Store table used to make plot in order to use this for hover
+  simTrenInten <- reactiveVal()  
+  
   SimilarTrends_plotten <- function(ID, highlight = NULL) {
     zeile <- which(grouped[, "alignmentID"] == ID)
     sl <- stringr::str_match(colnames(grouped), "^Int_(\\d+)$")[,2]
@@ -1031,7 +1190,7 @@ server <- function(input, output, session) {
                  int = a)
     }
     
-    # create highlighted trend
+    # Create highlighted trend
     if (is.null(highlight) || Negate(is.element)(highlight, similarTrends()))
       highlight <- ID
     hlrows <- inten[inten$alignmentID == highlight, ]
@@ -1047,7 +1206,6 @@ server <- function(input, output, session) {
   }
   
   annotationMS1Plotten <- function(zeile) {
-    #browser() 
     thisID <- groupedWithAnnotation[zeile, "alignmentID"]
     dataId <- annotationTable[annotationTable$alignmentID == thisID, "sample", drop = T]
     formula <- annotationTable[annotationTable$alignmentID == thisID, "formula", drop = T]
@@ -1072,7 +1230,7 @@ server <- function(input, output, session) {
     spec <- spec[spec$mz > comp_mz - 15 & spec$mz < comp_mz + 15, ]
     colnames(spec) <- c("mz", "int")
 
-    # compute theoretical isotopic distribution
+    # Compute theoretical isotopic distribution
     if (!is.na(formula)) {
       form_charge <- ntsworkflow::correct_formula(formula, adduct)
       mf <- rcdk::get.formula(form_charge$form, charge = form_charge$charge)
@@ -1093,7 +1251,6 @@ server <- function(input, output, session) {
       geom_segment(data=isotope_spec, aes(x = mz, xend = mz, y = 0, yend = int),
                    stat = "identity", size = .5, alpha = 0.5)+
       theme_bw() +
-      #geom_text(data = mz_lab_data, vjust = -0.5, alpha = 0.4) +
       geom_text(data = spec[spec$int > comp_int*0.2, ], check_overlap = TRUE, vjust = -0.5) +
       geom_text(data = isotope_spec[isotope_spec$int < -comp_int*0.2, ],
                 check_overlap = TRUE, vjust = 1.5) +
@@ -1112,15 +1269,14 @@ server <- function(input, output, session) {
       annotate("text", x = Inf, y = Inf, label = formLab, vjust = 1.5, hjust = 1.1)
   }
   annotationMS2Plotten <- function(zeile) {
-    # browser()
-    # get annotationTable row as a list to access the values later
+    # Get annotationTable row as a list to access the values later
     thisID <- groupedWithAnnotation[zeile, "alignmentID"]
     atr <- as.list(annotationTable[annotationTable$alignmentID == thisID, ])
     # if we have multiple hits, these values are the sample anyway, so just take 1st
     dataId <- atr[["sample"]][1]
     comp_mz <- atr[["mzData"]][1]
     
-    # if we have multiple hits, need to get the correct values from multiHitsTable
+    # If we have multiple hits, need to get the correct values from multiHitsTable
     if (groupedWithAnnotation[zeile, "multHits"]) {
       zeileMult <- input$multiHitsTable_rows_selected
       dbExpId <- atr[["expID"]][zeileMult] 
@@ -1195,66 +1351,9 @@ server <- function(input, output, session) {
   }
   
   
-  FragmentAnalysisXIC_plotten <- function(zeile){
-    mz_step <- input$PeakPick_mzstep 
-    XIC <- xcms::rawEIC(datenList[[selected]],mzrange=c(peaklist[[selected]]$mz[zeile]-mz_step/2,peaklist[[selected]]$mz[zeile]+mz_step/2))
-    output$FragmentAnalysisXIC <- renderPlot({
-      plot(x=datenList[[selected]]@scantime/60,y=XIC$intensity, type = "l", main = paste0("XIC (",round(peaklist[[selected]]$mz[zeile]-mz_step/2,4),"-",round(peaklist[[selected]]$mz[zeile]+mz_step/2,4),")"), xlim = FAXIC_ranges$x, ylim = FAXIC_ranges$y, xlab="RT",ylab="Intensity",xaxs = "i",yaxs="i")
-      lines(x = peaklist[[selected]]$LeftendRT[zeile]/60, y = peaklist[[selected]]$Intensity[zeile], type = "h", col = "red")
-      lines(x = peaklist[[selected]]$RightendRT[zeile]/60, y = peaklist[[selected]]$Intensity[zeile], type = "h", col = "red")
-      lines(x = c(peaklist[[selected]]$LeftendRT[zeile]/60-0.1,peaklist[[selected]]$LeftendRT[zeile]/60), y=c(peaklist[[selected]]$Baseline[zeile],peaklist[[selected]]$Baseline[zeile]), type = "l", col = "red")
-      lines(x = c(peaklist[[selected]]$RightendRT[zeile]/60,peaklist[[selected]]$RightendRT[zeile]/60+0.1), y=c(peaklist[[selected]]$Baseline[zeile],peaklist[[selected]]$Baseline[zeile]), type = "l", col = "red")
-      infotext <- ""
-      #if (peaklist[[selected]][zeile,18] > 0) mtext(paste0("! 13C of ",round(peaklist[[selected]][peaklist[[selected]][zeile,18],1],4)," !"),side = 3, line = 0, col = "red")
-      #if (peaklist[[selected]][zeile,19] > 0) mtext(paste0("! Na adduct of ",round(peaklist[[selected]][peaklist[[selected]][zeile,19],1],4)," !"),side = 3, line = 0, col = "red")
-      #if (peaklist[[selected]][zeile,17] > 0) mtext(paste0("! Source Fragment of ",round(peaklist[[selected]][peaklist[[selected]][zeile,17],1],4)," !"),side = 3, line = 0, col = "red")
-      
-      #if (peaklist[[selected]][zeile,18] > 0) infotext <- paste0(infotext, "! 13C of ",round(peaklist[[selected]][peaklist[[selected]][zeile,18],1],4)," !")
-      if (peaklist[[selected]]$C13[zeile] > 0) infotext <- paste0(infotext, "! 13C of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$C13[zeile]],4)," !")
-      #if (peaklist[[selected]][zeile,19] > 0) infotext <- paste0(infotext,"! Na adduct of ",round(peaklist[[selected]][peaklist[[selected]][zeile,19],1],4)," !")
-      if (peaklist[[selected]]$NaAddukt[zeile] > 0) infotext <- paste0(infotext,"! Na adduct of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$NaAddukt[zeile]],4)," !")
-      #if (peaklist[[selected]][zeile,20] > 0) infotext <- paste0(infotext,"! NH4 adduct of ",round(peaklist[[selected]][peaklist[[selected]][zeile,20],1],4)," !")
-      if (peaklist[[selected]]$NH4Addukt[zeile] > 0) infotext <- paste0(infotext,"! NH4 adduct of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$NH4Addukt[zeile]],4)," !")
-      #if ((peaklist[[selected]][zeile,21] > 0) & (peaklist[[selected]][zeile,21] != zeile)) infotext <- paste0(infotext,"! Cl Isotope (1 Cl) of ",round(peaklist[[selected]][peaklist[[selected]][zeile,21],1],4)," !")
-      if ((peaklist[[selected]]$Cl1[zeile] > 0) & (peaklist[[selected]]$Cl1[zeile] != zeile)) infotext <- paste0(infotext,"! Cl Isotope (1 Cl) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$Cl1[zeile]],4)," !")
-      #if (peaklist[[selected]][zeile,21] == zeile) infotext <- paste0(infotext,"! Shows Cl Isotope Pattern (1 Cl) !")
-      if (peaklist[[selected]]$Cl1[zeile] == zeile) infotext <- paste0(infotext,"! Shows Cl Isotope Pattern (1 Cl) !")
-      #if ((peaklist[[selected]][zeile,22] > 0) & (peaklist[[selected]][zeile,22] != zeile)) infotext <- paste0(infotext,"! Cl Isotope (2 Cl) of ",round(peaklist[[selected]][peaklist[[selected]][zeile,22],1],4)," !")
-      if ((peaklist[[selected]]$Cl2[zeile] > 0) & (peaklist[[selected]]$Cl2[zeile] != zeile)) infotext <- paste0(infotext,"! Cl Isotope (2 Cl) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$Cl2[zeile]],4)," !")
-      #if (peaklist[[selected]][zeile,22] == zeile) infotext <- paste0(infotext,"! Shows Cl Isotope Pattern (2 Cl) !")
-      if (peaklist[[selected]]$Cl2[zeile] == zeile) infotext <- paste0(infotext,"! Shows Cl Isotope Pattern (2 Cl) !")
-      #if ((peaklist[[selected]][zeile,23] > 0) & (peaklist[[selected]][zeile,23] != zeile)) infotext <- paste0(infotext,"! Cl Isotope (3 Cl) of ",round(peaklist[[selected]][peaklist[[selected]][zeile,23],1],4)," !")
-      if ((peaklist[[selected]]$Cl3[zeile] > 0) & (peaklist[[selected]]$Cl3[zeile] != zeile)) infotext <- paste0(infotext,"! Cl Isotope (3 Cl) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$Cl3[zeile]],4)," !")
-      #if (peaklist[[selected]][zeile,23] == zeile) infotext <- paste0(infotext,"! Shows Cl Isotope Pattern (3 Cl) !")
-      if (peaklist[[selected]]$Cl3[zeile] == zeile) infotext <- paste0(infotext,"! Shows Cl Isotope Pattern (3 Cl) !")
-      #if ((peaklist[[selected]][zeile,24] > 0) & (peaklist[[selected]][zeile,24] != zeile))  infotext <- paste0(infotext,"! Cl Isotope (4 Cl) of ",round(peaklist[[selected]][peaklist[[selected]][zeile,24],1],4)," !")
-      if ((peaklist[[selected]]$Cl4[zeile] > 0) & (peaklist[[selected]]$Cl4[zeile] != zeile))  infotext <- paste0(infotext,"! Cl Isotope (4 Cl) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$Cl4[zeile]],4)," !")
-      #if (peaklist[[selected]][zeile,24] == zeile) infotext <- paste0(infotext,"! Shows Cl Isotope Pattern (4 Cl) !")
-      if (peaklist[[selected]]$Cl4[zeile] == zeile) infotext <- paste0(infotext,"! Shows Cl Isotope Pattern (4 Cl) !")
-      #if (peaklist[[selected]][zeile,25] > 0) infotext <- paste0(infotext,"! Br Isotope (1 Br) of ",round(peaklist[[selected]][peaklist[[selected]][zeile,25],1],4)," !")
-      if (peaklist[[selected]]$Br1[zeile] > 0) infotext <- paste0(infotext,"! Br Isotope (1 Br) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$Br1[zeile]],4)," !")
-      #if (peaklist[[selected]][zeile,26] > 0) infotext <- paste0(infotext,"! Br Isotope (2 Br) of ",round(peaklist[[selected]][peaklist[[selected]][zeile,26],1],4)," !")
-      if (peaklist[[selected]]$Br2[zeile] > 0) infotext <- paste0(infotext,"! Br Isotope (2 Br) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$Br2[zeile]],4)," !")
-      #if (peaklist[[selected]][zeile,17] > 0) infotext <- paste0(infotext,"! Source Fragment of ",round(peaklist[[selected]][peaklist[[selected]][zeile,17],1],4)," !")
-      if (peaklist[[selected]]$Br3[zeile] > 0) infotext <- paste0(infotext,"! Br Isotope (3 Br) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$Br3[zeile]],4)," !")
-      if (peaklist[[selected]]$Br4[zeile] > 0) infotext <- paste0(infotext,"! Br Isotope (4 Br) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$Br4[zeile]],4)," !")
-      if (peaklist[[selected]]$KAddukt[zeile] > 0) infotext <- paste0(infotext,"! K adduct of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$KAddukt[zeile]],4)," !")
-      if ((peaklist[[selected]]$S1[zeile] > 0) & (peaklist[[selected]]$S1[zeile] != zeile)) infotext <- paste0(infotext,"! S Isotope (1 S) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$S1[zeile]],4)," !")
-      if ((peaklist[[selected]]$S2[zeile] > 0) & (peaklist[[selected]]$S2[zeile] != zeile)) infotext <- paste0(infotext,"! S Isotope (2 S) of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$S2[zeile]],4)," !")
-      if (peaklist[[selected]]$S1[zeile] == zeile) infotext <- paste0(infotext,"! Shows S Isotope Pattern (1 S) !")
-      if (peaklist[[selected]]$S2[zeile] == zeile) infotext <- paste0(infotext,"! Shows S Isotope Pattern (2 S) !")
-      if (peaklist[[selected]]$InSourceFragmentOf[zeile] > 0) infotext <- paste0(infotext,"! Source Fragment of ",round(peaklist[[selected]]$mz[peaklist[[selected]]$InSourceFragmentOf[zeile]],4)," !")
-      mtext(infotext,side = 3, line = 0, col = "red")           
-    })
-  }  
   
   
-  ##
-  #### Table fill functions: ####
-  ##
-  
-  #emptytable <- data.frame(mz=double(),RT=double(),Intensity=double(),Scan=integer(),SN=double())
-  
+  # Table fill functions: ####
   
   FillPeakPickTable <- function(filterMaske = list(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL), 
                                 HighlightType = 0, orderType = list(list(0,"asc")), 
@@ -1297,7 +1396,6 @@ server <- function(input, output, session) {
                               list(visible=FALSE, targets = 8),
                               list(visible=FALSE, targets = 9)
     )
-    # browser()
     output$PeakPickingTable <- DT::renderDataTable(
       DT::datatable(outputtable,
                     colnames = c("m/z","RT","Intensity","Area","S/N","Cl","Br","HighlightType","RealPeak", "random"),
@@ -1325,15 +1423,12 @@ server <- function(input, output, session) {
                       backgroundColor = styleEqual(c(1,2),c("yellow","red")))
       
     )
-    
   }
-  
-  
   
   
   FillAlignmentTable <- function(gr = grouped) {
      
-    # get general intensity, look at first intensity column
+    # Get general intensity, look at first intensity column
     firstIntCol <- grep("^Int_", colnames(gr))[1]
     upperQ <- quantile(gr[, firstIntCol], type = 1, na.rm = TRUE, probs = 0.75) 
     intDigits <- ifelse(upperQ < 10, 2, 0)
@@ -1344,7 +1439,7 @@ server <- function(input, output, session) {
 
     spaltennamen <- c("m/z","RT","ID", "Group", colnames(grouped2)[-(1:4)])
 
-    # merge with annotation table if there is one, ignore multi hits entries, just take first one
+    # Merge with annotation table if there is one, ignore multi hits entries, just take first one
     if (!is.null(annotationTable)) {
        
       grouped2 <- as.data.frame(grouped2)
@@ -1366,7 +1461,7 @@ server <- function(input, output, session) {
       grouped2 <- merge(grouped2, annot, all.x = TRUE, by = "alignmentID")
       
     }
-    # remove ID column
+    # Remove ID column
     grouped2 <- subset(grouped2, , -alignmentID)
     spaltennamen <- spaltennamen[spaltennamen != "ID"]
     filterMask <- vector("list", length = ncol(grouped2))
@@ -1446,14 +1541,16 @@ server <- function(input, output, session) {
     if("samplename" %in% colnames(groupedPlus)){
       
       groupedPlusRed <- subset(
-        groupedPlus, , c(mean_mz, mean_RT, name, samplename, sample_type, score, sample, multHits, alignmentID, mzDB, rtDB)
+        groupedPlus, , c(mean_mz, mean_RT, name, samplename, sample_type, score,
+                         sample, multHits, alignmentID, mzDB, rtDB)
       )
       
     } else {
     
-    groupedPlusRed <- subset(
-      groupedPlus, , c(mean_mz, mean_RT, name, CAS, score, sample, multHits, alignmentID, mzDB, rtDB)
-    )
+      groupedPlusRed <- subset(
+        groupedPlus, , c(mean_mz, mean_RT, name, CAS, score, sample, multHits, 
+                         alignmentID, mzDB, rtDB)
+      )
     }
     
     groupedPlusRed$mean_RT <- groupedPlusRed$mean_RT / 60
@@ -1462,8 +1559,12 @@ server <- function(input, output, session) {
     groupedPlusRed$mzDB <- NULL
     groupedPlusRed$rtDB <- NULL
     
-    groupedPlusRed$highest_int <- vapply(seq_len(nrow(groupedPlusRed)), getIntensity, numeric(1),
-                                         ofTable = groupedPlusRed)
+    groupedPlusRed$highest_int <- vapply(
+      seq_len(nrow(groupedPlusRed)), 
+      getIntensity, 
+      numeric(1), 
+      ofTable = groupedPlusRed
+    )
     
     stopifnot(nrow(groupedPlusRed) == nrow(grouped))
      
@@ -1488,7 +1589,6 @@ server <- function(input, output, session) {
   }
   
   fillMultiHitsTable <- function() {
-    #browser()
     az <- groupedWithAnnotation[input$AlignmentAnnotTable_rows_selected, "alignmentID"]
     multiHits <- annotationTable[annotationTable$alignmentID == az, ]
     groupedPlus <- as.data.frame(grouped)
@@ -1509,13 +1609,8 @@ server <- function(input, output, session) {
     colnames(multiHits)[8] <- "highest_int"
     }
     
-    # multiHits <- subset(
-    #   multiHits, , c(mean_mz, mean_RT, name, CAS, score, sample, multHits)
-    # )
-    
     multiHits$mean_RT <- multiHits$mean_RT / 60
     
-    # multiHits$highest_int <- grouped[az, paste0("Int_", multiHits[1, "sample"])]
     multiHitsTable <<- multiHits
     
     output$multiHitsTable <- DT::renderDataTable(
@@ -1533,8 +1628,7 @@ server <- function(input, output, session) {
     
   }
   
-  
-  #### Other functions: ####
+  # Other functions: ####
   
   compact <- function(x) {
     Filter(Negate(is.null), x)
@@ -1542,18 +1636,12 @@ server <- function(input, output, session) {
   
   deleteSample <- function(zeile) {
     datenList[[zeile]] <<- NULL
-    #headerList[[zeile]] <<- NULL  # depreicated
     peaklist[[zeile]] <<- NULL
     peakPickSettings[[zeile]] <<- NULL
     sampleList[zeile, "RAM"] <<- FALSE
     sampleList[zeile, "deleted"] <<- TRUE
     selected <<- NULL
     selectedR(NULL)
-    
-    # remove columns and rows from grouped, invalidate a bunch of stuff
-    
-    # trigger new drawing of sample table
-    
   }
   
   ppProgress <- function() {
@@ -1561,12 +1649,13 @@ server <- function(input, output, session) {
     cat("Peak-picking progress indicator:\n", file = ppProgressFile)
     ppProgressFile  # return file name
   }
+  
   ppProgressInc <- function(completed, filen) {
     progressText <- paste(completed, date(), "completed\n")
     cat(progressText, file = filen, append = T)
   }
   
-  #### Load environment ####
+  # Load environment ####
   observeEvent(input$loadEnv, {
     if (any(c("sampleList", "datenList") %notin% ls(globalenv())))
       showNotification("No data found in environment")
@@ -1575,8 +1664,6 @@ server <- function(input, output, session) {
     loadp$set(1, message = "Loading data")
     selected <<- NULL
     selectedR(NULL)
-    # sampleList_output <- sampleList
-    # sampleList_output[, "File"] <- basename(sampleList_output[, "File"])
     if (!is.null(grouped))
       FillAlignmentTable()
     if (!is.null(annotationTable))
@@ -1585,8 +1672,7 @@ server <- function(input, output, session) {
     loadp$close()
   })
   
-  #### Memory usage ####
-  
+  # Memory usage ####
   output$memUsage <- renderText({
     input$updateMem
     x <- system2('free', args = "-m",stdout=TRUE)
@@ -1596,12 +1682,11 @@ server <- function(input, output, session) {
     paste0("Current memory usage: ", percentUsed, "%")
   })
   
-  #### Batch add files ####
-
+  # Batch add files ####
   home <- c(WD = globalwd, Home = fs::path_home(), "R Installation" = R.home(), getVolumes("(E:)")())
   home2 <- c(Home = fs::path_home())
 
-  # for some reason on server the batch process add sample drop down does not work, 
+  # For some reason on server the batch process add sample drop down does not work, 
   # the problem of launching shinyFiles from within a modal is known. The issue was evidently fixed
   # but not here
   # This is a problem with firefox. Chrome apparently does not have this issue
@@ -1617,7 +1702,8 @@ server <- function(input, output, session) {
       pfad <<- dirname(additionalFiles[1])
     batchFiles <<- c(batchFiles,additionalFiles)
     batchFilesRAM <<- c(batchFilesRAM,rep(FALSE,length(additionalFiles)))
-    # automatically detect blanks and mark these in the table as such
+    
+    # Automatically detect blanks and mark these in the table as such
     types <- if (input$blankRegex == "") {
       rep(1, length(additionalFiles)) 
     } else {
@@ -1643,7 +1729,6 @@ server <- function(input, output, session) {
   
   observeEvent(input$BatchProcessTable_cell_clicked, {
     selectedBatchFiles <<- input$BatchProcessTable_cells_selected
-    #selectedBatchFiles <<- input$BatchProcessTable_rows_selected
     if (length(selectedBatchFiles) > 0) {
       if (any(selectedBatchFiles[,2] == 4)) {
         batchFilesRAM[selectedBatchFiles[which(selectedBatchFiles[,2] == 4),1]] <<- !batchFilesRAM[selectedBatchFiles[which(selectedBatchFiles[,2] == 4),1]]
@@ -1664,8 +1749,18 @@ server <- function(input, output, session) {
       
       if (any(selectedBatchFiles[,2] == 3)) {
         batchFilesSampleType[selectedBatchFiles[selectedBatchFiles[,2] == 3,1]] <<- batchFilesSampleType[selectedBatchFiles[selectedBatchFiles[,2] == 3,1]]+1
-        if (batchFilesSampleType[selectedBatchFiles[selectedBatchFiles[,2] == 3,1]] > length(sampleTypes)) batchFilesSampleType[selectedBatchFiles[selectedBatchFiles[,2] == 3,1]] <<- 1
-        batchTable <- cbind(dirname(batchFiles),basename(batchFiles),round(file.size(batchFiles)/1000000,1),sampleTypes[batchFilesSampleType],batchFilesRAM)
+        
+        if (batchFilesSampleType[selectedBatchFiles[selectedBatchFiles[,2] == 3,1]] > length(sampleTypes)) 
+          batchFilesSampleType[selectedBatchFiles[selectedBatchFiles[,2] == 3,1]] <<- 1
+        
+        batchTable <-
+          cbind(
+            dirname(batchFiles),
+            basename(batchFiles),
+            round(file.size(batchFiles) / 1000000, 1),
+            sampleTypes[batchFilesSampleType],
+            batchFilesRAM
+          )
         colnames(batchTable) <- c("Dir","File","Size","SampleType","RAM")
         output$BatchProcessTable <- DT::renderDataTable(
           DT::datatable(batchTable,
@@ -1681,13 +1776,21 @@ server <- function(input, output, session) {
       }
     }
   })
-  #### Batch remove files ####
+  
+  # Batch remove files ####
   observeEvent(input$BatchProcessRemoveFiles, {
     if (length(selectedBatchFiles) > 0) {
       batchFiles <<- batchFiles[-selectedBatchFiles[,1]]
       batchFilesRAM <<- batchFilesRAM[-selectedBatchFiles[,1]]
       batchFilesSampleType <<- batchFilesSampleType[-selectedBatchFiles[,1]]
-      batchTable <- cbind(dirname(batchFiles),basename(batchFiles),round(file.size(batchFiles)/1000000,1),batchFilesSampleType,batchFilesRAM)
+      batchTable <-
+        cbind(
+          dirname(batchFiles),
+          basename(batchFiles),
+          round(file.size(batchFiles) / 1000000, 1),
+          batchFilesSampleType,
+          batchFilesRAM
+        )
       colnames(batchTable) <- c("Dir","File","Size","SampleType","RAM")
       output$BatchProcessTable <- DT::renderDataTable(
         DT::datatable(batchTable,
@@ -1703,9 +1806,9 @@ server <- function(input, output, session) {
     }  
   })
   
-  #### Batch peak picking and alignment ####
+  # Batch peak picking and alignment ####
   observeEvent(input$BatchProcessStart, {
-    # get peak picking settings
+    # Get peak picking settings
     mz_min <- isolate(input$PeakPick_massrange[1])
     mz_max <- isolate(input$PeakPick_massrange[2])
     mz_step <- isolate(input$PeakPick_mzstep)
@@ -1724,7 +1827,7 @@ server <- function(input, output, session) {
     componentization_rt_tol_sum <- isolate(input$componentization_rt_tol_sum)
     maxNumPeaks <- isolate(input$maxPeaks)
     
-    # save settings
+    # Save settings
     settings <- list()
     settings$massrange <- c(mz_min,mz_max)
     settings$mz_step <- mz_step
@@ -1736,7 +1839,7 @@ server <- function(input, output, session) {
     settings$precursormzTol <- precursormzTol
     settings$ppm <- componentization_ppm
     settings$RT_Tol <- componentization_rt_tol
-    settings$PPTableRow <- 1  # I changed this to 1, the whole thing makes no sense to me
+    settings$PPTableRow <- 1  
     settings$orderType <- list(list(0,"asc"))
     settings$TableLength <- 10
     settings$displayStart <- 0
@@ -1749,9 +1852,8 @@ server <- function(input, output, session) {
 
     batchp <- Progress$new(session, 0, 1)
     batchp$set(0.1, message = "Overall progress", detail = "Set-up")
-    # browser()
     
-    # append data to sampleList
+    # Append data to sampleList
     # optMzStep will be added after peakpicking
     newIds <- if(length(sampleList$ID) == 0) 
       seq_along(batchFiles) else max(sampleList$ID) + seq_along(batchFiles)
@@ -1767,10 +1869,6 @@ server <- function(input, output, session) {
     # as a list (headerlist, datenList, peaklist, settings)
     batchp$set(0.3, detail = "Peak-picking")
     
-    #ppProgressFile <- ppProgress()  # creates a file to view progress
-    
-    # browser()
-    
     cl <- parallel::makeForkCluster(input$numcores)
     doParallel::registerDoParallel(cl)
     mcoptions <- list(preschedule = FALSE)
@@ -1780,7 +1878,6 @@ server <- function(input, output, session) {
                         inRam = batchFilesRAM, .export = "input",
                         .options.multicore = mcoptions) %dopar% {
       datenx <- xcms::xcmsRaw(filep, includeMSn = TRUE)
-      # browser()
       headerEntry <- list()
       headerEntry$mz_step_recommendation <- ntsworkflow::optimumMzStep(datenx, 0.90)
       headerEntry$sampleType <- sampleTypes[batchSampleType]
@@ -1790,7 +1887,7 @@ server <- function(input, output, session) {
       
       ppsettingsx <- settings
       
-      # if sample is a blank, it should be picked at 1/10th intensity and 1/2 sn ratio,
+      # If sample is a blank, it should be picked at 1/10th intensity and 1/2 sn ratio,
       # to ensure that all peaks near threshold are captured in blank.
       int_threshold_i <- int_threshold
       sn_i <- sn
@@ -1816,8 +1913,7 @@ server <- function(input, output, session) {
         maxNumPeaks
       )
       
-      
-      # remove samples from RAM
+      # Remove samples from RAM
       if (!inRam) {
         datenx@env$intensity <- 0
         datenx@env$mz <- 0
@@ -1825,11 +1921,9 @@ server <- function(input, output, session) {
         datenx@env$msnIntensity <- 0
         datenx@env$msnMz <- 0
       }  
-      gc()  # otherwise memory is not freed
+      gc() 
       
-      #ppProgressInc(basename(datenx@filepath@.Data), ppProgressFile)
-      
-      # collect the results in a list
+      # Collect the results in a list
       resultsList <- list(dat = datenx, headE = headerEntry, 
                           ppset = ppsettingsx, peakl = pl)
       resultsList
@@ -1841,7 +1935,6 @@ server <- function(input, output, session) {
     newppset <- lapply(combiRes, function(x) x[["ppset"]])
     newpeakl <- lapply(combiRes, function(x) x[["peakl"]])
     datenList <<- append(datenList, newdat)
-    #headerList <<- append(headerList, newheadE)  # headerlist is deprecated
     peakPickSettings <<- append(peakPickSettings, newppset)
     peaklist <<- append(peaklist, newpeakl)
     
@@ -1849,13 +1942,12 @@ server <- function(input, output, session) {
       newheadE, function(x) x[["mz_step_recommendation"]], numeric(1))
     sampleListR(sampleList)
 
-    # componentization for all peaklists at the same time (parallel)
+    # Componentization for all peaklists at the same time (parallel)
     batchp$set(0.6, detail = "Componentization")
     
     peaklist <<- foreach(peaklistx = peaklist, datenx = datenList,
                          .export = "input") %dopar% {
       
-      #browser()
       if (is.null(peaklist) || nrow(peaklistx) == 0)
         return(peaklistx)
       
@@ -1869,25 +1961,22 @@ server <- function(input, output, session) {
         Summe_all = componentization_rt_tol_sum,
         adjust_tolerance = isolate(input$Componentization_Dynamic_Tolerance))
       
-      #ppProgressInc(basename(datenx@filepath@.Data), ppProgressFile)
-      
       newpl$RealPeak <- TRUE
       newpl
     }
     
-    #file.remove(ppProgressFile)
-    #create log_file
+    # For logging
     adjust_tolerance <- input$Componentization_Dynamic_Tolerance
     log_file <<- create_log_file()
     
-    # start alignment if requested
+    # Start alignment if requested
     if (input$batchAlign) {
       batchp$set(0.8, detail = "Alignment")
       if (is.null(alignPeaksEvent()))
         alignPeaksEvent(1) else alignPeaksEvent(alignPeaksEvent() + 1)
     }
     
-    # save results if requested
+    # Save results if requested
     if (input$saveBatch) {
       batchp$set(0.9, detail = "Saving")
       if (is.null(saveLater()))
@@ -1899,7 +1988,7 @@ server <- function(input, output, session) {
     rm(cl)
   })
   
-  #### Add Sample ####
+  # Add Sample ####
   home3 <- c(WD = globalwd, Home = fs::path_home())
   shinyFileChoose(input, 'addSample', roots=home3, session=session,
                   filetypes=c('mzML', 'mzXML'))
@@ -1907,7 +1996,6 @@ server <- function(input, output, session) {
   sampleListR <- reactiveVal(NULL)
   
   observeEvent(input$addSample, {
-    #browser()
     req(is.list(input$addSample))
     dateiInfo <- parseFilePaths(home, input$addSample)
     dateiInfo <- as.data.frame(lapply(dateiInfo, as.character), stringsAsFactors = FALSE)
@@ -1945,7 +2033,7 @@ server <- function(input, output, session) {
     loadp$close()
   })
   
-  #### sampleTable Output ####
+  # SampleTable Output ####
   output$sampleTable <- DT::renderDataTable({
      
     req(nrow(sampleListR()) >= 1)
@@ -1979,12 +2067,11 @@ server <- function(input, output, session) {
     )
   })
   
-  #### sampleTable observer ####
+  # SampleTable observer ####
   selectedR <- reactiveVal()
   observeEvent(input$sampleTable_cell_clicked, {
     
     if (!is.null(selected)) {
-      # browser()
       if (length(peakPickSettings) >= selected) {
         TableState <- isolate(input$PeakPickingTable_state)
         peakPickSettings[[selected]]$orderType <<- TableState$order
@@ -1996,7 +2083,7 @@ server <- function(input, output, session) {
     }  
     currentRow <- input$sampleTable_rows_selected
     if (!is.null(currentRow)) {
-      # changed selection so that you select the right sample id, not the row of the table
+      # Changed selection so that you select the right sample id, not the row of the table
       sl <- sampleListR()[!sampleListR()$deleted, ]
       selected <<- sl[input$sampleTable_rows_selected, "ID"]
       selectedR(sl[input$sampleTable_rows_selected, "ID"])
@@ -2013,10 +2100,19 @@ server <- function(input, output, session) {
       
       output$ms1scans <- renderText(length(datenList[[selected]]@tic))
       output$ms2scans <- renderText(length(datenList[[selected]]@msnRt))
-      output$ms1RT <- renderText(c(round(min(datenList[[selected]]@scantime/60),1),"-",round(max(datenList[[selected]]@scantime/60),1),"min"))
-      output$ms2RT <- renderText(c(round(min(datenList[[selected]]@msnRt/60),1),"-",round(max(datenList[[selected]]@msnRt/60),1),"min"))
+      output$ms1RT <-
+        renderText(c(round(min(
+          datenList[[selected]]@scantime / 60
+        ), 1), "-", round(max(
+          datenList[[selected]]@scantime / 60
+        ), 1), "min"))
+      output$ms2RT <-
+        renderText(c(round(min(
+          datenList[[selected]]@msnRt / 60
+        ), 1), "-", round(max(
+          datenList[[selected]]@msnRt / 60
+        ), 1), "min"))
       
-      # output$mzsteprecommendation <- renderText(paste("Recomm.: ",round(headerList[[selected]]$mz_step_recommendation,2)))
       output$mzsteprecommendation <- renderText(paste("Recomm.: ", sampleListR()[sampleListR()$ID == selectedR(), "optMzStep"]))
       output$TICplot <- renderPlot({
         plot(x = datenList[[selected]]@scantime/60, y = datenList[[selected]]@tic, type = "l", xlim = TICplot_ranges$x, ylim = TICplot_ranges$y,main = "TIC",xlab="RT",ylab="Intensity",xaxs = "i",yaxs="i")
@@ -2027,10 +2123,13 @@ server <- function(input, output, session) {
       output$PeakPickXIC <- renderPlot(NULL)
       output$PeakPickMS <- renderPlot(NULL)
       
-      #PeakPicking Tab füllen soweit Daten vorhanden:
-      
-      updateSliderInput(session, "PeakPick_massrange",min=datenList[[selected]]@mzrange[1], max=datenList[[selected]]@mzrange[2])
-      updateSliderInput(session, "PeakPick_RTrange",max=round(max(datenList[[selected]]@scantime)/60))
+      # PeakPicking Table fill
+      updateSliderInput(session,
+                        "PeakPick_massrange",
+                        min = datenList[[selected]]@mzrange[1],
+                        max = datenList[[selected]]@mzrange[2])
+      updateSliderInput(session, "PeakPick_RTrange", 
+                        max = round(max(datenList[[selected]]@scantime) / 60))
       if (length(peakPickSettings) >= selected) { 
         settings <- peakPickSettings[[selected]]
         if (!is.null(settings$massrange)) {
@@ -2050,7 +2149,7 @@ server <- function(input, output, session) {
             value = settings$componentization_dynamic_tolerance
           )
           
-          if (settings$PPTableRow > 0) {  #KJ I don't understand this PPTableRow at all, it is causing everything to crash
+          if (settings$PPTableRow > 0) {  
             FillPeakPickTable(orderType = settings$orderType, TableLength = settings$TableLength, selectedRow = settings$PPTableRow, displayStart = settings$displayStart)
             
             if (sampleList[selected, "RAM"]) {
@@ -2065,7 +2164,6 @@ server <- function(input, output, session) {
           }
         } else {
           FillPeakPickTable()
-          
           output$ComponentsXIC <- renderPlot(ComponentXIC_plotten(1))
         }
       }
@@ -2073,7 +2171,7 @@ server <- function(input, output, session) {
     } 
   })
   
-  #### Load ####
+  # Load ####
   shinyFileChoose(input, 'load', roots=home3, session=session, filetypes = "RDS")
   observeEvent(input$load, {
     req(is.list(input$load))
@@ -2129,12 +2227,12 @@ server <- function(input, output, session) {
                                           mc.preschedule = FALSE, 
                                           mc.cores = input$numcores)
    
-    # add some other necessary variables
+    # Add some other necessary variables
     sampleTypes <<- c("Unknown","Blank","Standard")
     loadp$close()   
   })
   
-  #### Save ####
+  # Save ####
   save_data <- function(speicherort) {
     
     savep <- shiny::Progress$new(session, 0, 1)
@@ -2156,7 +2254,8 @@ server <- function(input, output, session) {
     
     datenList_save <- list()
     for (i in sampleList[!sampleList$deleted, "ID"]) {
-      #need to copy all stuff individually. copying the whole list and deleting the env also delete the env of the original list
+      # Need to copy all stuff individually. copying the whole list and 
+      # deleting the env also delete the env of the original list
       text_xcmsRaw <- "xcmsRaw"
       attr(text_xcmsRaw, "package") <- "xcms"  # need to define class's package as attribute
       datenList_save[[i]] <- new(text_xcmsRaw)
@@ -2210,37 +2309,7 @@ server <- function(input, output, session) {
       
   }, ignoreInit = TRUE)
   
-
-  # changePathModal <- function() {
-  #   modalDialog(
-  #     a("The selected file does not contain the same raw data."),
-  #     a("Peaklist and Alignment Table will be deleted upon replacement."),
-  #     footer = tagList(
-  #       modalButton("Cancel"),
-  #       actionButton("changePathModalContinue","Continue")
-  #     )
-  #   )
-  # }
-  # 
-  # observeEvent(input$changePathModalContinue, {
-  #   sampleList[selected, "File"] <<- newPath
-  #   sampleList[selected, "RAM"] <<- TRUE
-  #   datenList[[selected]] <<- newData
-  #   peaklist[selected] <<- list(NULL)
-  #   grouped <<- NULL
-  #   peakPickSettings[[selected]]$PPTableRow <<- 0
-  #   peakPickSettings[[selected]]$massrange <<- NULL
-  #   abweichungen <- deriveoptimummzstep(datenList[[selected]],0.90)
-  #   headerList[[selected]]$mz_step_recommendation <<- min(abweichungen)
-  #   sampleList
-  #   removeModal()
-  # })
-  # 
-  # observeEvent(input$changePathModalCancel, {
-  #   removeModal()
-  # })
-  
-  #### change path ####
+  # Change path ####
   observeEvent(input$changeSamplePath, {
     oldPath <- sampleListR()[sampleListR()$ID == selectedR(), "File"]
     if (length(selectedR()) == 1)  
@@ -2266,8 +2335,8 @@ server <- function(input, output, session) {
       shiny::showNotification("The replacement is not the same as the original", type = "error")
     }
   })
-  #### remove and reload sample from RAM ####
   
+  # Remove and reload sample from RAM ####
   removeFromRamFun <- function(fileID) {
     datenList[[fileID]]@env$intensity <<- 0
       datenList[[fileID]]@env$mz <<- 0
@@ -2282,13 +2351,13 @@ server <- function(input, output, session) {
     if (length(selected) == 1) {  
       removeFromRamFun(fileID = selected)
     }  
-    gc()  # linux does not free up memory after delete
+    # Linux seems to not free up memory after delete
+    gc()  
   })
   
   observeEvent(input$removeAllFromRAM, {
      filesToRemove <- subset(sampleList, RAM & (!deleted), ID, drop = TRUE)
      remProg <- Progress$new(session, 0, length(filesToRemove))
-     # browser()
      for (fileNum in filesToRemove) {
        removeFromRamFun(fileID = fileNum)
        remProg$inc(1, "Removing files from memory")
@@ -2315,7 +2384,6 @@ server <- function(input, output, session) {
       error = function(cnd) 
         showNotification(paste("Bad input:", conditionMessage(cnd)), type = "error"),
       {
-        # browser()
         if (input$reloadChoice == "") {
           filesToLoad <- subset(sampleList, (!RAM) & (!deleted), ID, drop = TRUE)
         } else {
@@ -2336,15 +2404,12 @@ server <- function(input, output, session) {
   
   #### deleteSample ####
   observeEvent(input$deleteSample, {
-    #browser()
-
     sel <- selectedR()
     if (is.null(sel))
       showNotification("First select sample", type = "error")
     req(!is.null(sel))
     # set elements of deleted samples to NULL
     datenList[sel] <<- list(NULL)
-    #headerList[sel] <<- list(NULL)  # deprecated
     peaklist[sel] <<- list(NULL)
     peakPickSettings[sel] <<- list(NULL)
     sampleList[sel, "deleted"] <<- T
@@ -2356,7 +2421,6 @@ server <- function(input, output, session) {
     
     if (!is.null(grouped)) {
       # Remove columns and rows of grouped table
-       
       grouped <<- grouped[, -grep(sprintf("_%i$", sel), colnames(grouped))]
       emptyRows <- apply(grouped[, grep("^Int_", colnames(grouped))], 1, function(x) all(x == 0))
       grouped <<- grouped[!emptyRows, ]
@@ -2369,9 +2433,7 @@ server <- function(input, output, session) {
   })
   
   
-  ##
-  #### TIC ####
-  ##
+  # TIC ####
   
   observeEvent(input$TICplot_brush, {
     TICplot_ranges$x <- c(input$TICplot_brush$xmin,input$TICplot_brush$xmax)
@@ -2422,9 +2484,9 @@ server <- function(input, output, session) {
   
   
   
-  #### Peak Picking: ####
-  #### 
-  observeEvent(input$PickPeaks, { #when Button "Pick Peaks" is pressed
+  #### Peak Picking ####
+  # when Button "Pick Peaks" is pressed
+  observeEvent(input$PickPeaks, { 
    
     overallp <- shiny::Progress$new(session, 0, 1)
     overallp$set(value = 0, message = "Overall progress", detail = "Setting up")
@@ -2478,7 +2540,6 @@ server <- function(input, output, session) {
         datenList[[selected]] <<- xcms::xcmsRaw(datenList[[selected]]@filepath@.Data, includeMSn = TRUE)
       }
       
-      # browser()
       overallp$set(0.2, detail = "Peak-Picking")
       peaklist[[selected]] <<- ntsworkflow::FindPeaks_BfG(daten = datenList[[selected]], 
                       mz_min, mz_max, mz_step, rt_min, rt_max, sn, 
@@ -2514,11 +2575,11 @@ server <- function(input, output, session) {
         datenList[[selected]]@env$msnMz <<- 0
       }
       
-      #create log_file
-       
       adjust_tolerance <- input$Componentization_Dynamic_Tolerance
       log_file <<- create_log_file()
+      
       overallp$set(1, detail = "Done")
+      
       # PP multiple samples ####
     } else if (nrow(sampleList) > 0 && any(!sampleList[, "deleted"])) {
       
@@ -2580,7 +2641,6 @@ server <- function(input, output, session) {
       
       overallp$set(0.9, detail = "Finishing")
       
-      #create log_file
       adjust_tolerance <- componentization_dynamic_tolerance
       log_file <<- create_log_file()
       
@@ -2616,8 +2676,8 @@ server <- function(input, output, session) {
   })
   
   ppRow <- reactiveVal()
-  
-  observeEvent(input$PeakPickingTable_cell_clicked, { #when one row in the Peak Picking results table is selected
+  # When one row in the Peak Picking results table is selected
+  observeEvent(input$PeakPickingTable_cell_clicked, { 
     zeile <- input$PeakPickingTable_rows_selected 
     if (is.numeric(selected)) {
       if (length(peakPickSettings) >= selected) {
@@ -2670,7 +2730,8 @@ server <- function(input, output, session) {
   ) 
   componentsTableProxy <- dataTableProxy("ComponentsTable")
   
-  observe({ #when one row in the component table results table is selected
+  # When one row in the component table results table is selected
+  observe({ 
     # which row of PP table selected?
     input$ComponentsTable_cell_clicked
     zeileComp <- input$ComponentsTable_rows_selected
@@ -2683,13 +2744,10 @@ server <- function(input, output, session) {
         if (!is.null(peakPickSettings[[selectedR()]]$massrange)) {
           if (!is.null(zeile)) {
             if (sampleList[selectedR(), "RAM"]) {
-              
               output$ComponentsXIC <- renderPlot(ComponentXIC_plotten(zeile))
-              
             }
             peakPickSettings[[selectedR()]]$PPTableRow <<- zeile
             ComponentXIC_ranges$y <<- c(0,max(peaklist[[selectedR()]]$Intensity[peaklist[[selectedR()]]$Gruppe == peaklist[[selectedR()]]$Gruppe[zeile]]))
-            #FillComponentsTable(selectedRow = which(peaklist[[selected]]$Gruppe == peaklist[[selected]]$Gruppe[zeile] & peaklist[[selected]]$groupleader))
             selectRows(dataTableProxy("PeakPickTable"), zeile)
             KomponentenZeilen <- which(peaklist[[selectedR()]]$Gruppe == peaklist[[selectedR()]]$Gruppe[zeile])
             KomponentenZeilen <- KomponentenZeilen[order(peaklist[[selectedR()]]$Intensity[KomponentenZeilen])]
@@ -2697,24 +2755,31 @@ server <- function(input, output, session) {
             ComponentType <- NULL
             for (i in 1:length(KomponentenZeilen)) {
               ComponentType[i] <- ""
+              
               if (peaklist[[selectedR()]]$C13[KomponentenZeilen[i]] > 0)  
                 ComponentType[i] <- paste("13C of",as.character(round(peaklist[[selectedR()]]$mz[peaklist[[selectedR()]]$C13[KomponentenZeilen[i]]],4)))
+              
               if (peaklist[[selectedR()]]$NaAddukt[KomponentenZeilen[i]] > 0)  
                 ComponentType[i] <- paste("[Na] of",as.character(round(peaklist[[selectedR()]]$mz[peaklist[[selectedR()]]$NaAddukt[KomponentenZeilen[i]]],4)))
+              
               if (peaklist[[selectedR()]]$NH4Addukt[KomponentenZeilen[i]] > 0)  
                 ComponentType[i] <- paste("[NH4] of",as.character(round(peaklist[[selectedR()]]$mz[peaklist[[selectedR()]]$NH4Addukt[KomponentenZeilen[i]]],4)))
+              
               if (peaklist[[selectedR()]]$KAddukt[KomponentenZeilen[i]] > 0)  
                 ComponentType[i] <- paste("[K] of",as.character(round(peaklist[[selectedR()]]$mz[peaklist[[selectedR()]]$KAddukt[KomponentenZeilen[i]]],4)))
+              
               if (peaklist[[selectedR()]]$Cl1[KomponentenZeilen[i]] > 0)  
                 ComponentType[i] <- paste("37Cl of",as.character(round(peaklist[[selectedR()]]$mz[peaklist[[selectedR()]]$Cl1[KomponentenZeilen[i]]],4)))
+              
               if (peaklist[[selectedR()]]$Cl2[KomponentenZeilen[i]] > 0)  
                 ComponentType[i] <- paste("37Cl of",as.character(round(peaklist[[selectedR()]]$mz[peaklist[[selectedR()]]$Cl2[KomponentenZeilen[i]]],4)))
+              
               if (peaklist[[selectedR()]]$Cl3[KomponentenZeilen[i]] > 0)  
                 ComponentType[i] <- paste("37Cl of",as.character(round(peaklist[[selectedR()]]$mz[peaklist[[selectedR()]]$Cl3[KomponentenZeilen[i]]],4)))
+              
               if (peaklist[[selectedR()]]$Cl4[KomponentenZeilen[i]] > 0)  
                 ComponentType[i] <- paste("37Cl of",as.character(round(peaklist[[selectedR()]]$mz[peaklist[[selectedR()]]$Cl4[KomponentenZeilen[i]]],4)))
             }
-            #outputtable <- data.frame(Farben=character(),Anzeige=character(),mz=double(),RT=double(),Intensity=double(),ComponentType=character())
             outputtable <- as.data.frame(cbind(
               farben,
               "",
@@ -2744,7 +2809,6 @@ server <- function(input, output, session) {
                               ),
                               order = list(list(2,"asc"))
                             )
-                            
                             
               )
               %>% formatRound(columns = "mz",digits = 4)
@@ -2902,7 +2966,22 @@ server <- function(input, output, session) {
             IsotopeType[as.numeric(names(which((anzahlCl4Isotope == 1) | (anzahlCl4Isotope == 2) | (anzahlCl4Isotope == 3))))] <- 1
             IsotopeType[as.numeric(names(which(anzahlCl4Isotope == 4)))] <- 2
             
-            FillPeakPickTable(filterMaske = list(NULL,NULL,NULL,NULL,NULL,list(search = "1 ... 1"),NULL,NULL,NULL),HighlightType = IsotopeType, orderType = peakPickSettings[[selected]]$order, TableLength = peakPickSettings[[selected]]$length)
+            FillPeakPickTable(
+              filterMaske = list(
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                list(search = "1 ... 1"),
+                NULL,
+                NULL,
+                NULL
+              ),
+              HighlightType = IsotopeType,
+              orderType = peakPickSettings[[selected]]$order,
+              TableLength = peakPickSettings[[selected]]$length
+            )
           }
         }
       }
@@ -2966,7 +3045,8 @@ server <- function(input, output, session) {
       }
     }
   })
-  # randomize peak picking table ####
+  
+  # Randomize peak picking table ####
   observeEvent(input$peakpick_random, {
     req(!is.null(selected))
     req(length(peaklist) >= selected)
@@ -2976,7 +3056,6 @@ server <- function(input, output, session) {
     FillPeakPickTable(filterMaske = list(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL), 
                       orderType = list(list(9,"asc")), TableLength = 100)
   })
-  
   
   shinyFileSave(input, 'PickPeaksTableExport', roots=home, session=session)
   observeEvent(input$PickPeaksTableExport,{
@@ -3007,17 +3086,14 @@ server <- function(input, output, session) {
   }
   )
   
-  
-  ##
-  ##Event handler Alignment:
-  ##
+  # Event handler Alignment
   alignPeaksEvent <- reactiveVal()  # this is done to allow programatic starting of alignment
   observeEvent(input$AlignPeaks, {
     if (is.null(alignPeaksEvent()))
       alignPeaksEvent(1) else alignPeaksEvent(alignPeaksEvent() + 1)
   })
   
-  ### GenForm ####
+  # GenForm ####
   observeEvent(input$genformGo, {
     
     # compile genform? use 
@@ -3025,7 +3101,6 @@ server <- function(input, output, session) {
     # in the genform source folder
     # The program was then placed in ~/bin
     # R/genformR_kj.R was added to ntsworkflow (code from E. Schymanski)
-    # browser()
     
     # create MS1 and MS2 files in current working dir
     prog <- shiny::Progress$new(session, 0, 1)
@@ -3067,7 +3142,7 @@ server <- function(input, output, session) {
         },
       {
         # function copied from package GenFormR by Emma Schymanski, edited for use on CentOS
-        # GenForm itself from M. Meringer et al
+        # GenForm itself from M. Meringer et al.
         ntsworkflow::RunGenForm(ms_file = file.path(globalwd, "GenFormMS1.txt"),
                                 mz = searchMz,
                                 msms_file = file.path(globalwd, "GenFormMS2.txt"), 
@@ -3095,8 +3170,10 @@ server <- function(input, output, session) {
     prog$close()
   })
   
-  #### Alignment ####
-  observeEvent(alignPeaksEvent(), {#when button "Align Peaks" is pressed
+  # Alignment ####
+  
+  # When button "Align Peaks" is pressed
+  observeEvent(alignPeaksEvent(), {
     # write aligment table into a global variable:
      
     # first correct peaks lists for parallel 
@@ -3135,10 +3212,9 @@ server <- function(input, output, session) {
       annotationTable <<- NULL
     }
     
-    
     progress$set(value = 1, message = "Aligning features...")
     
-    # create log_file
+    # logging
     ppm_dev <- input$Alignment_deltamz
     DeltaRT <- isolate(input$Alignment_deltaRT)
     log_file <<- create_log_file()
@@ -3149,10 +3225,12 @@ server <- function(input, output, session) {
     } else {
       peaklist2 <- peaklist
     }
-    # browser()
+
     # ready for alignment
-    # For more than 10 samples and not just group leaders try parallel alignment, for anything less it is not worth it!
-    # Be aware this does produce small differences in the result, some peaks are grouped differently I don't know why! :-(
+    # For more than 10 samples and not just group leaders try parallel alignment, 
+    # for anything less it is not worth it!
+    # Be aware this does produce small differences in the result, some peaks 
+    # are grouped differently, reason is unknown
     if (!input$alignLeaders && input$parallelAlign) {
       result <- ntsworkflow::alignment_BfG_cpp_par(
         peaklists = peaklist2, 
@@ -3165,7 +3243,6 @@ server <- function(input, output, session) {
       result <- ntsworkflow::alignment_BfG_cpp(peaklist2, isolate(input$Alignment_deltamz), 
                                   isolate(input$Alignment_deltaRT), isolate(input$aligMzTolType))
     }
-    # browser() 
     # fill out the Gruppe column (summarised componentisation)
     result <- ntsworkflow::summarize_groups(result)
     
@@ -3188,7 +3265,7 @@ server <- function(input, output, session) {
     FillAlignmentTable()
   })
   
-  #### Blank correction ####
+  # Blank correction ####
   observeEvent(input$BlankCorrection, {#when button "Blank Correction" is pressed
     if (is.null(grouped)) {
       showNotification("first align the peak lists")
@@ -3208,26 +3285,23 @@ server <- function(input, output, session) {
     progress$set(message = "Removing blanks...")
     
     nrow_grouped_before_blankcorrection <- nrow(grouped)
-    
-    # grouped <<- blankCorrection(grouped, headerList, intensityFactor = input$blankCorrFac,
-    #                             deleteGrouped = input$deleteGrouped)
     grouped <<- ntsworkflow::blankCorrection(grouped, sampleListR(), intensityFactor = input$blankCorrFac,
                                 deleteGrouped = input$deleteGrouped)
-    #create log_file
+    # logging
     intensityFactor <- input$blankCorrFac
     deleteGrouped <- input$deleteGrouped
     log_file <<- create_log_file()
     
     progress$close()
     
-    # need to invalidate the aligR reactive so that it using only the blank corrected table
+    # Need to invalidate the aligR reactive so that it using only the blank corrected table
     updateReactive$v <- updateReactive$v + 1
     if (exists("clusteringData"))
       rm(clusteringData, pos = globalenv())
     FillAlignmentTable()
   })
   
-  #### Normalize ####
+  # Normalize ####
   observeEvent(input$Normalize, {
      
     if (is.null(input$AlignmentTable_rows_selected)) {
@@ -3252,7 +3326,7 @@ server <- function(input, output, session) {
     
     grouped[, intCols_normalize] <<- sweep(grouped[, intCols_normalize, drop = F], 2, intensities, "/")
     
-    #create log_file 
+    # Logging 
     mean_mz_chosen_feature <- as.numeric(grouped[input$AlignmentTable_rows_selected, grep("^mean_mz", colnames(grouped))])
     mean_RT_chosen_feature <- as.numeric(grouped[input$AlignmentTable_rows_selected, grep("^mean_RT", colnames(grouped))])
     row_number <- input$AlignmentTable_rows_selected
@@ -3260,7 +3334,8 @@ server <- function(input, output, session) {
     
     FillAlignmentTable()
   })
-  #### Plot alignment stuff #### 
+  
+  # Plot alignment results #### 
   observeEvent(input$AlignmentTable_cell_clicked, {
     AlignmentTableZeile <<- input$AlignmentTable_rows_selected
     alignmentIdSelected(grouped[AlignmentTableZeile, "alignmentID"])
@@ -3268,7 +3343,6 @@ server <- function(input, output, session) {
       output$AlignmentXICs <- renderPlot(alignmentXICsPlotten(alignmentIdSelected()))
       output$AlignmentTrend <- renderPlot(alignmentTrendPlotten(AlignmentTableZeile, tabelle = grouped))
       output$AlignmentMS2 <- renderPlot(alignmentMS2Plotten(alignmentIdSelected()))
-      #FillSimilarTrendsTable(AlignmentTableZeile)
     }
   })
   
@@ -3314,7 +3388,7 @@ server <- function(input, output, session) {
   })
   
 
-  #### Alignment table filters ####
+  # Alignment table filters ####
   
   observeEvent(input$removeRare, {
     p <- Progress$new()
@@ -3336,7 +3410,7 @@ server <- function(input, output, session) {
         if (exists("clusteringData"))
           rm(clusteringData, pos = globalenv())
         
-        #create log_file
+        # Logging
         minDetections <- input$minDetections
         log_file <<- create_log_file()
       }
@@ -3361,7 +3435,7 @@ server <- function(input, output, session) {
         if (exists("clusteringData"))
           rm(clusteringData, pos = globalenv())
         
-        #create log_file
+        # Logging
         leader_first_sample <- min(eval(parse(text = input$leaderSamples)))
         leader_last_sample <- max(eval(parse(text = input$leaderSamples)))
         log_file <<- create_log_file()
@@ -3387,7 +3461,7 @@ server <- function(input, output, session) {
         if (exists("clusteringData"))
           rm(clusteringData, pos = globalenv())
         
-        #create log_file
+        # Logging
         rep_first_sample <- min(eval(parse(text = input$repSamples)))
         rep_last_sample <- max(eval(parse(text = input$repSamples)))
         rep_number_replicates <- input$repNum
@@ -3413,7 +3487,7 @@ server <- function(input, output, session) {
         if (exists("clusteringData"))
           rm(clusteringData, pos = globalenv())
         
-        #create log_file
+        # Logging
         repAve_first_sample <- min(eval(parse(text = input$repAveSamples)))
         repAve_last_sample <- max(eval(parse(text = input$repAveSamples)))
         repAve_number_replicates <- input$repAveNum
@@ -3497,7 +3571,8 @@ server <- function(input, output, session) {
   
   #### Alignment Overview ####
   
-  # build alignment table for overview, highest int and clustering tabs including calculation for rel intensity
+  # build alignment table for overview, highest int and clustering tabs 
+  # including calculation for rel intensity
   # range and max intensity and prepare calculation for clustering
   updateReactive <- reactiveValues(v=0)
   aligR <- reactive({
@@ -3511,7 +3586,8 @@ server <- function(input, output, session) {
     alig[, intCols] <- lapply(alig[, intCols, drop = F], signif, digits = 4)
     alig$maxInt <- apply(alig[, intCols, drop = F], 1, max)
     p$inc(1)
-    # relative intensity range as minimum use lower quartile (since there will always be some zeros!)
+    # relative intensity range as minimum use lower quartile 
+    # (since there will always be some zeros!)
     # the choice of lower quartile was arbitrary and may need to be changed
     alig$intRange <- apply(alig[, intCols, drop = F], 1, function(x) {
       1 - quantile(x / max(x), .25, na.rm = TRUE, names = FALSE)
@@ -3708,7 +3784,8 @@ server <- function(input, output, session) {
       lab <- substr(lab, 1, 12)
       hc$labels <- lab
     }
-    clusteringData <<- hc  # copy to global environment so that the data can still be used after closing/crash
+    # Copy to global environment so that the data can still be used after closing/crash
+    clusteringData <<- hc  
     prb$close()
     hc
   })
@@ -3740,8 +3817,8 @@ server <- function(input, output, session) {
   })
 
   
-  # denroLocStore stores the old value of dendro hover so that the plot remains even if
-  # you move the cursor off the dendrogram
+  # denroLocStore stores the old value of dendro hover so that the plot 
+  # remains even if you move the cursor off the dendrogram
   dendroLocStore <<- NULL
   dendroLocX <- reactive({
      
@@ -3800,11 +3877,6 @@ server <- function(input, output, session) {
   })
 
   #### Alignment similar trends ####
- # aligRowSel <- reactiveVal(0)
-
-  # observeEvent(input$AlignmentTable_cell_clicked, {
-  #   aligRowSel(input$AlignmentTable_rows_selected)
-  # })
 
   observeEvent(input$overviewSelected_cell_clicked, {
     req(input$overviewSelected_rows_selected)
@@ -3831,7 +3903,7 @@ server <- function(input, output, session) {
     input$intRangeSelected_cell_clicked
     input$dendroSelected_cell_clicked
     req(!is.na(input$trendFac))
-    req(input$trendFac >= 0.3)  # sonst rechnet er sich zu tode
+    req(input$trendFac >= 0.3)  # otherwise will never stop computations
     req(alignmentIdSelected())
     FillSimilarTrendsTable(alignmentIdSelected())
     SimilarTrends_plotten(alignmentIdSelected())  # otherwise old plot remains
@@ -3858,7 +3930,7 @@ server <- function(input, output, session) {
     }
   })
   
-  #### Annotation ####
+  # Annotation ####
   
   observeEvent(input$dbHelp, {
     showModal(modalDialog(
@@ -3927,7 +3999,6 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$annotGo, {
-    # browser() 
     dbPath <- as.character(parseFilePaths(home, input$ms2Db)$datapath)
     if (is.null(grouped))
       showNotification("First align the samples", type = "error")
@@ -3956,8 +4027,6 @@ server <- function(input, output, session) {
       
     } else if (grepl("\\.db$", dbPath) || grepl("\\.ya?ml$", dbPath)) {
       # yaml or SQLite db: do MS2 searching
-      # validate(need(length(dbPath) != 0, "Choose a database file"))
-      # removeNotification("nothingFound")
       
       # first check
       
@@ -3977,7 +4046,6 @@ server <- function(input, output, session) {
       } else {
         input$annotChromMeth
       }
-      #browser()
       
       annotationTableNew <- ntsworkflow::annotate_grouped(  # instrument: default settings
         sampleListLocal = sampleList,
@@ -4099,7 +4167,6 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$AlignmentAnnotTable_rows_selected, {
-    #browser() 
     cr <- input$AlignmentAnnotTable_rows_selected
     alignmentIdSelected(groupedWithAnnotation[cr, "alignmentID"])
     if (groupedWithAnnotation[input$AlignmentAnnotTable_rows_selected, "multHits"])
@@ -4134,14 +4201,15 @@ server <- function(input, output, session) {
   })
   
   
-  #### Save request batch ####
-  # this has to be placed at the very end so that other reactive events are done before saving
+  # Save request batch ####
+  # This has to be placed at the very end so that other reactive events are done
+  # before saving
   saveLater <- reactiveVal()
   observeEvent(saveLater(), {
     save_data(file.path(globalwd, paste0(input$saveBatchName, ".RDS")))
   })
   
-  #### Exit ####
+  # Exit ####
   session$onSessionEnded(function() {
     if (exists("cl")) {
       parallel::stopCluster(cl)
