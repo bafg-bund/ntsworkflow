@@ -1,4 +1,4 @@
-# random package admin functions
+# Package admin functions
 
 
 #' @useDynLib ntsworkflow
@@ -10,5 +10,3 @@ NULL
   packageStartupMessage("\nPlease cite ntsworkflow if you use it: see citation('ntsworkflow') for details.\n")
 }
 
-
-# test

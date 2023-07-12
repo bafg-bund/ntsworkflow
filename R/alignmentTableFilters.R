@@ -52,7 +52,6 @@ onlyGroupLeaders <- function(alignment, pll, samples) {
 #' @examples
 averageReplicates <- function(alignment, samples, reps) {
   stopifnot(length(samples) %% reps == 0)
-  #browser()
   # make list containing grouped samp ID which need to be merged
   sets <- split(samples, rep(1:(length(samples) / reps), each = reps))
   intColsSets <- lapply(sets, function(set) which(colnames(alignment) %in% paste0("Int_", set)))
@@ -123,12 +122,10 @@ keepReps <- function(alignment, samples, reps, least) {
   ms2ColsSets <- lapply(sets, function(set) which(colnames(alignment) %in% paste0("ms2scan_", set)))
   gruppeColsSets <- lapply(sets, function(set) which(colnames(alignment) %in% paste0("gruppe_", set)))
   pidColsSets <- lapply(sets, function(set) which(colnames(alignment) %in% paste0("PeakID_", set)))
-  #browser()
   # loop through each row of alignment
   for (r in seq_len(nrow(alignment))) {
     # loop through each element of sets
     for (setNum in seq_along(sets)) {
-      #browser()
       # get the intensity columns for this set
       
       intCols <- intColsSets[[setNum]]
@@ -178,14 +175,11 @@ removeRare <- function(alignment, minimum) {
 #' @export
 #' @import foreach
 blankCorrection <- function(alignment, samplels, intensityFactor = 10, deleteGrouped = TRUE) {
-  #browser()
   
   intensityCols <- grep("^Int_", colnames(alignment)) 
   groupCols <- grep("^gruppe_", colnames(alignment))
   
   # get columns in alignment table of blanks
-  #browser()
-  # blanks <- which(sapply(headerList, function(x) !is.null(x) && x$sampleType == "Blank"))
   blanks <- samplels[samplels$sampleType == "Blank", "ID"]
   blankIntColsNames <- paste0("Int_", blanks)
   blankIntCols <- which(colnames(alignment) %in% blankIntColsNames)
@@ -200,35 +194,36 @@ blankCorrection <- function(alignment, samplels, intensityFactor = 10, deleteGro
   
   if (deleteGrouped) {
     
-    # Wenn der Groupleader durch die Blankcorrection entfernt wurde soll die gesammte Gruppe IN DIESER 
-    # Probe entfernt werden.
+    # When the Groupleader due to blankcorrection is deleted then the whole group
+    # should be deleted in this sample.
     
-    for (i in 1:length(groupCols[-blanks])){  # Schleife für jede Probe
+    for (i in 1:length(groupCols[-blanks])){  # Loop over samples
       
-      for (j in 1:max(alignment[,groupCols[i]])){  # Schleife für jede Gruppe
+      for (j in 1:max(alignment[,groupCols[i]])){  # Loop over groups
         
-        # wenn die Gruppe in der Probe i existiert (lenght >0) wird ermittelt welches das intensivste Feature ist
+        # If the group exists the most intense feature in the group is determined
         
         if (0 != length(which(alignment[,groupCols[i]] == j))) {
           Int_max <- max(c(alignment[which(alignment[,groupCols[i]]==j),intensityCols[i]]))
           group_Int_max <- j
           
-          # Abfrage:  A Ist der Groupleader NICHT im Ergebnis (weil durch Blankcorrection entfernt) und
-          #           B sind andere Features dieser Gruppe im Ergebnis.
-          # Wenn ja, werden die Werte von PeakID_i bis gruppe_i für die verbleibenden Features der Gruppe in der Probe 0 gesetzt 
+          # Questions:  A is the groupleader not in the result and
+          #           B are other features of this group in the result.
+          # If both are true the values of the columns from PeakID to gruppe 
+          # for the other features of this group in this sample are set to 0
           
           if (!any(ergebnis[,sprintf("Int_%i",i)]==Int_max) &&        # A
               any(ergebnis[,sprintf("gruppe_%i",i)]==group_Int_max)){ # B
             
-            ergebnis[ergebnis[,sprintf("gruppe_%i",i)]==group_Int_max,        # Zeilen
-                     grep(sprintf("PeakID_%i",i), colnames(ergebnis)):        # Spalten von PeakID_i
-                       grep(sprintf("gruppe_%i",i), colnames(ergebnis))] <- 0}  # bis gruppen_i werden 0
+            ergebnis[ergebnis[,sprintf("gruppe_%i",i)]==group_Int_max, # rows
+                     grep(sprintf("PeakID_%i",i), colnames(ergebnis)): # cols from PeakID_i
+                       grep(sprintf("gruppe_%i",i), colnames(ergebnis))] <- 0}  # to gruppe_i
           
         } #if
       } #for j
     } #for i
     
-    # delete rows with all zero. Is this necessary? Yes!
+    # Delete rows with all zero. Is this necessary? Yes!
     if (0 < length(which(rowSums(ergebnis[, -c(grep("^mean_mz$", colnames(ergebnis)),
                                                grep("^mean_RT$", colnames(ergebnis)),
                                                grep("^MS2Fit$", colnames(ergebnis)),
@@ -242,24 +237,21 @@ blankCorrection <- function(alignment, samplels, intensityFactor = 10, deleteGro
     
   } #if (deleteGrouped) 
   
-  # Eliminieren von ein-Peak-Gruppen  (Gruppe wird 0)
+  # Removal of one peak groups (Group is set to 0)
   for (i in 1:max(ergebnis[,"Gruppe"])) {
     if (length(which(ergebnis[,"Gruppe"]==i))==1) 
       ergebnis[which(ergebnis[,"Gruppe"]==i),"Gruppe"] <- 0
   }
   
-  # Schließen der entstandenen Zwischenräume
+  # Closing the gaps
   V1 <- sort(unique(ergebnis[, "Gruppe"])[-(which(unique(ergebnis[, "Gruppe"]) == 0))])
   V2 <- seq_along(V1) 
   for (i in 1:length(V1)) {
     ergebnis[which(ergebnis[, "Gruppe"] == V1[i]),"Gruppe"] <- V2[i]
   }
   
-  #browser()
-  
   ergebnis   
 }
-
 
 
 #' Keep only rows found in at least X consecutive samples
