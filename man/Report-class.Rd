@@ -9,7 +9,7 @@
 This is a class for conducting non-target screening data evaluation based on database searching by m/z, retention time and MS2 spectral comparison. View the vignette "Database screening with Report in ntsworkflow" for a step-by-step guide on how to use this function.
 }
 \details{
-Initialize a Report by calling Report$new() this starts a new Report with the default settings 
+Initialize a Report by calling Report$new() this starts a new Report with the default settings
 (see settings field, below). Settings can be changed by calling the \code{changeSettings} method.
 Load files by calling the \code{addRawFiles} method and process files with the \code{process_all}
 method. After processing the Report can be saved for viewing in the visuallization tool (susS app).
@@ -26,41 +26,41 @@ The settings list contains the following fields and defaults:
 "LC-ESI-QTOF TripleTOF 5600 SCIEX", ceunit = c("V", "eV"), comparison = "dot_product", threshold
 = 400, rt_res = 1.5, EIC_extraction = 0.05, baseline_noise_MS1 = 0.5, sn = 3, rtoffset = 0,
 IS_rtoffset = 0, ISrttolm = 1, blank_int_factor = 3, rtTolReinteg = 1, mzTolReinteg = 0.005,
-ndp_m = 0.4, ndp_n = 1, mztolu_ms2 = 0.015, area_threshold = 1, height_threshold = 1, 
+ndp_m = 0.4, ndp_n = 1, mztolu_ms2 = 0.015, area_threshold = 1, height_threshold = 1,
 use_int_threshold = "area"}.
-\code{db_path}: path to sqlite spectral-database (SDB). 
-\code{rttolm}: retention time tolerance for the suspect search. 
+\code{db_path}: path to sqlite spectral-database (SDB).
+\code{rttolm}: retention time tolerance for the suspect search.
 \code{mztolu}: m/z tolerance for the spectrum extraction (MS2 precursor mass).
-\code{mztolu_fine}: m/z tolerance for precursor mass in MS1.  
-\code{chromatography} Is the chromatographic method allowed from the SDB, use DOI of paper in 
+\code{mztolu_fine}: m/z tolerance for precursor mass in MS1.
+\code{chromatography} Is the chromatographic method allowed from the SDB, use DOI of paper in
 which method is described.
-\code{pol}: polarity. 
-\code{CE_s}: allowed collision energies from SDB. 
-\code{CES_s}: allowed collision energy spreads from SDB. 
-\code{instr}: allowed instruments from SDB. 
-\code{ceunit}: allowed collision energy unit from SDB. 
+\code{pol}: polarity.
+\code{CE_s}: allowed collision energies from SDB.
+\code{CES_s}: allowed collision energy spreads from SDB.
+\code{instr}: allowed instruments from SDB.
+\code{ceunit}: allowed collision energy unit from SDB.
 \code{comparison}: algorithm to use for spectral comparison, currently only the default is allowed.
-\code{threshold}: score of spectral comparison under which results are rejected automatically, 
-1000=perfect match. 
+\code{threshold}: score of spectral comparison under which results are rejected automatically,
+1000=perfect match.
 \code{rt_res}: Resolution of chrom. peaks (see \code{\link{ms2_search}}) in min.
-Peaks with RT difference > \code{rt_res} are considered to be from different substances. 
-\code{EIC_extraction}: Extraction width to produce EIC, affects integration. 
+Peaks with RT difference > \code{rt_res} are considered to be from different substances.
+\code{EIC_extraction}: Extraction width to produce EIC, affects integration.
 \code{baseline_noise_MS1}: Signals under this intensity are ignored and also not
-included in the saved spectra. 
-\code{sn}: signal-to-noise ratio limit for peak integration. 
-\code{rtoffset}: Retention time offset between samples and database. 
-\code{ISrttolm}: RT tolerance for IS peak finding and integration. 
+included in the saved spectra.
+\code{sn}: signal-to-noise ratio limit for peak integration.
+\code{rtoffset}: Retention time offset between samples and database.
+\code{ISrttolm}: RT tolerance for IS peak finding and integration.
 \code{blank_int_factor}: Intensity factor to remove compounds found in blank. Peak in sample
-must be within \code{blank_int_factor}: * intensity in blank. 
+must be within \code{blank_int_factor}: * intensity in blank.
 \code{rtTolReinteg}: is the retention time tolerance for reintegration.
-\code{mzTolReinteg}: is the m/z tolerance for reintegration. 
-\code{ndp_m}: Peak intensity weighting factor for dot-product, 
-\code{ndp_n}: m/z weighting factor for dot-product, 
-\code{mztolu_ms2}: m/z tolerance for dot-product fragment mass binning, 
-\code{area_threshold}: Peak area intensity threshold. 
+\code{mzTolReinteg}: is the m/z tolerance for reintegration.
+\code{ndp_m}: Peak intensity weighting factor for dot-product,
+\code{ndp_n}: m/z weighting factor for dot-product,
+\code{mztolu_ms2}: m/z tolerance for dot-product fragment mass binning,
+\code{area_threshold}: Peak area intensity threshold.
 \code{height_threshold}: Peak height intensity threshold.
 \code{use_int_threshold}: can be either "area", "height", or "none"
-\code{peaksPerPeak}: 
+\code{peaksPerPeak}:
 \code{mustFindChromPeak}: default FALSE, if TRUE, peaks without area are deleted}
 
 \item{\code{rawFilesCompl}}{\code{data.frame} with processed files and date of processing.}
@@ -75,9 +75,9 @@ must be within \code{blank_int_factor}: * intensity in blank.
 
 \item{\code{MS2}}{\code{data.frame} holding all MS2 spectra.}
 
-\item{\code{IS}}{\code{data.frame} with list of IS to process, this has to be imported from a csv file 
+\item{\code{IS}}{\code{data.frame} with list of IS to process, this has to be imported from a csv file
 (comma sep) using this method \code{addIS()}. The csv file should have the columns name, formula,
-rt, adduct. Where formula is in the form e.g. for CBZ: C14 13CH12N 15NO, and adduct is in the 
+rt, adduct. Where formula is in the form e.g. for CBZ: C14 13CH12N 15NO, and adduct is in the
 form [M+H]+ or [M]+.}
 
 \item{\code{ISresults}}{\code{data.frame} with results of IS processings.}
@@ -100,14 +100,14 @@ Does not load files to RAM, only marks file path.}
 
 \item{\code{changeSettings(parameter, value)}}{Change any setting by name and then value. See settings field for more details.}
 
-\item{\code{cleanDuplicateCol()}}{Check the peaklist for duplicates, if peaks previously indicated as 
+\item{\code{cleanDuplicateCol()}}{Check the peaklist for duplicates, if peaks previously indicated as
 duplicates are no longer so then set duplicate column back to NA}
 
 \item{\code{cleanPeakLetterCol()}}{Check the peaklist for multiple peaks from one compound, if any B, C etc.
 peaks no longer have an A peak, these are renamed to start with A}
 
-\item{\code{clearAndSave(dialog = TRUE, nameReport = NULL)}}{Clear data from RAM and save report as .report file in the current working directory. 
-Use nameReport to give a different location and different name as in 
+\item{\code{clearAndSave(dialog = TRUE, nameReport = NULL)}}{Clear data from RAM and save report as .report file in the current working directory.
+Use nameReport to give a different location and different name as in
 *.clearAndSave('D:\exampleFolder\example'). Note: The folder must exist beforehand.
 To read the file again, use the function ntsworkflow::loadReport}
 
@@ -117,9 +117,9 @@ To read the file again, use the function ntsworkflow::loadReport}
 there is more than one blank then these will be combined. If IS should also be deleted use
 includeIS. Removal is based on intensity ratio, see settings.}
 
-\item{\code{deleteFP(substanceName, indices = 0)}}{Delete all occurances of a compound given by name. Only one compound can be given. Name must 
+\item{\code{deleteFP(substanceName, indices = 0)}}{Delete all occurances of a compound given by name. Only one compound can be given. Name must
 match exactly. Compound is added to list of falsePos (see fields). If indices = 0, then
-compound is always deleted, in all samples and also in future processed samples. 
+compound is always deleted, in all samples and also in future processed samples.
 Otherwise it is only deleted in the specified samples (by index number or name without quotes).}
 
 \item{\code{getPeak(rawLinki, comp_mzi, comp_rti, minIndi, maxIndi, width, mztoli, rttoli)}}{Internal function to integrate peaks during processing}

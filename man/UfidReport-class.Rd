@@ -13,7 +13,7 @@ The peak list has an additional column for the ufid
 
 \describe{
 \item{\code{ufid_search_one(data_raw, db_con, select_ufids = NULL)}}{This function takes an xcmsRaw file and looks for peaks found in the ufid db
-It needs a DBI connection to the ufid database and returns a peakList of 
+It needs a DBI connection to the ufid database and returns a peakList of
 the form returned by process_all}
 }}
 
