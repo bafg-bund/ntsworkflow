@@ -16,7 +16,6 @@
 #'
 #' @return Annotation table
 #' @export
-
 annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
   intCols <- alig[, c(
     grep("^Int_", colnames(alig)),
@@ -135,7 +134,6 @@ annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
 #'
 #' @return
 #' @export
-
 annotate_grouped <- function(sampleListLocal,
                              peakListList,
                              alignmentTable,
@@ -562,7 +560,6 @@ annotate_grouped <- function(sampleListLocal,
 #'
 #' @export
 #' @import dplyr
-
 ms2_search <- function(data_path, db_path,
                        rttolm = 1, mztolu = 0.5,
                        mztolu_fine = 0.005,
@@ -902,7 +899,6 @@ ms2_search <- function(data_path, db_path,
 #' @import dplyr
 #' @import mzR
 #'
-#' @examples
 get_MS2spectrum <- function(data.mzR, mass, rt, p_mztolu = 0.5, p_rttol = 0.2) {
   delta.mass2 <- p_mztolu
   rt.mzML.tol <- p_rttol
@@ -982,7 +978,6 @@ id_to_name <- function(id, db) {
 #' @return MS2-Spectrum as data.frame (mz, int)
 #' @export
 #' @import dplyr
-#' @examples
 dbGetSpectrum <- function(db, Exp.ID) {
   stopifnot(length(Exp.ID) == 1)
 
@@ -1066,7 +1061,6 @@ id_to_name_preloaded <- function(id, expTable, compTable) {
 #'
 #' @return
 #' @export
-#'
 #'
 get_ids <- function(db, mz, rt, mztolu = 0.005,
                     rttol = 1,
@@ -1202,7 +1196,6 @@ calc_ndp <- function(d_spec, db_spec, ndp_m = 2, ndp_n = 1, mztolu_ms2 = 0.015) 
 #' @return
 #' @export
 #'
-#' @examples
 normalizeMs2 <- function(x) {
   # remove precursor and noise
   compname <- attr(x, "comp_name")
