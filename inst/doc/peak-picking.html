@@ -12,7 +12,7 @@
 
 <meta name="author" content="Department G2 (Water Chemistry), Federal Institute of Hydrology, Koblenz" />
 
-<meta name="date" content="2022-10-20" />
+<meta name="date" content="2023-07-13" />
 
 <title>Example peak-picking and annotation using ntsworkflow</title>
 
@@ -31,13 +31,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
 </script>
 
 <style type="text/css">
-  code{white-space: pre-wrap;}
-  span.smallcaps{font-variant: small-caps;}
-  span.underline{text-decoration: underline;}
-  div.column{display: inline-block; vertical-align: top; width: 50%;}
-  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-  ul.task-list{list-style: none;}
-    </style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
 
 
 
@@ -241,7 +241,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ntsworkflow</h1>
 <h4 class="author">Department G2 (Water Chemistry), Federal Institute of
 Hydrology, Koblenz</h4>
-<h4 class="date">2022-10-20</h4>
+<h4 class="date">2023-07-13</h4>
 
 
 
@@ -324,11 +324,19 @@ considered.</p>
 </div>
 <div id="batch" class="section level3">
 <h3>Batch processing</h3>
-<p>(In progress)</p>
+<p>Use batch processing to process a large number of samples. The batch
+processing button will open a window to set up the batch (files and some
+settings). In batch processing, datafiles are loaded one-by-one into
+memory and removed after processing and therefore memory usage is
+reduced. The current settings found in the peak-picking and alignment
+tab are used, these need to be set first before starting the batch
+processes. After loading the datafiles, by clicking on the sample type
+in the table, it is possible to label a sample as blank. It is easier to
+use a regular expression to automatically detect blanks.</p>
 </div>
 <div id="feature-alignment" class="section level3">
 <h3>Feature alignment</h3>
-<p>Features are aligned accross multiple files under the tab
+<p>Features are aligned across multiple files under the tab
 “Alignment/Table” with the “Align Features” button. This algorithm
 starts by taking the first feature of the first sample and examines all
 other samples for features which fulfill the alignment parameters
@@ -340,8 +348,8 @@ correct m/z and <em>t</em><sub>R</sub>). This process is repeated for
 the remaining non-aligned features in all samples. Features are aligned
 in the <em>alignment table</em> showing the average m/z and
 <em>t</em><sub>R</sub> and the intensities for this aligned feature in
-all the samples. Clicking on a row will show the overlayed EICs, the
-intensity profile and the overlayed MS<sup>2</sup> spectra.</p>
+all the samples. Clicking on a row will show the overlay of EICs, the
+intensity profile and the overlay of MS<sup>2</sup> spectra.</p>
 </div>
 <div id="normalization" class="section level3">
 <h3>Normalization</h3>

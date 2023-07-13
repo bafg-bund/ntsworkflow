@@ -58,11 +58,11 @@ Peaks with a base width outside of this range will not be considered.
 
 ### Batch processing  {#batch}
 
-(In progress)
+Use batch processing to process a large number of samples. The batch processing button will open a window to set up the batch (files and some settings). In batch processing, datafiles are loaded one-by-one into memory and removed after processing and therefore memory usage is reduced. The current settings found in the peak-picking and alignment tab are used, these need to be set first before starting the batch processes. After loading the datafiles, by clicking on the sample type in the table, it is possible to label a sample as blank. It is easier to use a regular expression to automatically detect blanks.
 
 ### Feature alignment
 
-Features are aligned accross multiple files under the tab "Alignment/Table" with the "Align Features" button. This algorithm starts by taking the first feature of the first sample and examines all other samples for features which fulfill the alignment parameters defined (m/z and *t*~R~ tolerance. Of all these candidate features the most intense one is chosen and subsequently the first step is repeated using this feature as a starting point (since it is assumed that the more intense feature most accurately represents the correct m/z and *t*~R~). This process is repeated for the remaining non-aligned features in all samples. Features are aligned in the *alignment table* showing the average m/z and *t*~R~ and the intensities for this aligned feature in all the samples. Clicking on a row will show the overlayed EICs, the intensity profile and the overlayed MS^2^ spectra.
+Features are aligned across multiple files under the tab "Alignment/Table" with the "Align Features" button. This algorithm starts by taking the first feature of the first sample and examines all other samples for features which fulfill the alignment parameters defined (m/z and *t*~R~ tolerance. Of all these candidate features the most intense one is chosen and subsequently the first step is repeated using this feature as a starting point (since it is assumed that the more intense feature most accurately represents the correct m/z and *t*~R~). This process is repeated for the remaining non-aligned features in all samples. Features are aligned in the *alignment table* showing the average m/z and *t*~R~ and the intensities for this aligned feature in all the samples. Clicking on a row will show the overlay of EICs, the intensity profile and the overlay of MS^2^ spectra.
 
 ### Normalization
 

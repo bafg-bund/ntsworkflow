@@ -10,6 +10,8 @@ Authors@R: c(
              comment = "Federal Institute of Hydrology (BfG) Koblenz, Germany"),
              person("Toni", "Köppe", email = "Koeppe@bafg.de", role = "aut",
              comment = "Federal Institute of Hydrology (BfG) Koblenz, Germany"),
+             person("Franziska", "Thron", email = "Thron@bafg.de", role = c("aut"),
+             comment = "Federal Institute of Hydrology (BfG) Koblenz, Germany"),
              person("Arne", "Wick", email = "Wick@bafg.de", role = "aut",
              comment = "Federal Institute of Hydrology (BfG) Koblenz, Germany"),
              person(c("Thomas", "A."), "Ternes", email = "Ternes@bafg.de", role = "aut",
