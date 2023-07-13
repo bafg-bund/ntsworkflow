@@ -876,7 +876,7 @@ Report <- setRefClass(
       compName <- peakList[peakList$peakID == ID, "comp_name"]
       newDbPath <- settings$db_path
       if (is.null(newDbPath)) {
-        newDbPath <- "Z:\\G\\G2\\HRMS\\Spektrendatenbank\\sqlite\\MS2_db_v7.db"
+        warning("There is no DB")
       }
       db <- DBI::dbConnect(RSQLite::SQLite(), newDbPath)
       expTbl <- tbl(db, "experiment")
@@ -994,7 +994,7 @@ Report <- setRefClass(
       expID <- peakList[peakList$peakID == ID, "expID"]
       newDbPath <- settings$db_path
       if (is.null(newDbPath)) {
-        newDbPath <- "Z:\\G\\G2\\HRMS\\Spektrendatenbank\\sqlite\\MS2_db_v7.db"
+        warning("There is no DB")
       }
       db <- DBI::dbConnect(RSQLite::SQLite(), newDbPath)
       db_spec <- ntsworkflow::dbGetSpectrum(db, expID)
