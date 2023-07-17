@@ -1,6 +1,8 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
+# ntsworkflow
+
 The goal of ntsworkflow is to process non-target LC/GC-HRMS data and
 carry out simple data analysis. It is designed as a basic peak-picking
 and annotation algorithm which feeds into more specialized workflows for
@@ -28,9 +30,9 @@ If you use the package or any derivative thereof, please cite the work.
 To cite this work please use the following citation or run
 `citation("ntsworkflow")`.
 
-> Kevin S. Jewell, Christian Dietrich, Toni Köppe, Arne Wick and Thomas
-> A. Ternes (2023). ntsworkflow: A Non-Target Screening Data Evaluation
-> Tool. R package version 0.2.2.
+> Kevin S. Jewell, Christian Dietrich, Toni Köppe, Franziska Thron, Arne
+> Wick and Thomas A. Ternes (2023). ntsworkflow: A Non-Target Screening
+> Data Evaluation Tool. R package version 0.2.2.
 
 ### Peer-reviewed articles reporting the development of ntsworkflow
 
