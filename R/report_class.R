@@ -114,7 +114,7 @@ Report <- setRefClass(
     initialize = function(...) {
       # Standard settings ####
       settings <<- list(
-        db_path = "Z:\\G\\G2\\HRMS\\Spektrendatenbank\\sqlite\\MS2_db_v7.db",
+        db_path = NULL,
         rttolm = 1, mztolu = 0.05,
         mztolu_fine = 0.005,
         chromatography =
@@ -464,6 +464,10 @@ Report <- setRefClass(
 
       if (nrow(IS) == 0) {
         warning("No internal standards loaded")
+      }
+      
+      if (is.null(settings$db_path)) {
+        stop("There is no DB")
       }
 
       # loop through each file and peak, collect MS1, EIC and MS2, store in corresponding tables
@@ -890,9 +894,7 @@ Report <- setRefClass(
       expID <- peakList[peakList$peakID == ID, "expID"]
       compName <- peakList[peakList$peakID == ID, "comp_name"]
       newDbPath <- settings$db_path
-      if (is.null(newDbPath)) {
-        warning("There is no DB")
-      }
+      
       db <- DBI::dbConnect(RSQLite::SQLite(), newDbPath)
       expTbl <- tbl(db, "experiment")
       comTbl <- tbl(db, "compound")
@@ -1008,9 +1010,7 @@ Report <- setRefClass(
       # get ms2 spec from database
       expID <- peakList[peakList$peakID == ID, "expID"]
       newDbPath <- settings$db_path
-      if (is.null(newDbPath)) {
-        warning("There is no DB")
-      }
+     
       db <- DBI::dbConnect(RSQLite::SQLite(), newDbPath)
       db_spec <- ntsworkflow::dbGetSpectrum(db, expID)
       DBI::dbDisconnect(db)
@@ -2307,61 +2307,3 @@ Report <- setRefClass(
   )
 )
 
-# Ufid Subclass ####
-
-#' A reference class for extracting ufids from raw data for import into elastic search
-#'
-#' This class extends Report class for use with the ufid database
-#' The peak list has an additional column for the ufid
-#'
-#' @export UfidReport
-#' @exportClass UfidReport
-UfidReport <- setRefClass(
-  "UfidReport",
-  contains = "Report",
-  methods = list(
-    initialize = function(...) {
-      callSuper(...)
-      settings[["analysis_method"]] <<- "BfG_NTS_RP1"
-      settings[["db_path"]] <<- "~/projects/ufid/ufid1.sqlite"
-    },
-    ufid_search_one = function(data_raw, db_con, select_ufids = NULL) {
-      "This function takes an xcmsRaw file and looks for peaks found in the ufid db
-      It needs a DBI connection to the ufid database and returns a peakList of
-      the form returned by process_all"
-      browser()
-      feature_table <- tbl(db_con, "feature")
-      retention_time_table <- tbl(db_con, "retention_time")
-      retention_time_table <- filter(retention_time_table, method == settings$analysis_method)
-      ufids <- feature_table %>%
-        left_join(retention_time_table, by = "ufid") %>%
-        dplyr::collect()
-
-      if (!is.null(select_ufids)) {
-        ufids <- ufids[ufids$ufid %in% select_ufids, ]
-      }
-
-      # for each ufid, find if it is in raw data
-      extract_feature <- function(ufid_, mz_, rt_) {
-        browser()
-        minInd <- which.min(abs(data_raw@scantime - (rt_ - (settings$rtTolReinteg * 60) / 2)))
-        maxInd <- which.min(abs(data_raw@scantime - (rt_ + (settings$rtTolReinteg * 60) / 2)))
-        # get peak for this mz and rt
-        ufid_res <- .self$getPeak(
-          data_raw, mz_, rt_, minInd, maxInd,
-          settings$EIC_extraction,
-          settings$mzTolReinteg,
-          settings$rtTolReinteg
-        )
-
-        # check for MS2
-      }
-      pl_raw <- Map(extract_feature, ufids$ufid, ufids$mz, ufids$rt)
-    },
-    process_all_ufid = function() {
-      dbc <- DBI::dbConnect(RSQLite::SQLite(), settings$db_path)
-      .self$loadData(indices = 1)
-      pl1 <- ufid_search_one(rawData[[1]], dbc)
-    }
-  )
-)
