@@ -2035,12 +2035,18 @@ server <- function(input, output, session) {
                            RAM = T, 
                            deleted = F, 
                            stringsAsFactors=F)
-    
     }
+    
     newRowsList <- Map(createRow, datSeq, dateiAlle, datenList[datSeq])
     newRows <- do.call("rbind", newRowsList)
       
-    sampleList <<- rbind(sampleList, newRows)
+    if(!"normelizePeakID" %in% colnames(sampleList)) {
+      sampleList <<- rbind(sampleList, newRows)
+    } else {
+      newRows[,"normelizePeakID"] <- NA
+      sampleList <<- rbind(sampleList, newRows)
+    }
+    
     loadp$set(0.5)
     
     sampleListR(sampleList)
