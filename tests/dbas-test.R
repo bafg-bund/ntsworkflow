@@ -12,5 +12,5 @@ test$addIS(F, "~/projects/ntsautoeval/IS_table_pos.csv")
 test$addRawFiles(F, "/home/Jewell/HRMS_Z/Messdaten/koblenz/wasser//2018/201802/pos/RH_pos_20180226.mzXML")
 test$process_all()
 
-test$peakList
+View(test$peakList)
 test$view()

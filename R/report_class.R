@@ -159,6 +159,7 @@ Report <- setRefClass(
         int_h = integer(),
         int_a = integer(),
         peak = character(),
+        adduct = character(),
         rt_min = numeric(),
         real_rt_min = numeric(),
         comp_id = integer(),
@@ -613,7 +614,19 @@ Report <- setRefClass(
           results$s_to_n <- NA
           results$real_rt_min <- NA
           results$eic_extraction_width <- NA
-
+          
+          # Add adduct to peak list
+          slib <- DBI::dbConnect(RSQLite::SQLite(), settings$db_path)
+          exptbl <- tbl(slib, "experiment") %>% 
+            select(experiment_id, adduct) %>% 
+            collect()
+          DBI::dbDisconnect(slib)
+          get_adduct <- function(expid) {
+            exptbl %>% filter(experiment_id == !!expid) %>% 
+              select(adduct) %>% unlist()
+          }
+          results$adduct <- vapply(results$expID, get_adduct, character(1))
+          
           # bind results to existing results
           # export peaklist ####
           peakList <<- rbind(peakList, results)

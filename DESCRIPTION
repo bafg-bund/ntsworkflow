@@ -28,7 +28,7 @@ Authors@R: c(
 Description: This is a collection of functions to be used for non-target
     data analysis. Specifically for the identification of unknowns and process
     evaluation. 
-License: GNU GPL-3.0 (comes with ABSOLUTELY NO WARRANTY)
+License: GNU GPL-3.0
 LazyData: TRUE
 Imports:
     tidyverse,
