@@ -3330,10 +3330,17 @@ server <- function(input, output, session) {
       return(NULL)
     }
     # record peak IDs used to do the normalization
+    #browser()
     pidColsNorm <- grep("^PeakID", colnames(grouped))
     pidNorm <- as.numeric(grouped[input$AlignmentTable_rows_selected, pidColsNorm, drop = T])
     stopifnot(length(pidNorm) == nrow(subset(sampleList, !deleted)))
-    stopifnot(all(pidNorm != 0), all(!is.na(pidNorm)))
+    stopifnot(all(!is.na(pidNorm)))
+    if (!all(pidNorm != 0)) {
+      showNotification(
+        "Feature not found in all samples, cannot be used for normalization",
+        type = "warning")
+    }
+    req(all(pidNorm != 0))
     sampleList[!sampleList$deleted, "normalizePeakID"] <<- pidNorm
     sampleListR(sampleList)
     
@@ -4041,11 +4048,18 @@ server <- function(input, output, session) {
     } else if (grepl("\\.csv$", dbPath)) {  
       # csv library: just do m/z-rt screening in alignment table
       progress$set(detail = "Searching average m/z, rt")
-      annotationTableNew <- ntsworkflow::annotate_grouped_mz_rt(
-        grouped, dbPath, input$annotMzTolmDa / 1000, input$annotRtTolM
+      tryCatch(
+        annotationTableNew <- ntsworkflow::annotate_grouped_mz_rt(
+          grouped, dbPath, input$annotMzTolmDa / 1000, input$annotRtTolM
+        ),
+        error = function(cnd) {
+          message("Error in annotation. ", cnd)
+        }
       )
-      
-      
+      if (!exists("annotationTableNew")) {
+        showNotification("Annotation unsuccessful, check format of csv", type = "warning")
+      }
+      req(exists("annotationTableNew"))
     } else if (grepl("\\.db$", dbPath) || grepl("\\.ya?ml$", dbPath)) {
       # yaml or SQLite db: do MS2 searching
       
