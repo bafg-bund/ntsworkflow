@@ -1131,8 +1131,7 @@ Report <- setRefClass(
           falsePos <<- rbind(falsePos, tempdf)
         }
       } else {
-        message(sprintf("False positive (%s) not found or already deleted\n", substanceName))
-        # Still need to add this compound to the list
+        # Even if not found, still need to add this compound to the list
         if (substanceName %notin% falsePos$name) {
           tempdf <- data.frame(name = substanceName, sampNum = indices, stringsAsFactors = FALSE)
           falsePos <<- rbind(falsePos, tempdf)
