@@ -212,7 +212,11 @@ Report <- setRefClass(
         stringsAsFactors = FALSE
       )
       integRes <<- data.frame(
-        samp = character(), comp_name = character(), int_h = integer(),
+        samp = character(), 
+        comp_name = character(), 
+        adduct = character(),
+        isotopologue = character(),
+        int_h = integer(),
         int_a = integer(), s_to_n = numeric(),
         rt_error_min = numeric(), # rt error to the average found from MS2 search
         eic_extraction_width = numeric(),
@@ -1340,6 +1344,8 @@ Report <- setRefClass(
         indices <- seq_along(rawFiles)
         integRes <<- data.frame(
           samp = character(), comp_name = character(),
+          adduct = character(),
+          isotopologue = character(),
           int_h = integer(),
           int_a = integer(), s_to_n = numeric(),
           rt_error_min = numeric(),
@@ -1353,20 +1359,32 @@ Report <- setRefClass(
         integRes <<- integRes[integRes$samp %notin% basename(rawFiles[indices]), ]
       }
 
-      # get all unique compounds from peakList with their mz and rt
-      allComps <- unique(peakList$comp_name)
+      # get all unique compound+adduct+isotop from peakList with their mz and rt
+      
+      tempcai <- paste(peakList$comp_name, peakList$adduct, peakList$isotopologue, sep = "|")
+      allComps <- unique(tempcai)
       allSamps <- rawFiles[indices]
 
       cc <- rep(allComps, times = length(allSamps))
       ss <- rep(allSamps, each = length(allComps))
-
+      #browser()
       # check if results are present in peakList, if yes, copy these to integRes, if not
       # leave as NA, need to be processed later
       getPreDat <- function(nm, sa) {
-        r <- peakList[peakList$comp_name == nm & peakList$samp == basename(sa), ]
+        x <- strsplit(nm, "\\|")[[1]]
+        cnm <- x[1]
+        ad <- x[2]
+        isot <- x[3]
+        r <- peakList[
+          peakList$comp_name == cnm & 
+            peakList$adduct == ad &
+            peakList$isotopologue == isot &
+            peakList$samp == basename(sa), ]
         if (nrow(r) >= 1) {
           return(data.frame(
-            samp = sa, comp_name = nm, int_h = r$int_h,
+            samp = sa, comp_name = cnm, 
+            adduct = ad, isotopologue = isot,
+            int_h = r$int_h,
             int_a = r$int_a, s_to_n = r$s_to_n,
             rt_error_min = r$rt_error_min,
             eic_extraction_width = r$eic_extraction_width,
@@ -1375,7 +1393,7 @@ Report <- setRefClass(
           ))
         } else {
           return(data.frame(
-            samp = sa, comp_name = nm, int_h = NA,
+            samp = sa, comp_name = cnm, adduct = ad, isotopologue = isot, int_h = NA,
             int_a = NA, s_to_n = NA, rt_error_min = NA,
             eic_extraction_width = NA,
             real_mz = NA, real_rt_min = NA,
@@ -1390,7 +1408,7 @@ Report <- setRefClass(
       preDat <- do.call("rbind", preDatL)
 
       # which compounds and samples have no area
-      toProc <- preDat[is.na(preDat$int_a), c("comp_name", "samp")]
+      toProc <- preDat[is.na(preDat$int_a), c("comp_name", "samp", "adduct", "isotopologue")]
 
       if (nrow(toProc) == 0) {
         message("no additional peaks to integrate")
@@ -1412,11 +1430,25 @@ Report <- setRefClass(
 
         rawLink <- rawData[[thisSamp]]
 
-        getCompDat <- function(thisComp) {
+        getCompDat <- function(thisCai) {
+          #browser()
+          x <- strsplit(thisCai, "\\|")[[1]]
+          thisComp <- x[1]
+          thisAd <- x[2]
+          thisIsot <- x[3]
           # find best mz
-          thisMz <- mean(peakList[peakList$comp_name == thisComp, "real_mz"], na.rm = TRUE)
+          thisMz <- mean(
+            peakList[
+              peakList$comp_name == thisComp & 
+              peakList$adduct == thisAd & 
+              peakList$isotopologue == thisIsot
+              , "real_mz"
+            ], na.rm = TRUE)
           # find best rt
-          allRt <- peakList[peakList$comp_name == thisComp, "real_rt_min"]
+          allRt <- peakList[
+            peakList$comp_name == thisComp & 
+            peakList$adduct == thisAd & 
+            peakList$isotopologue == thisIsot, "real_rt_min"]
           thisRt <- mean(allRt, na.rm = TRUE)
           # if no rt found, could be because no peak integrated, use rt from
           if (is.na(thisRt)) {
@@ -1439,7 +1471,10 @@ Report <- setRefClass(
           # get highest peak
           compRes <- compRes[which.max(compRes$peak_intens), ]
           data.frame(
-            samp = basename(thisSamp), comp_name = thisComp,
+            samp = basename(thisSamp), 
+            comp_name = thisComp,
+            adduct = thisAd,
+            isotopologue = thisIsot,
             int_h = as.integer(round(compRes$peak_intens)),
             int_a = as.integer(round(compRes$peakArea)),
             s_to_n = round(compRes$peak_intens / compRes$noisedeviation, 1),
@@ -1449,7 +1484,8 @@ Report <- setRefClass(
             stringsAsFactors = FALSE
           )
         }
-        datL <- lapply(proc$comp_name, getCompDat)
+        proc$cai <- paste(proc$comp_name, proc$adduct, proc$isotopologue, sep = "|")
+        datL <- lapply(proc$cai, getCompDat)
         if (all(is.null(datL))) {
           return(NULL)
         }
