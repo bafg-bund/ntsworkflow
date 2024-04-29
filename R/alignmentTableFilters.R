@@ -274,7 +274,7 @@ blankCorrection <- function(alignment, samplels, intensityFactor = 10, deleteGro
 #' Keep only rows found in at least X consecutive samples
 #'
 #' @param alignment Alignment Table
-#' @param samples samples to consider (everything else will be ignored)
+#' @param samples samples to consider (everything else will be ignored), by ID
 #' @param consecutive number of consecutive samples a peak should be present in
 #'
 #' @return

@@ -141,7 +141,7 @@ annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
 #' @param mztolu_ms2
 #' @param rtoffset Note: Offset the database to make it match your values
 #' @param intCutData
-#' @param numcores Number of cores for parallelization
+#' @param numcores Number of cores for parallelization (currently not used)
 #'
 #' @details If data files are not in memory, they will be temporary loaded and
 #'
@@ -313,9 +313,10 @@ annotate_grouped <- function(sampleListLocal,
     # check that file is loaded, if not, load file
 
     if (!sampleListLocal[sampleListLocal$ID == sample_highest, "RAM"]) {
-      currentDataFile <- xcms::xcmsRaw(datenListLocal[[sample_highest]]@filepath@.Data,
+      currentDataFile <- suppressMessages(xcms::xcmsRaw(
+        datenListLocal[[sample_highest]]@filepath@.Data,
         includeMSn = TRUE
-      )
+      ))
     } else {
       currentDataFile <- datenListLocal[[sample_highest]]
     }
@@ -500,6 +501,13 @@ annotate_grouped <- function(sampleListLocal,
 
       viabExp
     })
+    
+    # Reduce size of rawFile (might be causing crashes 2024-04-22, not sure)
+    currentDataFile@env$intensity <- NULL
+    currentDataFile@env$mz <- NULL
+    currentDataFile@env$profile <- NULL
+    currentDataFile@env$msnIntensity <- NULL
+    currentDataFile@env$msnMz <- NULL
 
     hitsForSamp <- do.call("rbind", hitsForSamp)
     hitsForSamp
@@ -591,7 +599,7 @@ ms2_search <- function(data_path, db_path,
   if (inherits(data_path, "character")) {
     data_path <- normalizePath(data_path)
   }
-
+  #browser()
   if (db_path == "Z:\\G\\G2\\HRMS\\Spektrendatenbank\\sqlite\\MS2_db_v7.db") {
     stop("Copy database to the local harddrive, do not use copy on Z")
   }
@@ -612,7 +620,7 @@ ms2_search <- function(data_path, db_path,
     filter(CE %in% CE_s) %>%
     filter(CES %in% CES_s) %>%
     filter(instrument %in% instr) %>%
-    select(name, CAS, mz, rt, adduct, experiment_id, compound_id) %>%
+    select(name, CAS, mz, rt, adduct, isotope, experiment_id, compound_id) %>%
     dplyr::collect() %>%
     distinct()
 
@@ -645,7 +653,7 @@ ms2_search <- function(data_path, db_path,
       stop("data_path is not character or list of xcmsRaw")
     }
 
-    # for each compound in db, search raw data to find ms2 spectra with the
+    # For each compound+adduct+isotopologue in db, search raw data to find ms2 spectra with the
     # correct precursor mass and correct rt
     eval_comp <- function(compound, exptbl, comptbl, fragtbl) {
       inf <- data.frame(
@@ -843,6 +851,8 @@ ms2_search <- function(data_path, db_path,
       inf$comp_name <- compound$name[1]
       inf$comp_CAS <- compound$CAS[1]
       inf$mz_error_mDa <- round(abs(compound$mz[1] - inf$real_mz) * 1000, 3)
+      inf$adduct <- compound$adduct[1]
+      inf$isotopologue <- compound$isotope[1]
       if (is.na(compound$rt[1])) {
         inf$rt_error_min <- NA
       } else {
@@ -853,7 +863,8 @@ ms2_search <- function(data_path, db_path,
       }
       inf
     }
-    splitByComp <- split(suspects, suspects$compound_id)
+    suspects$comp_adduct_isot <- paste(suspects$name, suspects$adduct, suspects$isotope, sep = "_")
+    splitByComp <- split(suspects, suspects$comp_adduct_isot)
 
     all_comps <- lapply(
       splitByComp,

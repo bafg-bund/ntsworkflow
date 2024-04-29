@@ -160,6 +160,7 @@ Report <- setRefClass(
         int_a = integer(),
         peak = character(),
         adduct = character(),
+        isotopologue = character(),
         rt_min = numeric(),
         real_rt_min = numeric(),
         comp_id = integer(),
@@ -460,6 +461,7 @@ Report <- setRefClass(
       "Process all currently unprocessed files in the report object. Previously recorded false
       positives (without specified sample) are deleted by default."
       # find out which are left to process
+      #browser()
       to_process <- setdiff(rawFiles, rawFilesCompl$path)
       .self$loadData(indices = which(rawFiles %in% to_process))
 
@@ -577,7 +579,6 @@ Report <- setRefClass(
             results <- rbind(results, further_res)
           }
         }
-
         # continue with this rest only if peaks are found
         if (!is.null(results)) {
           # clear features which are under the MS1 baseline
@@ -616,16 +617,16 @@ Report <- setRefClass(
           results$eic_extraction_width <- NA
           
           # Add adduct to peak list
-          slib <- DBI::dbConnect(RSQLite::SQLite(), settings$db_path)
-          exptbl <- tbl(slib, "experiment") %>% 
-            select(experiment_id, adduct) %>% 
-            collect()
-          DBI::dbDisconnect(slib)
-          get_adduct <- function(expid) {
-            exptbl %>% filter(experiment_id == !!expid) %>% 
-              select(adduct) %>% unlist()
-          }
-          results$adduct <- vapply(results$expID, get_adduct, character(1))
+          # slib <- DBI::dbConnect(RSQLite::SQLite(), settings$db_path)
+          # exptbl <- tbl(slib, "experiment") %>% 
+          #   select(experiment_id, adduct) %>% 
+          #   collect()
+          # DBI::dbDisconnect(slib)
+          # get_adduct <- function(expid) {
+          #   exptbl %>% filter(experiment_id == !!expid) %>% 
+          #     select(adduct) %>% unlist()
+          # }
+          # results$adduct <- vapply(results$expID, get_adduct, character(1))
           
           # bind results to existing results
           # export peaklist ####
@@ -808,7 +809,7 @@ Report <- setRefClass(
       process_all, previous FP will be deleted by default"
       # first delete results corresponding to results that are to be reprocessed
       # get peak IDs of all peaks to be deleted
-
+      #browser()
       if (is.null(indices) && is.null(comp_names)) {
         indices <- seq_along(rawFiles)
         delIDs <- peakList[, "peakID"]
