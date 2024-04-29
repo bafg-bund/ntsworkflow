@@ -31,7 +31,7 @@ annotate_grouped(
 \arguments{
 \item{rtoffset}{Note: Offset the database to make it match your values}
 
-\item{numcores}{Number of cores for parallelization}
+\item{numcores}{Number of cores for parallelization (currently not used)}
 }
 \description{
 Function takes all the variables needed from non-target app and settings for

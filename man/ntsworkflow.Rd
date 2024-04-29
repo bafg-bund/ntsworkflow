@@ -2,6 +2,7 @@
 % Please edit documentation in R/ntsworkflow.R
 \docType{package}
 \name{ntsworkflow}
+\alias{ntsworkflow-package}
 \alias{ntsworkflow}
 \title{ntsworkflow: A package for computating the notorious bar statistic.}
 \description{
@@ -13,3 +14,16 @@ foo, bar and baz.
 The mypackage functions ...
 }
 
+\author{
+\strong{Maintainer}: Kevin S. Jewell \email{Jewell@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
+
+Authors:
+\itemize{
+  \item Christian Dietrich \email{Christian.Dietrich@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
+  \item Toni Köppe \email{Koeppe@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
+  \item Franziska Thron \email{Thron@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
+  \item Arne Wick \email{Wick@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
+  \item Thomas A. Ternes \email{Ternes@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
+}
+
+}
