@@ -1525,7 +1525,7 @@ Report <- setRefClass(
     clearAndSave = function(dialog = TRUE, nameReport = NULL) {
       "Clear data from RAM and save report as .report file in the current working directory.
       Use nameReport to give a different location and different name as in
-      *.clearAndSave('D:\\exampleFolder\\example'). Note: The folder must exist beforehand.
+      *.clearAndSave('D:/exampleFolder/example'). Note: The folder must exist beforehand.
       To read the file again, use the function ntsworkflow::loadReport"
 
       if (dialog) {

@@ -124,23 +124,23 @@ annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
 #'
 #' datenList is taken from parent frame
 #'
-#' @param sampleList
-#' @param peakListList
-#' @param alignmentTable
-#' @param db_path
-#' @param threshold_score
-#' @param mztolu
-#' @param rttol
-#' @param polarity
-#' @param CE
-#' @param CES
-#' @param instrument
-#' @param chrom_method
-#' @param ndp_m
-#' @param ndp_n
-#' @param mztolu_ms2
-#' @param rtoffset Note: Offset the database to make it match your values
-#' @param intCutData
+#' @param sampleList data.frame of filenames and paths
+#' @param peakListList list of data.frames of the peak-lists
+#' @param alignmentTable Knonw as "grouped" in the app 
+#' @param db_path Path to the spectral library (sqlite)
+#' @param threshold_score dot product threshold score
+#' @param mztolu m/z tolerance in Da
+#' @param rttol RT tolerance in min.
+#' @param polarity Polarity of the measurement
+#' @param CE Collision energy
+#' @param CES Collision energy spread
+#' @param instrument Instruments allowed, must match the instruments listed in the library
+#' @param chrom_method Chromatography name to choose the correct retention times from the library
+#' @param ndp_m Peak intensity weighting factor for dot-product
+#' @param ndp_n m/z weighting factor for dot-product
+#' @param mztolu_ms2 m/z window for dot-product
+#' @param rtoffset Offset the database to make it match your values (in min)
+#' @param intCutData Cut off intensity under which fragments are ignored (in data spectra)
 #' @param numcores Number of cores for parallelization (currently not used)
 #'
 #' @details If data files are not in memory, they will be temporary loaded and
@@ -501,13 +501,6 @@ annotate_grouped <- function(sampleListLocal,
 
       viabExp
     })
-    
-    # Reduce size of rawFile (might be causing crashes 2024-04-22, not sure)
-    currentDataFile@env$intensity <- NULL
-    currentDataFile@env$mz <- NULL
-    currentDataFile@env$profile <- NULL
-    currentDataFile@env$msnIntensity <- NULL
-    currentDataFile@env$msnMz <- NULL
 
     hitsForSamp <- do.call("rbind", hitsForSamp)
     hitsForSamp
@@ -561,21 +554,21 @@ annotate_grouped <- function(sampleListLocal,
 
 #' Suspect search without peak searching, looking only at MS2 spectra
 #'
-#' @param data_path can be a vector of file locations or a list of xcmsRaw objects
-#' @param db_path
-#' @param rttolm
-#' @param mztolu
-#' @param mztolu_fine
-#' @param chromatography
-#' @param pol
-#' @param CE_s
-#' @param CES_s
-#' @param instr
-#' @param ceunit
-#' @param comparison
-#' @param threshold
+#' @param data_path Path to rawfiles, can be a vector of file locations or a list of xcmsRaw objects
+#' @param db_path Path to spectral library
+#' @param rttolm Retention time tolerance in minutes
+#' @param mztolu m/z tolerance in Da (MS2 precursor mass)
+#' @param mztolu_fine m/z tolerance in Da (second stage)
+#' @param chromatography Chromatography name to choose the correct retention times from the library
+#' @param pol Polarity used
+#' @param CE_s Collision energy
+#' @param CES_s Collision energy spread
+#' @param instr Instruments allowed, must match the instruments listed in the library
+#' @param ceunit Collision energy units
+#' @param comparison How the spectra should be compared, at the moment only "dot_product" is allowed
+#' @param threshold Threshold score for spectral comparison (for dot_product 1000 is max)
 #' @param rt_res resolution of two peaks in chromatography
-#' @param rtoffset
+#' @param rtoffset Retention time offset (will be added to library RTs)
 #' @param ndp_m Peak intensity weighting factor for dot-product
 #' @param ndp_n m/z weighting factor for dot-product
 #' @param mztolu_ms2 m/z window for dot-product

@@ -19,7 +19,7 @@ The goal of ntsworkflow is to process non-target LC/GC-HRMS data and carry out s
 
 ## License
 
-Copyright 2016-2023 Bundesanstalt für Gewässerkunde (Federal Institute of Hydrology)
+Copyright 2016-2024 Bundesanstalt für Gewässerkunde (Federal Institute of Hydrology)
 
 ntsworkflow is free software: you can redistribute it and/or modify it under the 
 terms of the GNU General Public License as published by the Free Software 
@@ -50,7 +50,7 @@ To cite this work please use the following citation or run `citation("ntsworkflo
 ntsworkflow is designed for use on servers and currently only works on Linux-based systems. It is usually run on CentOS or Ubuntu.
 
 ### Step 1: Install dependencies
-To use the package, you must first install some dependencies. R (v4.3.0) and Java JRE and JDK (v1.8) (for rcdk package). 
+To use the package, you must first install some dependencies. R (v4.4.0) and Java JRE and JDK (v1.8) (for rcdk package). 
 
 #### Installation on Ubuntu
 Using `apt`, the packages r-base, default-jre and default-jdk are needed. Installing Rstudio server for WSL2 was done through the website instructions (deb package).
@@ -79,7 +79,9 @@ Using `apt`, the packages r-base, default-jre and default-jdk are needed. Instal
       "iterators", 
       "doParallel", 
       "Rcpp", 
-      "RcppArmadillo",  
+      "RcppArmadillo",
+      "future",
+      "furrr"
       
       # chemistry
       "rcdk",  

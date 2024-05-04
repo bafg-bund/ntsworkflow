@@ -29,9 +29,41 @@ annotate_grouped(
 )
 }
 \arguments{
-\item{rtoffset}{Note: Offset the database to make it match your values}
+\item{peakListList}{list of data.frames of the peak-lists}
+
+\item{alignmentTable}{Knonw as "grouped" in the app}
+
+\item{db_path}{Path to the spectral library (sqlite)}
+
+\item{threshold_score}{dot product threshold score}
+
+\item{mztolu}{m/z tolerance in Da}
+
+\item{rttol}{RT tolerance in min.}
+
+\item{polarity}{Polarity of the measurement}
+
+\item{CE}{Collision energy}
+
+\item{CES}{Collision energy spread}
+
+\item{instrument}{Instruments allowed, must match the instruments listed in the library}
+
+\item{chrom_method}{Chromatography name to choose the correct retention times from the library}
+
+\item{ndp_m}{Peak intensity weighting factor for dot-product}
+
+\item{ndp_n}{m/z weighting factor for dot-product}
+
+\item{mztolu_ms2}{m/z window for dot-product}
+
+\item{rtoffset}{Offset the database to make it match your values (in min)}
+
+\item{intCutData}{Cut off intensity under which fragments are ignored (in data spectra)}
 
 \item{numcores}{Number of cores for parallelization (currently not used)}
+
+\item{sampleList}{data.frame of filenames and paths}
 }
 \description{
 Function takes all the variables needed from non-target app and settings for

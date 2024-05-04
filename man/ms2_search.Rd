@@ -27,9 +27,35 @@ ms2_search(
 )
 }
 \arguments{
-\item{data_path}{can be a vector of file locations or a list of xcmsRaw objects}
+\item{data_path}{Path to rawfiles, can be a vector of file locations or a list of xcmsRaw objects}
+
+\item{db_path}{Path to spectral library}
+
+\item{rttolm}{Retention time tolerance in minutes}
+
+\item{mztolu}{m/z tolerance in Da (MS2 precursor mass)}
+
+\item{mztolu_fine}{m/z tolerance in Da (second stage)}
+
+\item{chromatography}{Chromatography name to choose the correct retention times from the library}
+
+\item{pol}{Polarity used}
+
+\item{CE_s}{Collision energy}
+
+\item{CES_s}{Collision energy spread}
+
+\item{instr}{Instruments allowed, must match the instruments listed in the library}
+
+\item{ceunit}{Collision energy units}
+
+\item{comparison}{How the spectra should be compared, at the moment only "dot_product" is allowed}
+
+\item{threshold}{Threshold score for spectral comparison (for dot_product 1000 is max)}
 
 \item{rt_res}{resolution of two peaks in chromatography}
+
+\item{rtoffset}{Retention time offset (will be added to library RTs)}
 
 \item{ndp_m}{Peak intensity weighting factor for dot-product}
 

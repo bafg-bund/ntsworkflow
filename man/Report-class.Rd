@@ -108,7 +108,7 @@ peaks no longer have an A peak, these are renamed to start with A}
 
 \item{\code{clearAndSave(dialog = TRUE, nameReport = NULL)}}{Clear data from RAM and save report as .report file in the current working directory.
 Use nameReport to give a different location and different name as in
-*.clearAndSave('D:\exampleFolder\example'). Note: The folder must exist beforehand.
+*.clearAndSave('D:/exampleFolder/example'). Note: The folder must exist beforehand.
 To read the file again, use the function ntsworkflow::loadReport}
 
 \item{\code{clearData(indices = NULL)}}{Remove data from RAM to clear memory, use indices of raw files}

@@ -15,7 +15,7 @@
 
 # Non-Target App
 # written by: Christian Dietrich, Kevin Jewell, Toni Köppe
-# Last update: 2023-07-11
+
 
 library(shiny)
 library(shinyBS)
@@ -25,6 +25,7 @@ library(shinyFiles)
 library(foreach)
 library(ggplot2)
 library(ntsworkflow)
+library(future)
 
 #### Set-up ####
 
@@ -1079,15 +1080,18 @@ server <- function(input, output, session) {
   aligXICranges <- reactiveValues(x = NULL, y = NULL)
   
   alignmentXICsPlotten <- function(ID) {
+    # This function will take the alignementID and plot the EICs
+    # overlayed on each other (XIC aka EIC)
     XIC <- list()
     sl <- sampleListR()
+    # Can only plot files which are in memory
     validate(need(any(sl$RAM), "Load sample to RAM to display EICs"))
-    # get samples to plot from grouped table
+    # Get samples to plot from grouped table
     gn <- colnames(grouped)
     intColNames <- gn[grep("^Int_", gn)]
     files <- as.numeric(stringr::str_match(intColNames, "^Int_(.*)$")[,2])
     files <- files[files %in% sl[sl$RAM & !sl$deleted, "ID"]]
-    # which row has this ID?
+    # alignmentID and row of grouped are not always the same
     zeile <- which(grouped[, "alignmentID"] == ID)
     for (i in files) {
       mzstep <- peakPickSettings[[i]]$mz_step
@@ -1099,7 +1103,7 @@ server <- function(input, output, session) {
         XIC[[i]]$scanTime <- round(datenList[[i]]@scantime[XIC[[i]]$scan]/60, 2)
       } else {
         XIC[[i]] <- list()
-        XIC[[i]]$intensity <- rep(0, length(datenList[[1]]@scantime))
+        XIC[[i]]$intensity <- rep(0, length(datenList[[i]]@scantime))
         XIC[[i]]$scanTime <- round(datenList[[i]]@scantime/60, 2)
       }  
     }
@@ -1112,6 +1116,8 @@ server <- function(input, output, session) {
     XIC$samp <- as.factor(XIC$samp)
     XIC <- XIC[XIC$intensity != 0,]  # remove row with intensity 0 to reduce length and increase speed
     # overlay plot
+    
+    
     ggplot(XIC, aes(scanTime, intensity, color = samp)) + geom_line() + guides(color = "none") +
       xlab("Time (min.)") + ylab("Inten. (cps)") + 
       geom_vline(xintercept = grouped[zeile, "mean_RT"]/60, color = "red", alpha = .2) + 
@@ -1142,7 +1148,6 @@ server <- function(input, output, session) {
     intColNames <- gn[grep("^Int_", gn)]
     files <- as.numeric(stringr::str_match(intColNames, "^Int_(.*)$")[,2])
     files <- files[files %in% sl[sl$RAM & !sl$deleted, "ID"]]
-    # browser()
     for (i in files) {
       if ((grouped[zeile, paste0("ms2scan_", i)] > 0) &&
           (length(datenList[[i]]@env$intensity) > 1)) {
@@ -1164,7 +1169,6 @@ server <- function(input, output, session) {
     MS2 <- do.call("rbind", MS2)
     massRange <- c(min(MS2$mz), grouped[zeile, "mean_mz"] + 1)
     intMax <- max(MS2$intensity)
-    # browser()
     if (selection != 0) 
       MS2 <- MS2[MS2$samp == selection, ]
      
@@ -1172,7 +1176,7 @@ server <- function(input, output, session) {
     # 10 most intense fragments for text labels
     ggplot(MS2, aes(mz, intensity, color = samp)) +
       geom_segment(aes(x = mz, xend = mz, y = 0, yend = intensity),
-                   stat = "identity", size = .5, alpha = .5) +
+                   stat = "identity", linewidth = .5, alpha = .5) +
       geom_text(aes(label = round(mz,4)), alpha = .6, nudge_y = intMax*.02, check_overlap = T) +
       guides(color = "none") + xlab("m/z") + ylab("Inten. (cps)") +
       scale_x_continuous(limits = massRange) + scale_y_continuous(limits = c(NA, intMax*1.05)) +
@@ -1262,9 +1266,9 @@ server <- function(input, output, session) {
     
     ggplot(spec, aes(mz, int, label = round(mz,4))) +
       geom_segment(aes(x = mz, xend = mz, y = 0, yend = int),
-                   stat = "identity", size = .5, alpha = 0.5) +
+                   stat = "identity", linewidth = .5, alpha = 0.5) +
       geom_segment(data=isotope_spec, aes(x = mz, xend = mz, y = 0, yend = int),
-                   stat = "identity", size = .5, alpha = 0.5)+
+                   stat = "identity", linewidth = .5, alpha = 0.5)+
       theme_bw() +
       geom_text(data = spec[spec$int > comp_int*0.2, ], check_overlap = TRUE, vjust = -0.5) +
       geom_text(data = isotope_spec[isotope_spec$int < -comp_int*0.2, ],
@@ -1343,9 +1347,9 @@ server <- function(input, output, session) {
     
     ggplot(dataSpec, aes(mz, int, label = round(mz,4))) +
       geom_segment(aes(x = mz, xend = mz, y = 0, yend = int),
-                   stat = "identity", size = .5, alpha = .5) +
+                   stat = "identity", linewidth = .5, alpha = .5) +
       geom_segment(data = dbSpec, aes(x = mz, xend = mz, y = 0, yend = int),
-                   stat = "identity", size = .5, alpha = .5) +
+                   stat = "identity", linewidth = .5, alpha = .5) +
       theme_bw() +
       geom_text(data = dataSpec[dataSpec$int > 0.01, ], check_overlap = TRUE, vjust = -0.5) +
       geom_text(data = dbSpec[dbSpec$int < -0.01, ], check_overlap = TRUE, vjust = 1.5) +
@@ -1474,7 +1478,6 @@ server <- function(input, output, session) {
       notDup <- !duplicated(annotationTable$alignmentID)
       annot <- annot[notDup, ]
       grouped2 <- merge(grouped2, annot, all.x = TRUE, by = "alignmentID")
-      
     }
     # Remove ID column
     grouped2 <- subset(grouped2, , -alignmentID)
@@ -1511,7 +1514,6 @@ server <- function(input, output, session) {
     req(is.numeric(grouped[,seq(8,ncol(grouped), by = 6)]))
     req(!is.na(input$trendFac))
     req(is.matrix(grouped[,seq(8,ncol(grouped), by = 6)]))
-    # browser()
     zeile <- which(grouped[, "alignmentID"] == ID)
     req(zeile >= 1)
     similarTrendRows <- which(correlates_with_r(grouped[,grep("^Int_", colnames(grouped))], zeile, input$trendFac))
@@ -1936,7 +1938,6 @@ server <- function(input, output, session) {
         datenx@env$msnIntensity <- 0
         datenx@env$msnMz <- 0
       }  
-      gc() 
       
       # Collect the results in a list
       resultsList <- list(dat = datenx, headE = headerEntry, 
@@ -2022,10 +2023,11 @@ server <- function(input, output, session) {
     loadp <- shiny::Progress$new(session, 0, 1)
     loadp$set(0.4, message = "Loading...")
     
-    # parallel data loading
-    datenList[datSeq] <<- parallel::mclapply(dateiAlle, xcms::xcmsRaw, includeMSn = TRUE,
-                                   mc.preschedule = TRUE, mc.cores = input$numcores)
-    
+    # Parallel data loading
+    future::plan(multisession, workers = input$numcores)
+    datenList[datSeq] <<- furrr::future_map(dateiAlle, xcms::xcmsRaw,
+                                            includeMSn = TRUE)
+    future::plan(sequential)
     br <- input$blankRegex
     createRow <- function(newId, dateiPfad, datRaw) {
       bl <- if (br == "") FALSE else grepl(br, basename(dateiPfad))
@@ -3205,7 +3207,6 @@ server <- function(input, output, session) {
     
     progress <- shiny::Progress$new()
     progress$set(value = .5, message = "Preparing...")
-    #browser()
     # reset sample list
     sampleList <<- sampleList[!sampleList$deleted, ]
     sampleList$ID <<- seq_len(nrow(sampleList))
@@ -3330,7 +3331,6 @@ server <- function(input, output, session) {
       return(NULL)
     }
     # record peak IDs used to do the normalization
-    #browser()
     pidColsNorm <- grep("^PeakID", colnames(grouped))
     pidNorm <- as.numeric(grouped[input$AlignmentTable_rows_selected, pidColsNorm, drop = T])
     stopifnot(length(pidNorm) == nrow(subset(sampleList, !deleted)))
@@ -4101,6 +4101,7 @@ server <- function(input, output, session) {
         expGroups = expSource,
         chrom_method = chromMethod
       )
+      
     } else {
       showNotification("Unknown database file", type = "error", duration = NULL)
     }
@@ -4125,7 +4126,6 @@ server <- function(input, output, session) {
       for (cnn in newColAnTN)
         annotationTableNew[, cnn] <- vector(unlist(dplyr::summarise_all(annotationTable[, cnn], class)), nrow(annotationTableNew))
       
-      #browser()
       stopifnot(setequal(colnames(annotationTable), colnames(annotationTableNew)))
       annotationTable <<- rbind(annotationTable, annotationTableNew)
     } else {
