@@ -21,4 +21,5 @@
 #' @name ntsworkflow
 #' @useDynLib ntsworkflow, .registration=TRUE
 #' @importFrom Rcpp evalCpp
+#' @import foreach
 NULL

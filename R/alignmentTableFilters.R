@@ -14,9 +14,7 @@
 
 
 
-
-# Contains functions for filtering and reducing the alignment table
-
+# This file contains functions for filtering and reducing the alignment table
 
 
 #' Keep only features which are the group leaders
@@ -26,12 +24,11 @@
 #' and a feature is sometimes marked as groupleader and sometimes not, the feature will be kept.
 #'
 #' @param alignment alignment table
-#' @param pll peaklistlist
+#' @param pll collection of peaklists as a `list`
 #' @param samples sample IDs of the samples which will be looked at, all other samples will be ignored 
 #'
-#' @return an alignment table with reduced number of rows
+#' @returns An alignment table with reduced number of rows
 #' @export
-#' @import foreach
 onlyGroupLeaders <- function(alignment, pll, samples) {
   stopifnot(is.numeric(samples))
   stopifnot(is.list(pll))
@@ -113,6 +110,7 @@ averageReplicates <- function(alignment, samples, reps) {
 
 #' Only retain peaks found in all replicates
 #' 
+#' @description
 #' This function will check, for a given number of replicate injections, that a feature was found
 #' in all replicates. Features will be set to zero if they are not found in replicates.
 #' Aligned features not found in any samples (everything zero) will be removed. 
@@ -122,7 +120,7 @@ averageReplicates <- function(alignment, samples, reps) {
 #' @param reps numer of replicates
 #' @param least Peak found in at least this many replicates, must be <= reps
 #'
-#' @return an alignment table with the same number of columns but a reduced number of rows.
+#' @returns An alignment table with the same number of columns but a reduced number of rows.
 #' @export
 keepReps <- function(alignment, samples, reps, least) {
   stopifnot(length(samples) %% reps == 0)
@@ -173,10 +171,10 @@ keepReps <- function(alignment, samples, reps, least) {
 #' Remove features found in less than x samples
 #'
 #' @param alignment alignment table
-#' @param minimum number of samples in which a feature is found must be less than
-#' total number of samples
+#' @param minimum number of samples in which a feature is found must be less
+#'   than total number of samples
 #'
-#' @return alignment table with rows removed
+#' @returns Alignment table with rows removed
 #' @export 
 removeRare <- function(alignment, minimum) {
   # TODO this function should ignore blanks!
@@ -188,15 +186,33 @@ removeRare <- function(alignment, minimum) {
 
 #' Remove features also found in the blanks
 #' 
-#' @return an alignment table with rows removed
+#' @description Which samples are blanks is given in the sample table. The
+#'   features found both in samples and blanks are removed from the alignment
+#'   table, unless the intensity in the samples is higher than the blank by the
+#'   intensityFactor.
+#' 
+#' 
+#' @param alignment Alignment table (matrix)
+#' @param samplels sample table
+#' @param intensityFactor Intensity difference between samples and blanks beyond
+#'   which features are not deleted
+#' @param deleteGrouped If true (default) then when a blank feature is found, it
+#'   will be removed along with the whole component group (isotopologues,
+#'   adducts, in-source fragments)
+#' 
+#' @details If more than one blank sample exists then the highest intensity will
+#' be used for the comparison.
+#' 
+#' 
+#' @returns An alignment table with rows removed
 #' @export
-#' @import foreach
-blankCorrection <- function(alignment, samplels, intensityFactor = 10, deleteGrouped = TRUE) {
+blankCorrection <- function(alignment, samplels, intensityFactor = 10, 
+                            deleteGrouped = TRUE) {
   
   intensityCols <- grep("^Int_", colnames(alignment)) 
   groupCols <- grep("^gruppe_", colnames(alignment))
   
-  # get columns in alignment table of blanks
+  # Get columns in alignment table of blanks
   blanks <- samplels[samplels$sampleType == "Blank", "ID"]
   blankIntColsNames <- paste0("Int_", blanks)
   blankIntCols <- which(colnames(alignment) %in% blankIntColsNames)
@@ -240,7 +256,7 @@ blankCorrection <- function(alignment, samplels, intensityFactor = 10, deleteGro
       } #for j
     } #for i
     
-    # Delete rows with all zero. Is this necessary? Yes!
+    # Delete rows with all zeros. Is this necessary? Yes!
     if (0 < length(which(rowSums(ergebnis[, -c(grep("^mean_mz$", colnames(ergebnis)),
                                                grep("^mean_RT$", colnames(ergebnis)),
                                                grep("^MS2Fit$", colnames(ergebnis)),
@@ -274,13 +290,12 @@ blankCorrection <- function(alignment, samplels, intensityFactor = 10, deleteGro
 #' Keep only rows found in at least X consecutive samples
 #'
 #' @param alignment Alignment Table
-#' @param samples samples to consider (everything else will be ignored), by ID
-#' @param consecutive number of consecutive samples a peak should be present in
+#' @param samples Samples to consider (everything else will be ignored), by ID
+#' @param consecutive Number of consecutive samples a peak should be present in
 #'
 #' @returns Alignment table with possibly some rows removed
 #' @export
 #'
-#' @import foreach
 keepConsecutive <- function(alignment, samples, consecutive) {
   stopifnot(is.numeric(samples))
   searchString <- paste0(rep("TRUE", consecutive), collapse = "")

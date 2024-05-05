@@ -13,16 +13,18 @@
 # with ntsworkflow. If not, see <https://www.gnu.org/licenses/>.
 
 
-#' annotate_grouped_components
+#' Annotate alignment table with adduct and isotopologue information
 #' 
-#' If no db is chosen, annotate alignmentTable with peaklist component info (Cl and Br)
+#' @description This function is for the annotation section of the app. If no db
+#'   is chosen, it will annotate the alignmentTable with peaklist component info
+#'   (Cl and Br and some adducts)
 #' 
 #' @param sampleListLocal (list of processed samples)
 #' @param peakListList (result of peakpicking)
 #' @param alignmentTable (result of the alignment)
 #' @param numcores (number of CPU cores to be used)
 #'
-#' @return alignmentTable with annotated isotopologues based on componentization 
+#' @returns alignmentTable with annotated isotopologues based on componentization 
 #' @export
 annotate_grouped_components <- function(sampleListLocal,
                                         peakListList,
@@ -97,14 +99,14 @@ annotate_grouped_components <- function(sampleListLocal,
   res
 }
 
-#' componentization_BfG
+#' Group features into components
 #'
-#' Componentization/ Grouping of adducts, isotopologues, in-source fragments, etc.
-#' Either by:
-#'  fixed thresholds for RT, RT_FWHM_left and RT_FWHM_right or
-#'  automatically adjusted thresholds based on the 13C isotopologue.
+#' @description Componentization/ Grouping of adducts, isotopologues, in-source
+#' fragments, etc. Either by: fixed thresholds for RT, RT_FWHM_left and
+#' RT_FWHM_right or automatically adjusted thresholds based on the 13C
+#' isotopologue.
 #'
-#' @param Liste (peaklist)
+#' @param Liste peaklist from the peak-picking step
 #' @param daten (datenList)
 #' @param ppm (mass deviation in ppm)
 #' @param Grenzwert_RT (Threshold value for the retention time)
@@ -113,7 +115,7 @@ annotate_grouped_components <- function(sampleListLocal,
 #' @param Summe_all (Threshold value for the sum of the three retention times (apex, FWHM left, FWHM right)
 #' @param adjust_tolerance (adjust thresholds with 13C isotopologue)
 #'
-#' @return peaklist with added cols groupleader and group for each component 
+#' @returns peaklist with added cols groupleader and group for each component 
 #' @export
 componentization_BfG <- function(Liste,
                                  daten,
@@ -369,14 +371,14 @@ componentization_BfG <- function(Liste,
     }
   }
   
-  Liste <- Liste[order(Liste$mz), ] 
-  
-  return(Liste)
+  Liste[order(Liste$mz), ] 
 }
+
+# TODO Need to replace DBSCAN with hierarchical clustering
 
 #' Second stage componentisation using the alignment table
 #' 
-#' Based on four criteria: rt, peak shape, intensity correlation and common mz differences.
+#' @description Based on four criteria: rt, peak shape, intensity correlation and common mz differences.
 #' Will replace group column in the alignment table. Distance matrices for all 
 #' four criteria are combined and then DBSCAN clusters the features.
 #' 
@@ -388,7 +390,7 @@ componentization_BfG <- function(Liste,
 #' @param pol polarity, must be either "pos" or "neg" 
 #' @param numcores number of cores to use for parallel distance matrix computations
 #'
-#' @return Alignment table with the group column "Gruppe" replaced with the new values
+#' @returns Alignment table with the group column "Gruppe" replaced with the new values
 #' @export
 alig_componentisation <- function(altable, rttols = 3,
                                   fracComponMatch = 0.5, 
@@ -577,5 +579,5 @@ alig_componentisation <- function(altable, rttols = 3,
   dbscan_res <- dbscan::dbscan(combiDist, 0.1, 2)
   altable[, "Gruppe"] <- dbscan_res$cluster
   message("Completed 2nd stage componentisation")
-  return(altable)
+  altable
 }
