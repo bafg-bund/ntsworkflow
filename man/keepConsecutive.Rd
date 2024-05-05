@@ -13,6 +13,9 @@ keepConsecutive(alignment, samples, consecutive)
 
 \item{consecutive}{number of consecutive samples a peak should be present in}
 }
+\value{
+Alignment table with possibly some rows removed
+}
 \description{
 Keep only rows found in at least X consecutive samples
 }

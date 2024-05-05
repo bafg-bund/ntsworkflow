@@ -20,7 +20,6 @@
 #' @return log_file with used settings for peakpicking, alignment, blankcorrectio,normalization, filtering, annotation
 #' @export
 #'
-#' @examples
 create_log_file <- function () {
   
   if(!exists("log_file")){ 

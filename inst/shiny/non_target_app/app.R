@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Bundesanstalt für Gewässerkunde
+# Copyright 2016-2024 Bundesanstalt für Gewässerkunde
 # This file is part of ntsworkflow
 # ntsworkflow is free software: you can redistribute it and/or modify it under the 
 # terms of the GNU General Public License as published by the Free Software 

@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Bundesanstalt für Gewässerkunde
+# Copyright 2016-2024 Bundesanstalt für Gewässerkunde
 # This file is part of ntsworkflow
 # ntsworkflow is free software: you can redistribute it and/or modify it under the 
 # terms of the GNU General Public License as published by the Free Software 
@@ -12,16 +12,12 @@
 # You should have received a copy of the GNU General Public License along 
 # with ntsworkflow. If not, see <https://www.gnu.org/licenses/>.
 
+#' @keywords internal 
+"_PACKAGE"
 
 #' ntsworkflow: A package for computating the notorious bar statistic.
 #'
-#' The mypackage package provides three categories of important functions:
-#' foo, bar and baz.
-#' 
-#' @section Mypackage functions:
-#' The mypackage functions ...
 #'
-#' @docType package
 #' @name ntsworkflow
 #' @useDynLib ntsworkflow, .registration=TRUE
 #' @importFrom Rcpp evalCpp

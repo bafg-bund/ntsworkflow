@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Bundesanstalt für Gewässerkunde
+# Copyright 2016-2024 Bundesanstalt für Gewässerkunde
 # This file is part of ntsworkflow
 # ntsworkflow is free software: you can redistribute it and/or modify it under the 
 # terms of the GNU General Public License as published by the Free Software 
@@ -54,7 +54,8 @@ onlyGroupLeaders <- function(alignment, pll, samples) {
 }
 
 #' Get mean intensities for replicate injections
-#'
+#' 
+#' @description
 #' This function will take an alignment table and average the intensities of replicate injections.
 #' The first sample in each replicate will remain in the table with average int. Zeros will be
 #' ignored (unless all intensities are zero).
@@ -63,10 +64,9 @@ onlyGroupLeaders <- function(alignment, pll, samples) {
 #' @param samples numeric sample IDs to merge, length must be divisable by repNum
 #' @param reps number of replicates
 #'
-#' @return An alignment table with a reduced number of samples but the same number of rows.
+#' @returns An alignment table with a reduced number of samples but the same number of rows.
 #' @export
 #'
-#' @examples
 averageReplicates <- function(alignment, samples, reps) {
   stopifnot(length(samples) %% reps == 0)
   # make list containing grouped samp ID which need to be merged
@@ -277,7 +277,7 @@ blankCorrection <- function(alignment, samplels, intensityFactor = 10, deleteGro
 #' @param samples samples to consider (everything else will be ignored), by ID
 #' @param consecutive number of consecutive samples a peak should be present in
 #'
-#' @return
+#' @returns Alignment table with possibly some rows removed
 #' @export
 #'
 #' @import foreach

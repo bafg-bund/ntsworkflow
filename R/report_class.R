@@ -88,7 +88,6 @@
 #' @import ggplot2
 #' @import stringr
 #' @import dplyr
-#' @return
 #' @export Report
 #' @exportClass Report
 Report <- setRefClass(

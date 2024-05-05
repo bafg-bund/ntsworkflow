@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Bundesanstalt für Gewässerkunde
+# Copyright 2016-2024 Bundesanstalt für Gewässerkunde
 # This file is part of ntsworkflow
 # ntsworkflow is free software: you can redistribute it and/or modify it under the 
 # terms of the GNU General Public License as published by the Free Software 
@@ -13,10 +13,10 @@
 # with ntsworkflow. If not, see <https://www.gnu.org/licenses/>.
 
 
-# Database screening ####
+# Library screening ####
 
-# Includes functions for database search, but also annotating non-target peaks
-# lists.
+# Includes functions for library screening used in conjunction with Report class
+# (dbas) and the non-target app (peak picking).
 
 
 #' Annotate alignment table based only on m/z and RT comparison
@@ -29,7 +29,8 @@
 #' @param mztol tolerance in u
 #' @param rttol tolerance in minutes
 #'
-#' @return Annotation table
+#' @returns Annotation table (`data.frame`) which gives the annotations of the
+#'   alignment table linked by `alignmentID`
 #' @export
 annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
   intCols <- alig[, c(
@@ -116,38 +117,57 @@ annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
   re
 }
 
-#' Annotate alignment table from non-target app by MS2 searching
+#' Annotate alignment table with compound names by spectral library screening
 #'
-#' Function takes all the variables needed from non-target app and settings for
-#' searching the database. It returns a table with the annotations for rows of
-#' the alignment table.
-#'
-#' datenList is taken from parent frame
+#' @description
+#' Using the SQLite spectral library (CSL), this function will pass over the alignment
+#' table, open the measurement files stored in datenList and compare m/z,
+#' retention time and MS² spectra found in the data and the library.
+#' 
 #'
 #' @param sampleList data.frame of filenames and paths
 #' @param peakListList list of data.frames of the peak-lists
-#' @param alignmentTable Knonw as "grouped" in the app 
-#' @param db_path Path to the spectral library (sqlite)
+#' @param alignmentTable Knonw as "grouped" in the app
+#' @param db_path Path to the spectral library (CSL in SQLite format)
 #' @param threshold_score dot product threshold score
 #' @param mztolu m/z tolerance in Da
 #' @param rttol RT tolerance in min.
 #' @param polarity Polarity of the measurement
 #' @param CE Collision energy
 #' @param CES Collision energy spread
-#' @param instrument Instruments allowed, must match the instruments listed in the library
-#' @param chrom_method Chromatography name to choose the correct retention times from the library
+#' @param instrument Instruments allowed, must match the instruments listed in
+#'   the library
+#' @param chrom_method Chromatography name to choose the correct retention times
+#'   from the library
 #' @param ndp_m Peak intensity weighting factor for dot-product
 #' @param ndp_n m/z weighting factor for dot-product
 #' @param mztolu_ms2 m/z window for dot-product
 #' @param rtoffset Offset the database to make it match your values (in min)
-#' @param intCutData Cut off intensity under which fragments are ignored (in data spectra)
+#' @param intCutData Cut off intensity under which fragments are ignored (in
+#'   data spectra)
 #' @param numcores Number of cores for parallelization (currently not used)
 #'
-#' @details If data files are not in memory, they will be temporary loaded and
+#' @details This function operates either in conjunction with the non-target app
+#'   but can also work in stand-alone scripts, see examples in ntsportal. If
+#'   data files are not in memory (xcmsRaw objects), they will be temporary
+#'   loaded. `datenListLocal` is a shallow copy. Therefore, changes to the
+#'   underlying xcmsRaw objects affect the calling environment.
+#'    
+#'   ## Spectral library
+#'   The spectral library is an SQLite file (see Jewell et al. 2019). 
+#'   
+#'   ## References
+#'   Jewell, K. S., Kunkel, U., Ehlig, B., Thron, F., Schlüsener, M., Dietrich,
+#'   C., . . . Ternes, T. A. (2019). Comparing mass, retention time and MS2
+#'   spectra as criteria for the automated screening of small molecules in
+#'   aqueous environmental samples analyzed by LC-QToF-MS/MS. Rapid
+#'   Communications in Mass Spectrometry, 34, e8541. doi:10.1002/rcm.8541
+#' 
+#' @returns `data.frame` with the annotations for the alignment table referenced
+#'   by the column "alignementID" (compound identifiers and results of the
+#'   spectral comparison)
 #'
 #' @import dplyr
-#'
-#' @return
 #' @export
 annotate_grouped <- function(sampleListLocal,
                              peakListList,
@@ -552,7 +572,12 @@ annotate_grouped <- function(sampleListLocal,
 }
 
 
-#' Suspect search without peak searching, looking only at MS2 spectra
+#' Library screening without prior peak-picking
+#' 
+#' @description
+#' A direct library screening approach using measurement files and the CSL 
+#' spectral libary in SQLite format.
+#' 
 #'
 #' @param data_path Path to rawfiles, can be a vector of file locations or a list of xcmsRaw objects
 #' @param db_path Path to spectral library
@@ -573,7 +598,25 @@ annotate_grouped <- function(sampleListLocal,
 #' @param ndp_n m/z weighting factor for dot-product
 #' @param mztolu_ms2 m/z window for dot-product
 #' @param compounds character vector of compounds which should be processed
-#'
+#' 
+#' @details
+#' The function is used in the Report RC to obtain the peak list. No prior peak
+#' picking is needed for this function. The function starts from the list of
+#' masses provided in the spectral library and searches for these in the
+#' measurement data. The measurement data is in mz(X)ML format and contains DDA
+#' MS² spectra.
+#' 
+#' ## References
+#'   Jewell, K. S., Kunkel, U., Ehlig, B., Thron, F., Schlüsener, M., Dietrich,
+#'   C., . . . Ternes, T. A. (2019). Comparing mass, retention time and MS2
+#'   spectra as criteria for the automated screening of small molecules in
+#'   aqueous environmental samples analyzed by LC-QToF-MS/MS. Rapid
+#'   Communications in Mass Spectrometry, 34, e8541. doi:10.1002/rcm.8541
+#' 
+#' @returns a `data.frame` with hits from the spectral library
+#' 
+#' @seealso [annotate_grouped()]
+#' 
 #' @export
 #' @import dplyr
 ms2_search <- function(data_path, db_path,
@@ -976,7 +1019,7 @@ get_MS2spectrum <- function(data.mzR, mass, rt, p_mztolu = 0.5, p_rttol = 0.2) {
 }
 
 
-# database access functions ####
+# Database access functions ####
 
 id_to_name <- function(id, db) {
   compTbl <- tbl(db, "compound")
@@ -989,7 +1032,7 @@ id_to_name <- function(id, db) {
   name
 }
 
-#' Extraction of a MS2-Spectrum for a given ExperimentID from MSMS-database
+#' Extraction of a MS2-Spectrum for a given ExperimentID from spectral library
 #'
 #' @param db database connection object using dplyr::src_sqlite
 #' @param Exp.ID integer of experiment ID (only 1)
@@ -1057,99 +1100,9 @@ id_to_name_preloaded <- function(id, expTable, compTable) {
 }
 
 
-#' Get Experiment IDs From DB By Mz and Rt
-#'
-#' Can't include ExpGroupNames due to stack overflow, so this parameter doesn't
-#' do anything yet
-#'
-#' @param db_path
-#' @param mz
-#' @param mztolu
-#' @param rt
-#' @param rttol
-#' @param ExpGroupNames
-#' @param compGroupNames
-#' @param polarity
-#' @param ionisation
-#' @param CE
-#' @param CES
-#' @param ce_unit
-#' @param col_type
-#' @param instrument
-#' @param chrom_method
-#'
-#' @return
-#' @export
-#'
-get_ids <- function(db, mz, rt, mztolu = 0.005,
-                    rttol = 1,
-                    ExpGroupNames = c("BfG"),
-                    compGroupNames = c("BfG"),
-                    polarity = "pos",
-                    ionisation = "ESI", CE = 35, CES = 15, ce_unit = "V",
-                    col_type = "Q",
-                    instrument = "LC-ESI-QTOF TripleTOF 5600 SCIEX",
-                    chrom_method = "dx.doi.org/10.1016/j.chroma.2015.11.014") {
-  # change all variable names to allow NSE these names have _i after them:
-  oldNames <- c(
-    "mz", "rt", "polarity", "ionisation", "CE", "CES", "ce_unit",
-    "col_type", "instrument", "chrom_method"
-  )
-
-  for (name in oldNames) {
-    assign(paste0(name, "_i"), get(eval(name)))
-  }
-  rm(list = oldNames)
-
-  expTable <- tbl(db, "experiment")
-  expGroupTable <- tbl(db, "experimentGroup")
-  expGroupExpTable <- tbl(db, "expGroupExp")
-  paraTable <- tbl(db, "parameter")
-  rtTable <- tbl(db, "retention_time")
-  compTable <- tbl(db, "compound")
-  compGroupTable <- tbl(db, "compoundGroup")
-  compGroupCompTable <- tbl(db, "compGroupComp")
-
-  # add nonsense group to exp and compound groups, so that in case only one
-  # group is given, the %in% function does not crash
-
-  ExpGroupNames <- c(ExpGroupNames, "spam")
-  compGroupNames <- c(compGroupNames, "spam")
-
-  # add the possibility of giving a CE and CES range
-
-  exp_ids <- filter(
-    rtTable, chrom_method == chrom_method_i,
-    abs(rt - rt_i) < rttol
-  ) %>%
-    left_join(expTable, by = "compound_id") %>%
-    filter(abs(mz - mz_i) < mztolu) %>%
-    left_join(paraTable, by = "parameter_id") %>%
-    filter(
-      polarity == polarity_i, ionisation == ionisation_i,
-      CE == CE_i, CES == CES_i, ce_unit == ce_unit_i,
-      col_type == col_type_i, instrument == instrument_i
-    ) %>%
-    select(experiment_id, compound_id) %>%
-    left_join(compGroupCompTable, by = "compound_id") %>%
-    left_join(compGroupTable, by = "compoundGroup_id") %>%
-    filter(name %in% compGroupNames) %>%
-    # select(experiment_id) %>%
-    # left_join(expGroupExpTable, by = "experiment_id") %>%
-    # left_join(expGroupTable, by = "experimentGroup_id") %>%
-    # filter(name %in% ExpGroupNames) %>%
-    dplyr::collect() %>%
-    .$experiment_id
-
-  exp_ids
-}
-
-
-# spectral comparison functions ####
+# Spectral comparison functions ####
 
 #' Calculate Normalized Dot-Product
-#'
-#' A wrapper function to prepare spectra for MetCirc::NDP()
 #'
 #' @param data_spec Spectrum from data
 #' @param stan_spec Spectrum from database
@@ -1159,7 +1112,7 @@ get_ids <- function(db, mz, rt, mztolu = 0.005,
 #'
 #' @details See MetCirc::NDP for more information
 #'
-#' @return A numeric from 0 to 1000 with 1000 a perfect match
+#' @returns A numeric from 0 to 1000 with 1000 a perfect match
 #' @export
 #'
 calc_ndp <- function(d_spec, db_spec, ndp_m = 2, ndp_n = 1, mztolu_ms2 = 0.015) {
@@ -1212,7 +1165,7 @@ calc_ndp <- function(d_spec, db_spec, ndp_m = 2, ndp_n = 1, mztolu_ms2 = 0.015) 
 #'
 #' @param x spectrum as data.frame columns mz, int
 #'
-#' @return
+#' @returns spectrum with intensities to max intensity and precursor mass removed
 #' @export
 #'
 normalizeMs2 <- function(x) {
@@ -1220,7 +1173,8 @@ normalizeMs2 <- function(x) {
   compname <- attr(x, "comp_name")
   compmz <- attr(x, "precursor_mz")
   expID <- try(attr(x, "db_exp_ID"))
-  x <- x[x$mz < attr(x, "precursor_mz") - 0.02, ] # remove precursor otherwise MS1 checked again
+  # Remove precursor otherwise essentially MS1 checked again
+  x <- x[x$mz < attr(x, "precursor_mz") - 0.02, ] 
   x <- x[x$int >= 0.1, ]
   if (length(x) == 0 || nrow(x) == 0) {
     return(NULL)
