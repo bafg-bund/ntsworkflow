@@ -55,7 +55,6 @@
 #'
 #' @export
 #'
-#' @examples
 #'
 RunGenForm <- function(ms_file, msms_file, ion, GenFormDir, ResultsDir,
                        ppm=5, acc=15, elements="CHNOPS",ff="", dbe=TRUE, oei=TRUE, mz=0,
@@ -176,7 +175,6 @@ RunGenForm <- function(ms_file, msms_file, ion, GenFormDir, ResultsDir,
 #'
 #' @export
 #'
-#' @examples
 #'
 annotateCleanMSMS <- function(cleanMSMS, GenForm_an_out, GenForm_loss_out, lowestPpm=TRUE,
                               round=TRUE, removeAnnoSpace=FALSe) {
@@ -254,8 +252,6 @@ annotateCleanMSMS <- function(cleanMSMS, GenForm_an_out, GenForm_loss_out, lowes
 #' @seealso \code{\link{annotateCleanMSMS}}
 #'
 #' @export
-#'
-#' @examples
 #'
 fixNoLossSpace <- function(anno_MS_file, replace=TRUE) {
   fileConnection <- file(anno_MS_file)
