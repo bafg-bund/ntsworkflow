@@ -33,6 +33,7 @@
 #' @param precursormzTol m/z tolerance for linking MS2 fragment spectra by the precursor m/z, in ppm
 #' @param maxPeaksPerSignal Maximum number of sub-peaks within a peak (direction changes) within a peak
 #'
+#' @details Uses the C++ function `peakPickingBfGC` 
 #' @returns matrix of peaks detected in the extracted ion chromatogram, each peak
 #' is one row with the columns representing various parameters for the peak.
 #'
@@ -83,15 +84,15 @@ peakpicking_BfG_cpp <- function(
 
 #' Find Pearson's correlation between intensity trends
 #' 
-#' Wrapper for the cpp function correlates_with. Takes a matrix of intensities
+#' @description Wrapper for the cpp function correlates_with. Takes a matrix of intensities
 #' (each row representing one feature) and a row, returns which rows have
 #' correlation coefficients within threshold
 #' 
 #' @param aligned_intensities Matrix of intensities
-#' @param zeile Reference row of matrix
-#' @param koeffizient Pearson correlation coefficient 
+#' @param zeile Reference row of matrix to which all other are compared to
+#' @param koeffizient Pearson correlation coefficient (minimum)
 #' 
-#' @return Boolean. True for those rows of the matrix which have a correlation 
+#' @returns Boolean. True for those rows of the matrix which have a correlation 
 #' coefficient higher than the threshold. 
 #' 
 #' @export
@@ -102,15 +103,15 @@ correlates_with_r <- function(aligned_intensities, zeile, koeffizient){
 
 #' Alignment of peaks from difference samples
 #' 
-#' This a wrapper for the cpp function alignmentBfGC. It takes a list of peaklists
+#' @description This a wrapper for the C++ function alignmentBfGC. It takes a list of peaklists
 #' and produces an alignment table. 
 #' 
 #' @param peaklists list of peaklists
-#' @param mz_dev mz tolerance
+#' @param mz_dev m/z tolerance
 #' @param DeltaRT rt tolerance in s
-#' @param mz_dev_unit units for mz tolerance (ppm or mDa)
+#' @param mz_dev_unit Units for m/z tolerance (ppm or mDa)
 #' 
-#' @return matrix of aligned peaks, one aligned feature per row
+#' @returns Matrix of aligned peaks, one aligned feature per row
 #' 
 #' @export
 alignment_BfG_cpp <- function(peaklists, mz_dev, DeltaRT, mz_dev_unit){
@@ -164,12 +165,12 @@ alignment_BfG_cpp <- function(peaklists, mz_dev, DeltaRT, mz_dev_unit){
 
 #' Summarize componentization groups into one column 
 #' 
-#' Will take the componentization information from each sample in the
+#' @description Will take the componentization information from each sample in the
 #' alignment table and attempt to summerize this into one column named "Gruppe".
 #' 
 #' @param alig Alignment table
 #' 
-#' @return Matrix. Alignment table with additional column Gruppe
+#' @returns Alignment table with the additional column Gruppe
 #' @export
 summarize_groups <- function(alig) {
   gruppenzaehler <- 1
@@ -294,33 +295,36 @@ alignment_BfG_cpp_par <- function(peaklists, ppm_dev, DeltaRT, mz_dev_unit,
 
 
 
-
+# TODO: need to make a new *peak table* S3 class to formalize the different
+# tables
 
 #' Peak finding algorithm
 #'
-#' Function will pick chromatographic peaks in the raw data file by binning and 
-#' analyzing the extracted ion chromatograms. The peak finding is done by
+#' @description Function will pick chromatographic peaks in the raw data file by binning and 
+#' analyzing the extracted ion chromatograms. 
+#' 
+#' @param daten Measurement data of class `xcms::xcmsRAW`
+#' @param mz_min m/z range to peak-picking (lower) (Da)
+#' @param mz_max m/z range to peak-picking (upper) (Da)
+#' @param mz_step m/z width for extracted ion chromatogram (Da)
+#' @param rt_min Retention time range minimum in which to look for peaks (s)
+#' @param rt_max Retention time range maximum in which to look for peaks (s)
+#' @param sn Minimum signal-to-noise ratio (apex peak height over noise spread before and after peak)
+#' @param int_threshold Minimum peak intensity (at peak apex)
+#' @param peak_NoiseScans Number of scans before and after peak to measure noise
+#' @param precursormzTol m/z tolerance for linking MS2 fragment spectra by the precursor m/z (ppm)
+#' @param peakwidth_min Minimum peak width given (s)
+#' @param peakwidth_max Maximum peak width given (s)
+#' @param maxPeaksPerSignal Maximum number of sub-peaks within a peak (direction changes) within a peak
+#'
+#' @details The peak finding is done by
 #' taking the derivative of the chromatogram and looking for points where it 
-#' crosses 0. More information can be found in Dietrich, C., Wick, A., & 
+#' crosses 0. This function uses `peakpicking_BfG_cpp` which in turn uses the C++ function `peakPickingBfGC`. More information can be found in Dietrich, C., Wick, A., & 
 #' Ternes, T. A. (2021). Open source feature detection for non‐target LC‐MS 
 #' analytics. Rapid Communications in Mass Spectrometry, e9206. doi:10.1002/rcm.9206  
 #' 
-#' 
-#' @param daten from xcms
-#' @param mz_min 
-#' @param mz_max 
-#' @param mz_step 
-#' @param rt_min 
-#' @param rt_max 
-#' @param sn 
-#' @param int_threshold 
-#' @param peak_NoiseScans 
-#' @param precursormzTol 
-#' @param peakwidth_min 
-#' @param peakwidth_max 
-#' @param maxPeaksPerSignal 
-#'
-#' @return data.frame of the peak inventory list
+#' @seeaslo `peakpicking_BfG_cpp`
+#' @returns `data.frame` of the peak inventory (peak table)
 #' @export
 FindPeaks_BfG <- function(daten,  
                           mz_min, 
@@ -421,13 +425,14 @@ FindPeaks_BfG <- function(daten,
 
 #' Add additional peak and sample ID information to peaklists
 #' 
-#' This needs to be run before alignment
+#' @description takes a list of peaklists and adds sample ID and peak ID information
 #'
-#' @param peaklist 
-#' @param datenList 
-#'
-#' @return New peaklist list in the same form as before but with additional columns
-#' sample_id and peak_id_all. If these were already present, they are deleted and re-written
+#' @param peaklist `list` of peak tables
+#' @param datenList `list` of `xcms::xcmsRAW` objects
+#' 
+#' @details This needs to be run before alignment 
+#' @returns New peak table `list` in the same form as before but with additional columns
+#' sample_id and peak_id_all. If these were already present, they are over-written
 #' @export
 new_peaklist <- function(peaklist, datenList) {
   peaklisttemp <- Map(function(pl, sid) transform(pl, sample_id = sid, peak_id_all = NA), 
@@ -438,18 +443,15 @@ new_peaklist <- function(peaklist, datenList) {
 }
 
 
-
-
-
-#' Get a recommendation for the mz step parameter (binning width)
+#' Get a recommendation for the m/z-step parameter (binning width)
 #' 
-#' Calculates the optimum mz step based on mass differences. Takes a sample
+#' @description Calculates the optimum mz step based on mass differences. Takes a sample
 #' of 100 spectra to make the calculation
 #' 
 #' @param daten raw data as list of xcmsRAW objects
 #' @param probs quantile to use (see quantile function)
 #' 
-#' @return numeric. Width in Da
+#' @returns Recommended m/z width (Da)
 #' 
 #' @export
 optimumMzStep <- function(daten, probs) {
