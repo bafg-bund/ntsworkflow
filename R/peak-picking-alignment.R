@@ -20,21 +20,22 @@
 #' in a specific mz range (defined by i and mz_step). Used by the function
 #' FindPeaks_BfG.
 #'
-#' @param i lower mz for extracted ion chromatogram
-#' @param rawData 
-#' @param mz_step mz width for extracted ion chromatogram
-#' @param rt_min_scan 
-#' @param rt_max_scan 
-#' @param sn 
-#' @param int_threshold 
-#' @param NoiseScans 
-#' @param peakwidth_min 
-#' @param peakwidth_max 
-#' @param precursormzTol 
-#' @param maxPeaksPerSignal 
+#' @param i Lower m/z for extracted ion chromatogram in Da
+#' @param rawData Measurement data of class `xcms::xcmsRAW`
+#' @param mz_step m/z width for extracted ion chromatogram in Da
+#' @param rt_min_scan Retention time range minimum in which to look for peaks, in scans
+#' @param rt_max_scan Retention time range maximum in which to look for peaks, in scans
+#' @param sn Minimum signal-to-noise ratio (apex peak height over noise spread before and after peak)
+#' @param int_threshold Minimum peak intensity (at peak apex)
+#' @param NoiseScans Number of scans before and after peak to measure noise
+#' @param peakwidth_min Minimum peak width given in seconds
+#' @param peakwidth_max Maximum peak width given in seconds
+#' @param precursormzTol m/z tolerance for linking MS2 fragment spectra by the precursor m/z, in ppm
+#' @param maxPeaksPerSignal Maximum number of sub-peaks within a peak (direction changes) within a peak
 #'
-#' @return matrix of peaks detected in the extracted ion chromatogram, each peak
+#' @returns matrix of peaks detected in the extracted ion chromatogram, each peak
 #' is one row with the columns representing various parameters for the peak.
+#'
 #' @export
 peakpicking_BfG_cpp <- function(
     i, rawData, mz_step, rt_min_scan, rt_max_scan, 
