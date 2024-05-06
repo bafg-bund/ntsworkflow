@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Bundesanstalt für Gewässerkunde
+# Copyright 2016-2024 Bundesanstalt für Gewässerkunde
 # This file is part of ntsworkflow
 # ntsworkflow is free software: you can redistribute it and/or modify it under the 
 # terms of the GNU General Public License as published by the Free Software 
@@ -13,31 +13,30 @@
 # with ntsworkflow. If not, see <https://www.gnu.org/licenses/>.
 
 
-# Utilities ####
+# Utility functions for use with different parts of ntsworkflow
 
 
-#' Calculate the mass/charge from molecular formula and adduct form
+#' Calculate the mass/charge (m/z) from molecular formula and adduct form
 #'
-#' If adduct is not given or [M] assumes a [M+H]+ or [M-H]- adduct if 
+#' @description If adduct is not given or [M] assumes a [M+H]+ or [M-H]- adduct if 
 #' charge is not 0. Adduct must be one of "[M+H]+", "[M-H]-", "[M]+", "[M]-", "[M]".
 #' 
-#' Uses a modification of the OrgMassSpecR Function Copyright 2017 Nathan Dodder 
-#' (2-clause-BSD). The modification allows for the addition of isotopes 2H, 13C
-#' 15N and 37Cl (a whitespace charachter must precede the isotope in order to separate it from
-#' the other elements).
 #'
-#'
-#' @param formula String of molecular formula, insert space before  atomic
+#' @param formula Molecular formula as `character`, insert a space before atomic
 #'   numbers
-#' @param charge Integer
-#' @param adduct
+#' @param charge Ion charge as a positive or negative `numeric`
+#' @param adduct Adduct type as a `character`, default is no adduct (`[M]`). See details. 
 #'
-#' @return Mass/charge ratio
+#' @details Uses a modification of the `OrgMassSpecR` Function by Nathan Dodder. The modification allows for the addition of isotopes 2H, 13C
+#' 15N and 37Cl (a whitespace charachter must precede the isotope in order to separate it from
+#' the other elements). The adduct must be one of `[M+H]`, `[M-H]-`, `[M]+`, `[M]-`, `[M]`. 
+#'
+#' @returns m/z as numeric
 #' @export
 #'
 #' @examples
 #' # [M+H]+ Mass of Carbamazepine-13C15N
-#' get_mass("C14 13CH12 15NNO", 1)
+#' get_mass(formula = "C14 13CH12 15NNO", charge = 1, adduct = "[M+H]+")
 get_mass <- function(formula, charge, adduct = "[M]") {
 
   stopifnot(adduct %in% c("[M+H]+", "[M-H]-", "[M]+", "[M]-", "[M]"))
@@ -170,12 +169,10 @@ dot_every <- function(n, f) {
 
 #' Simple function to create window tolerance
 #' 
-#' Internal package use only
-#' 
-#' @param value 
-#' @param tol 
+#' @param value Central number, e.g. m/z 
+#' @param tol Tolerance
 #'
-#' @return two numbers
+#' @returns numeric length 2 with start and end of window
 wind <- function(value, tol) {
   c(value - tol, value + tol)
 } 
@@ -183,12 +180,11 @@ wind <- function(value, tol) {
 
 #' Combine a formula with the adduct
 #' 
-#'
 #' @param formula Chemical formula as a string
 #' @param adduct adduct as a string, must be one of [M+H]+, [M+Na]+, [M]+,
 #'  [M-H]-, [M+NH4]+, [M+H2CO2-H]-, [M-H2O+H]+   
 #'
-#' @return List with two elements: formula with the adduct added to it and charge
+#' @returns List with two elements: formula with the adduct added to it and the charge
 #' @export
 correct_formula <- function(formula, adduct) {
 
@@ -251,25 +247,26 @@ compact <- function(x) {
   Filter(Negate(is.null), x)
 }
 
+# TODO this function has not been tested in years and needs to be tested
+# However, currently not used.
 
-#' Export Function to For-Ident.
+#' Export data to For-Ident.
 #' 
-#' For batch processing in For-Ident, txt file is created for import on For-Ident platform. MS2 
-#' spectra are included for Met-frag or Massbank search. The spectrum for each row is taken from the
-#' sample with the highest intensity in this row. The function takes approx. 1 min to process 100 
-#' rows, so limit the size of the alignment matrix passed to the app. If no MS2 is available, row is
-#' skipped.
-#' 
+#' @description For batch processing in For-Ident, txt file is created for import on For-Ident platform. 
 #' 
 #' @param align_matrix Alignment \code{matrix} from Christian's App
 #' @param sampleList sampleList \code{matrix} from App
 #' @param rawDataList datenList \code{list} from App
 #' @param intThreshRel Intensity threshold for including peaks in MS2 spectra
 #' @param report_nm Name of output file
-#'   
-#' @return A txt file with each found mass, retention time and MS2 spectrum (if available).
-#'   
-#' @export
+#' 
+#' @details MS2 
+#' spectra are included for Met-frag or Massbank search. The spectrum for each row is taken from the
+#' sample with the highest intensity in this row. The function takes approx. 1 min to process 100 
+#' rows, so limit the size of the alignment matrix passed to the app. If no MS2 is available, row is
+#' skipped.
+#'  
+#' @returns A txt file with each found mass, retention time and MS2 spectrum (if available).
 #' 
 forIdentExport <- function(align_matrix, sampleList, rawDataList, intThreshRel = 0.01, report_nm) {
   
@@ -327,13 +324,16 @@ forIdentExport <- function(align_matrix, sampleList, rawDataList, intThreshRel =
 
 
 
-#' Load a report file using a dialog box or by giving the path to the file
+#' Load a previously saved Report 
 #' 
-#' readRDS can be used directly to open saved Report objects. 
+#' @description A dialog box is used or the path can be given as an argument.
 #' 
 #' @param dialog logical should a dialog window open to select the file (only works in rstudio)
-#' @param path if dialog is false a path to the file must be given
-#'  
+#' @param path if dialog is false a path to the file. Must be given if rstudioapi is not available
+#' 
+#' @details rstudioapi is used for the dialog. readRDS can be used directly to open saved Report objects as well.
+#' @seealso readRDS
+#' @returns an `ntsworkflow::Report` object
 #' @export
 loadReport <- function(dialog = TRUE, path = NULL) {
   if (dialog)
@@ -344,13 +344,13 @@ loadReport <- function(dialog = TRUE, path = NULL) {
 
 #' Merge two Report objects
 #' 
-#' The function will combine 2 report objects into one. The peak ids of the first
+#' @description The function will combine two report objects into one. The peak ids of the first
 #' object are followed by the second.
 #' 
-#' @param report1 a Report object
-#' @param report2 a second Report object
+#' @param report1 A Report object
+#' @param report2 A second Report object
 #' 
-#' @return a Report object
+#' @returns an ntsworkflow::Report object
 #' @export
 mergeReport <- function(report1, report2) {
   # copy to avoid reference semantics
