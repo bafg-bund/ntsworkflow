@@ -15,7 +15,7 @@
 #' @keywords internal 
 "_PACKAGE"
 
-#' ntsworkflow: A package for computating the notorious bar statistic.
+#' ntsworkflow: A package for non-target data processing.
 #'
 #'
 #' @name ntsworkflow

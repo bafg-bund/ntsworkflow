@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Bundesanstalt für Gewässerkunde
+# Copyright 2016-2024 Bundesanstalt für Gewässerkunde
 # This file is part of ntsworkflow
 # ntsworkflow is free software: you can redistribute it and/or modify it under the 
 # terms of the GNU General Public License as published by the Free Software 
@@ -13,11 +13,15 @@
 # with ntsworkflow. If not, see <https://www.gnu.org/licenses/>.
 
 
-#' create_log_file
+#' Create a list for logging when processing with the Non-Target App
 #'
-#' @param no parameters needed
+#' @description Using variables in the global environment in the Non-Target-App,
+#' a `list` is created which is later saved as a log file in JSON format when
+#' saving the processing results.
 #'
-#' @return log_file with used settings for peakpicking, alignment, blankcorrectio,normalization, filtering, annotation
+#'
+#' @returns list with used settings for peakpicking, alignment, blankcorrection,
+#'   normalization, filtering, annotation
 #' @export
 #'
 create_log_file <- function () {

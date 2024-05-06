@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Bundesanstalt für Gewässerkunde
+# Copyright 2016-2024 Bundesanstalt für Gewässerkunde
 # This file is part of ntsworkflow
 # ntsworkflow is free software: you can redistribute it and/or modify it under the 
 # terms of the GNU General Public License as published by the Free Software 
@@ -14,13 +14,13 @@
 
 
 
-#' Peakpeaking algorithm using c++
+#' Peakpeaking algorithm using C++
 #' 
 #' This function wraps the c++ peakpicking algorithm. The function picks peaks
 #' in a specific mz range (defined by i and mz_step). Used by the function
 #' FindPeaks_BfG.
 #'
-#' @param i lower mz for extracted ion chromatogram
+#' @param i Lower mz for extracted ion chromatogram
 #' @param rawData 
 #' @param mz_step mz width for extracted ion chromatogram
 #' @param rt_min_scan 

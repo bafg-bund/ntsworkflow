@@ -19,9 +19,9 @@
 #'   is chosen, it will annotate the alignmentTable with peaklist component info
 #'   (Cl and Br and some adducts)
 #' 
-#' @param sampleListLocal (list of processed samples)
-#' @param peakListList (result of peakpicking)
-#' @param alignmentTable (result of the alignment)
+#' @param sampleListLocal (`data.frame` of processed samples)
+#' @param peakListList (from peakpicking)
+#' @param alignmentTable (from alignment)
 #' @param numcores (number of CPU cores to be used)
 #'
 #' @returns alignmentTable with annotated isotopologues based on componentization 
@@ -98,6 +98,8 @@ annotate_grouped_components <- function(sampleListLocal,
   }, FUN.VALUE = numeric(1))
   res
 }
+
+# TODO: Clean up code to make it more readable
 
 #' Group features into components
 #'
@@ -374,7 +376,8 @@ componentization_BfG <- function(Liste,
   Liste[order(Liste$mz), ] 
 }
 
-# TODO Need to replace DBSCAN with hierarchical clustering
+# TODO Need to replace DBSCAN with hierarchical clustering in 
+# alig_componentisation
 
 #' Second stage componentisation using the alignment table
 #' 
