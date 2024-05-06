@@ -253,7 +253,6 @@ annotateCleanMSMS <- function(cleanMSMS, GenForm_an_out, GenForm_loss_out, lowes
 #'
 #' @export
 #'
-#'
 fixNoLossSpace <- function(anno_MS_file, replace=TRUE) {
   fileConnection <- file(anno_MS_file)
   anno_MS_lines <- readLines(fileConnection)
