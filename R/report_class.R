@@ -582,11 +582,12 @@ Report <- setRefClass(
             results <- rbind(results, further_res)
           }
         }
+        
+        # clear features which are under the MS1 baseline
+        results <- results[results$int_h >= settings$baseline_noise_MS1, , drop = FALSE]
+        
         # continue with this rest only if peaks are found
-        if (!is.null(results)) {
-          # clear features which are under the MS1 baseline
-          results <- results[results$int_h >= settings$baseline_noise_MS1, , drop = FALSE]
-
+        if (nrow(results) != 0) {
           # check for duplicate detections
           du <- results[, c("index", "samp")]
           du <- du[duplicated(du), ]
@@ -662,7 +663,26 @@ Report <- setRefClass(
 
           getMS1 <- function(thisID, thisRt, thisMz, thisInt) {
             ind <- which.min(abs(rawLink@scantime - thisRt))
-            ms1Spec <- xcms::getSpec(rawLink, scanrange = c(ind - 1, ind, ind + 1))
+            failvar <- FALSE
+            tryCatch(
+              ms1Spec <- xcms::getSpec(rawLink, scanrange = c(ind - 1, ind, ind + 1)),
+              error = function(cnd) {
+                log_error("Error in getSpec() for peakID = {thisID}: {conditionMessage(cnd)}")
+                failvar <<- TRUE
+              }
+            )
+            if (failvar) {
+              for(i in c(ind, ind-1, ind+1)) {  # check if any of them returns results with multiple rows
+                ms1Spec <- xcms::getScan(rawLink, i)
+                if (nrow(ms1Spec) > 1) {  # first one to return nrwos > 1
+                  # Test if m/z of peak is found in spectrum (within tolerance)
+                  if (any(abs(ms1Spec[,1] - thisMz) <= settings$mztolu_fine)) {
+                    log_info("Used single scan instead and found peak for peakID = {thisID}")
+                    break
+                  }
+                }
+              }
+            }
             ms1Spec <- as.data.frame(ms1Spec)
             colnames(ms1Spec) <- c("mz", "int")
             ms1Spec <- ms1Spec[ms1Spec$int >= settings$baseline_noise_MS1, ]
@@ -673,6 +693,7 @@ Report <- setRefClass(
             ms1Spec <- ms1Spec[!is.na(ms1Spec$mz) & !is.na(ms1Spec$int), ]
             ms1Spec
           }
+          
           MS1List <- Map(getMS1, subres$peakID, subres$rt, subres$real_mz, subres$int_h)
           MS1df <- do.call("rbind", MS1List)
           # export MS1 ####
