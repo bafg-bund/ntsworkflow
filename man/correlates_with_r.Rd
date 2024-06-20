@@ -9,9 +9,9 @@ correlates_with_r(aligned_intensities, zeile, koeffizient)
 \arguments{
 \item{aligned_intensities}{Matrix of intensities}
 
-\item{zeile}{Reference row of matrix}
+\item{zeile}{Reference row of matrix to which all other are compared to}
 
-\item{koeffizient}{Pearson correlation coefficient}
+\item{koeffizient}{Pearson correlation coefficient (minimum)}
 }
 \value{
 Boolean. True for those rows of the matrix which have a correlation 

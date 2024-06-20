@@ -2,7 +2,7 @@
 % Please edit documentation in R/componentization.R
 \name{annotate_grouped_components}
 \alias{annotate_grouped_components}
-\title{annotate_grouped_components}
+\title{Annotate alignment table with adduct and isotopologue information}
 \usage{
 annotate_grouped_components(
   sampleListLocal,
@@ -12,11 +12,11 @@ annotate_grouped_components(
 )
 }
 \arguments{
-\item{sampleListLocal}{(list of processed samples)}
+\item{sampleListLocal}{(`data.frame` of processed samples)}
 
-\item{peakListList}{(result of peakpicking)}
+\item{peakListList}{(from peakpicking)}
 
-\item{alignmentTable}{(result of the alignment)}
+\item{alignmentTable}{(from alignment)}
 
 \item{numcores}{(number of CPU cores to be used)}
 }
@@ -24,5 +24,7 @@ annotate_grouped_components(
 alignmentTable with annotated isotopologues based on componentization
 }
 \description{
-If no db is chosen, annotate alignmentTable with peaklist component info (Cl and Br)
+This function is for the annotation section of the app. If no db
+  is chosen, it will annotate the alignmentTable with peaklist component info
+  (Cl and Br and some adducts)
 }

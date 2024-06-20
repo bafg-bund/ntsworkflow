@@ -21,40 +21,43 @@ FindPeaks_BfG(
 )
 }
 \arguments{
-\item{daten}{from xcms}
+\item{daten}{Measurement data of class `xcms::xcmsRAW`}
 
-\item{mz_min}{}
+\item{mz_min}{m/z range to peak-picking (lower) (Da)}
 
-\item{mz_max}{}
+\item{mz_max}{m/z range to peak-picking (upper) (Da)}
 
-\item{mz_step}{}
+\item{mz_step}{m/z width for extracted ion chromatogram (Da)}
 
-\item{rt_min}{}
+\item{rt_min}{Retention time range minimum in which to look for peaks (s)}
 
-\item{rt_max}{}
+\item{rt_max}{Retention time range maximum in which to look for peaks (s)}
 
-\item{sn}{}
+\item{sn}{Minimum signal-to-noise ratio (apex peak height over noise spread before and after peak)}
 
-\item{int_threshold}{}
+\item{int_threshold}{Minimum peak intensity (at peak apex)}
 
-\item{peak_NoiseScans}{}
+\item{peak_NoiseScans}{Number of scans before and after peak to measure noise}
 
-\item{precursormzTol}{}
+\item{precursormzTol}{m/z tolerance for linking MS2 fragment spectra by the precursor m/z (ppm)}
 
-\item{peakwidth_min}{}
+\item{peakwidth_min}{Minimum peak width given (s)}
 
-\item{peakwidth_max}{}
+\item{peakwidth_max}{Maximum peak width given (s)}
 
-\item{maxPeaksPerSignal}{}
+\item{maxPeaksPerSignal}{Maximum number of sub-peaks within a peak (direction changes) within a peak}
 }
 \value{
-data.frame of the peak inventory list
+`data.frame` of the peak inventory (peak table)
 }
 \description{
 Function will pick chromatographic peaks in the raw data file by binning and 
-analyzing the extracted ion chromatograms. The peak finding is done by
+analyzing the extracted ion chromatograms.
+}
+\details{
+The peak finding is done by
 taking the derivative of the chromatogram and looking for points where it 
-crosses 0. More information can be found in Dietrich, C., Wick, A., & 
+crosses 0. This function uses `peakpicking_BfG_cpp` which in turn uses the C++ function `peakPickingBfGC`. More information can be found in Dietrich, C., Wick, A., & 
 Ternes, T. A. (2021). Open source feature detection for non‐target LC‐MS 
 analytics. Rapid Communications in Mass Spectrometry, e9206. doi:10.1002/rcm.9206
 }

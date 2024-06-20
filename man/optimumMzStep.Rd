@@ -2,7 +2,7 @@
 % Please edit documentation in R/peak-picking-alignment.R
 \name{optimumMzStep}
 \alias{optimumMzStep}
-\title{Get a recommendation for the mz step parameter (binning width)}
+\title{Get a recommendation for the m/z-step parameter (binning width)}
 \usage{
 optimumMzStep(daten, probs)
 }
@@ -12,7 +12,7 @@ optimumMzStep(daten, probs)
 \item{probs}{quantile to use (see quantile function)}
 }
 \value{
-numeric. Width in Da
+Recommended m/z width (Da)
 }
 \description{
 Calculates the optimum mz step based on mass differences. Takes a sample

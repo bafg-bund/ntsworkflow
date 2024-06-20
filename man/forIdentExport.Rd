@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities.R
 \name{forIdentExport}
 \alias{forIdentExport}
-\title{Export Function to For-Ident.}
+\title{Export data to For-Ident.}
 \usage{
 forIdentExport(
   align_matrix,
@@ -27,7 +27,10 @@ forIdentExport(
 A txt file with each found mass, retention time and MS2 spectrum (if available).
 }
 \description{
-For batch processing in For-Ident, txt file is created for import on For-Ident platform. MS2 
+For batch processing in For-Ident, txt file is created for import on For-Ident platform.
+}
+\details{
+MS2 
 spectra are included for Met-frag or Massbank search. The spectrum for each row is taken from the
 sample with the highest intensity in this row. The function takes approx. 1 min to process 100 
 rows, so limit the size of the alignment matrix passed to the app. If no MS2 is available, row is

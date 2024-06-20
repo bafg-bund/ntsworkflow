@@ -7,14 +7,14 @@
 mergeReport(report1, report2)
 }
 \arguments{
-\item{report1}{a Report object}
+\item{report1}{A Report object}
 
-\item{report2}{a second Report object}
+\item{report2}{A second Report object}
 }
 \value{
-a Report object
+an ntsworkflow::Report object
 }
 \description{
-The function will combine 2 report objects into one. The peak ids of the first
+The function will combine two report objects into one. The peak ids of the first
 object are followed by the second.
 }

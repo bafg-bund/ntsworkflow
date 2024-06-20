@@ -2,7 +2,7 @@
 % Please edit documentation in R/componentization.R
 \name{componentization_BfG}
 \alias{componentization_BfG}
-\title{componentization_BfG}
+\title{Group features into components}
 \usage{
 componentization_BfG(
   Liste,
@@ -16,7 +16,7 @@ componentization_BfG(
 )
 }
 \arguments{
-\item{Liste}{(peaklist)}
+\item{Liste}{peaklist from the peak-picking step}
 
 \item{daten}{(datenList)}
 
@@ -36,8 +36,8 @@ componentization_BfG(
 peaklist with added cols groupleader and group for each component
 }
 \description{
-Componentization/ Grouping of adducts, isotopologues, in-source fragments, etc.
-Either by:
- fixed thresholds for RT, RT_FWHM_left and RT_FWHM_right or
- automatically adjusted thresholds based on the 13C isotopologue.
+Componentization/ Grouping of adducts, isotopologues, in-source
+fragments, etc. Either by: fixed thresholds for RT, RT_FWHM_left and
+RT_FWHM_right or automatically adjusted thresholds based on the 13C
+isotopologue.
 }

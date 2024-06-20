@@ -9,11 +9,11 @@ removeRare(alignment, minimum)
 \arguments{
 \item{alignment}{alignment table}
 
-\item{minimum}{number of samples in which a feature is found must be less than
-total number of samples}
+\item{minimum}{number of samples in which a feature is found must be less
+than total number of samples}
 }
 \value{
-alignment table with rows removed
+Alignment table with rows removed
 }
 \description{
 Remove features found in less than x samples

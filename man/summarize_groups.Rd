@@ -10,7 +10,7 @@ summarize_groups(alig)
 \item{alig}{Alignment table}
 }
 \value{
-Matrix. Alignment table with additional column Gruppe
+Alignment table with the additional column Gruppe
 }
 \description{
 Will take the componentization information from each sample in the

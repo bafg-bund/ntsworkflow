@@ -2,16 +2,16 @@
 % Please edit documentation in R/logging.R
 \name{create_log_file}
 \alias{create_log_file}
-\title{create_log_file}
+\title{Create a list for logging when processing with the Non-Target App}
 \usage{
 create_log_file()
 }
-\arguments{
-\item{no}{parameters needed}
-}
 \value{
-log_file with used settings for peakpicking, alignment, blankcorrectio,normalization, filtering, annotation
+list with used settings for peakpicking, alignment, blankcorrection,
+  normalization, filtering, annotation
 }
 \description{
-create_log_file
+Using variables in the global environment in the Non-Target-App,
+a `list` is created which is later saved as a log file in JSON format when
+saving the processing results.
 }

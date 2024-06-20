@@ -9,9 +9,9 @@ keepConsecutive(alignment, samples, consecutive)
 \arguments{
 \item{alignment}{Alignment Table}
 
-\item{samples}{samples to consider (everything else will be ignored), by ID}
+\item{samples}{Samples to consider (everything else will be ignored), by ID}
 
-\item{consecutive}{number of consecutive samples a peak should be present in}
+\item{consecutive}{Number of consecutive samples a peak should be present in}
 }
 \value{
 Alignment table with possibly some rows removed

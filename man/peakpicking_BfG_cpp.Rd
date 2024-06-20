@@ -2,7 +2,7 @@
 % Please edit documentation in R/peak-picking-alignment.R
 \name{peakpicking_BfG_cpp}
 \alias{peakpicking_BfG_cpp}
-\title{Peakpeaking algorithm using c++}
+\title{Peakpeaking algorithm using C++}
 \usage{
 peakpicking_BfG_cpp(
   i,
@@ -20,29 +20,29 @@ peakpicking_BfG_cpp(
 )
 }
 \arguments{
-\item{i}{lower mz for extracted ion chromatogram}
+\item{i}{Lower m/z for extracted ion chromatogram in Da}
 
-\item{rawData}{}
+\item{rawData}{Measurement data of class `xcms::xcmsRAW`}
 
-\item{mz_step}{mz width for extracted ion chromatogram}
+\item{mz_step}{m/z width for extracted ion chromatogram in Da}
 
-\item{rt_min_scan}{}
+\item{rt_min_scan}{Retention time range minimum in which to look for peaks, in scans}
 
-\item{rt_max_scan}{}
+\item{rt_max_scan}{Retention time range maximum in which to look for peaks, in scans}
 
-\item{sn}{}
+\item{sn}{Minimum signal-to-noise ratio (apex peak height over noise spread before and after peak)}
 
-\item{int_threshold}{}
+\item{int_threshold}{Minimum peak intensity (at peak apex)}
 
-\item{NoiseScans}{}
+\item{NoiseScans}{Number of scans before and after peak to measure noise}
 
-\item{peakwidth_min}{}
+\item{peakwidth_min}{Minimum peak width given in seconds}
 
-\item{peakwidth_max}{}
+\item{peakwidth_max}{Maximum peak width given in seconds}
 
-\item{precursormzTol}{}
+\item{precursormzTol}{m/z tolerance for linking MS2 fragment spectra by the precursor m/z, in ppm}
 
-\item{maxPeaksPerSignal}{}
+\item{maxPeaksPerSignal}{Maximum number of sub-peaks within a peak (direction changes) within a peak}
 }
 \value{
 matrix of peaks detected in the extracted ion chromatogram, each peak
@@ -52,4 +52,7 @@ is one row with the columns representing various parameters for the peak.
 This function wraps the c++ peakpicking algorithm. The function picks peaks
 in a specific mz range (defined by i and mz_step). Used by the function
 FindPeaks_BfG.
+}
+\details{
+Uses the C++ function `peakPickingBfGC`
 }

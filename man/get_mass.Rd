@@ -2,32 +2,31 @@
 % Please edit documentation in R/utilities.R
 \name{get_mass}
 \alias{get_mass}
-\title{Calculate the mass/charge from molecular formula and adduct form}
+\title{Calculate the mass/charge (m/z) from molecular formula and adduct form}
 \usage{
 get_mass(formula, charge, adduct = "[M]")
 }
 \arguments{
-\item{formula}{String of molecular formula, insert space before  atomic
+\item{formula}{Molecular formula as `character`, insert a space before atomic
 numbers}
 
-\item{charge}{Integer}
+\item{charge}{Ion charge as a positive or negative `numeric`}
 
-\item{adduct}{}
+\item{adduct}{Adduct type as a `character`, default is no adduct (`[M]`). See details.}
 }
 \value{
-Mass/charge ratio
+m/z as numeric
 }
 \description{
 If adduct is not given or [M] assumes a [M+H]+ or [M-H]- adduct if 
 charge is not 0. Adduct must be one of "[M+H]+", "[M-H]-", "[M]+", "[M]-", "[M]".
 }
 \details{
-Uses a modification of the OrgMassSpecR Function Copyright 2017 Nathan Dodder 
-(2-clause-BSD). The modification allows for the addition of isotopes 2H, 13C
+Uses a modification of the `OrgMassSpecR` Function by Nathan Dodder. The modification allows for the addition of isotopes 2H, 13C
 15N and 37Cl (a whitespace charachter must precede the isotope in order to separate it from
-the other elements).
+the other elements). The adduct must be one of `[M+H]`, `[M-H]-`, `[M]+`, `[M]-`, `[M]`.
 }
 \examples{
 # [M+H]+ Mass of Carbamazepine-13C15N
-get_mass("C14 13CH12 15NNO", 1)
+get_mass(formula = "C14 13CH12 15NNO", charge = 1, adduct = "[M+H]+")
 }

@@ -9,16 +9,16 @@ alignment_BfG_cpp(peaklists, mz_dev, DeltaRT, mz_dev_unit)
 \arguments{
 \item{peaklists}{list of peaklists}
 
-\item{mz_dev}{mz tolerance}
+\item{mz_dev}{m/z tolerance}
 
 \item{DeltaRT}{rt tolerance in s}
 
-\item{mz_dev_unit}{units for mz tolerance (ppm or mDa)}
+\item{mz_dev_unit}{Units for m/z tolerance (ppm or mDa)}
 }
 \value{
-matrix of aligned peaks, one aligned feature per row
+Matrix of aligned peaks, one aligned feature per row
 }
 \description{
-This a wrapper for the cpp function alignmentBfGC. It takes a list of peaklists
+This a wrapper for the C++ function alignmentBfGC. It takes a list of peaklists
 and produces an alignment table.
 }

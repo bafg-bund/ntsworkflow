@@ -7,13 +7,13 @@
 wind(value, tol)
 }
 \arguments{
-\item{value}{}
+\item{value}{Central number, e.g. m/z}
 
-\item{tol}{}
+\item{tol}{Tolerance}
 }
 \value{
-two numbers
+numeric length 2 with start and end of window
 }
 \description{
-Internal package use only
+Simple function to create window tolerance
 }

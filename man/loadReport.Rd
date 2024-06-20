@@ -2,15 +2,24 @@
 % Please edit documentation in R/utilities.R
 \name{loadReport}
 \alias{loadReport}
-\title{Load a report file using a dialog box or by giving the path to the file}
+\title{Load a previously saved Report}
 \usage{
 loadReport(dialog = TRUE, path = NULL)
 }
 \arguments{
 \item{dialog}{logical should a dialog window open to select the file (only works in rstudio)}
 
-\item{path}{if dialog is false a path to the file must be given}
+\item{path}{if dialog is false a path to the file. Must be given if rstudioapi is not available}
+}
+\value{
+an `ntsworkflow::Report` object
 }
 \description{
-readRDS can be used directly to open saved Report objects.
+A dialog box is used or the path can be given as an argument.
+}
+\details{
+rstudioapi is used for the dialog. readRDS can be used directly to open saved Report objects as well.
+}
+\seealso{
+readRDS
 }

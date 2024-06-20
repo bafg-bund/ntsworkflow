@@ -9,12 +9,12 @@ onlyGroupLeaders(alignment, pll, samples)
 \arguments{
 \item{alignment}{alignment table}
 
-\item{pll}{peaklistlist}
+\item{pll}{collection of peaklists as a `list`}
 
 \item{samples}{sample IDs of the samples which will be looked at, all other samples will be ignored}
 }
 \value{
-an alignment table with reduced number of rows
+An alignment table with reduced number of rows
 }
 \description{
 This will go through the alignment table and check every feature if it is a group leader. Features

@@ -16,7 +16,7 @@ keepReps(alignment, samples, reps, least)
 \item{least}{Peak found in at least this many replicates, must be <= reps}
 }
 \value{
-an alignment table with the same number of columns but a reduced number of rows.
+An alignment table with the same number of columns but a reduced number of rows.
 }
 \description{
 This function will check, for a given number of replicate injections, that a feature was found

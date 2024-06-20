@@ -7,14 +7,17 @@
 new_peaklist(peaklist, datenList)
 }
 \arguments{
-\item{peaklist}{}
+\item{peaklist}{`list` of peak tables}
 
-\item{datenList}{}
+\item{datenList}{`list` of `xcms::xcmsRAW` objects}
 }
 \value{
-New peaklist list in the same form as before but with additional columns
-sample_id and peak_id_all. If these were already present, they are deleted and re-written
+New peak table `list` in the same form as before but with additional columns
+sample_id and peak_id_all. If these were already present, they are over-written
 }
 \description{
+takes a list of peaklists and adds sample ID and peak ID information
+}
+\details{
 This needs to be run before alignment
 }

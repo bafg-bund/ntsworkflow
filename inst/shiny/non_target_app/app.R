@@ -2038,7 +2038,6 @@ server <- function(input, output, session) {
                            deleted = F, 
                            stringsAsFactors=F)
     }
-    
     newRowsList <- Map(createRow, datSeq, dateiAlle, datenList[datSeq])
     newRows <- do.call("rbind", newRowsList)
       

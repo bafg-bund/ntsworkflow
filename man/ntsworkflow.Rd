@@ -2,7 +2,7 @@
 % Please edit documentation in R/ntsworkflow-package.R
 \name{ntsworkflow}
 \alias{ntsworkflow}
-\title{ntsworkflow: A package for computating the notorious bar statistic.}
+\title{ntsworkflow: A package for non-target data processing.}
 \description{
-ntsworkflow: A package for computating the notorious bar statistic.
+ntsworkflow: A package for non-target data processing.
 }

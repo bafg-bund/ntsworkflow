@@ -13,7 +13,7 @@ correct_formula(formula, adduct)
 [M-H]-, [M+NH4]+, [M+H2CO2-H]-, [M-H2O+H]+}
 }
 \value{
-List with two elements: formula with the adduct added to it and charge
+List with two elements: formula with the adduct added to it and the charge
 }
 \description{
 Combine a formula with the adduct

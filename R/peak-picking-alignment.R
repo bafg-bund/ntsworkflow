@@ -459,7 +459,8 @@ optimumMzStep <- function(daten, probs) {
     msspektrum <- xcms::getScan(daten, scan)
     -quantile(-diff(msspektrum[, 1], lag = 1), probs = probs)
   }
-  diffs <- vapply(sample(seq_along(daten@scanindex), 100), get_diff, numeric(1))
+  ns <- ifelse(length(daten@scanindex) < 100, length(daten@scanindex), 100)
+  diffs <- vapply(sample(seq_along(daten@scanindex), ns), get_diff, numeric(1))
   round(min(diffs), 2)
 }
 
