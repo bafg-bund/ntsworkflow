@@ -464,7 +464,7 @@ Report <- setRefClass(
       "Process all currently unprocessed files in the report object. Previously recorded false
       positives (without specified sample) are deleted by default."
       # find out which are left to process
-      #browser()
+      
       to_process <- setdiff(rawFiles, rawFilesCompl$path)
       .self$loadData(indices = which(rawFiles %in% to_process))
 
@@ -498,6 +498,7 @@ Report <- setRefClass(
         # if no ms2 comparison is desired i.e. threshold score = 0, for compounds not found
         # previously, search again based only on mz and rt
         if (settings$threshold == 0) {
+          stop("Currently it is not possible to turn off the MS2 comparison")
           # remove compounds that have MS2 score below 500 from previous list (this is leading to errors)
           results <- results[results$score >= 500, ]
 
@@ -583,11 +584,13 @@ Report <- setRefClass(
           }
         }
         
-        # clear features which are under the MS1 baseline
-        results <- results[results$int_h >= settings$baseline_noise_MS1, , drop = FALSE]
+        # Clear features which are under the MS1 baseline
+        if (!is.null(results)) {
+          results <- results[results$int_h >= settings$baseline_noise_MS1, , drop = FALSE]
+        }
         
-        # continue with this rest only if peaks are found
-        if (nrow(results) != 0) {
+        # Continue with this rest only if peaks are found
+        if (!is.null(results) && nrow(results) != 0) {
           # check for duplicate detections
           du <- results[, c("index", "samp")]
           du <- du[duplicated(du), ]
@@ -674,7 +677,7 @@ Report <- setRefClass(
             if (failvar) {
               for(i in c(ind, ind-1, ind+1)) {  # check if any of them returns results with multiple rows
                 ms1Spec <- xcms::getScan(rawLink, i)
-                if (nrow(ms1Spec) > 1) {  # first one to return nrwos > 1
+                if (nrow(ms1Spec) > 1) {  # first one to return nrows > 1
                   # Test if m/z of peak is found in spectrum (within tolerance)
                   if (any(abs(ms1Spec[,1] - thisMz) <= settings$mztolu_fine)) {
                     log_info("Used single scan instead and found peak for peakID = {thisID}")
@@ -833,7 +836,7 @@ Report <- setRefClass(
       process_all, previous FP will be deleted by default"
       # first delete results corresponding to results that are to be reprocessed
       # get peak IDs of all peaks to be deleted
-      #browser()
+      
       if (is.null(indices) && is.null(comp_names)) {
         indices <- seq_along(rawFiles)
         delIDs <- peakList[, "peakID"]
@@ -1387,7 +1390,6 @@ Report <- setRefClass(
 
       cc <- rep(allComps, times = length(allSamps))
       ss <- rep(allSamps, each = length(allComps))
-      #browser()
       # check if results are present in peakList, if yes, copy these to integRes, if not
       # leave as NA, need to be processed later
       getPreDat <- function(nm, sa) {
@@ -1451,7 +1453,6 @@ Report <- setRefClass(
         rawLink <- rawData[[thisSamp]]
 
         getCompDat <- function(thisCai) {
-          #browser()
           x <- strsplit(thisCai, "\\|")[[1]]
           thisComp <- x[1]
           thisAd <- x[2]
@@ -1542,10 +1543,11 @@ Report <- setRefClass(
       integRes <<- rbind(integRes, allDat)
       rownames(integRes) <<- NULL
     },
-    clearAndSave = function(dialog = TRUE, nameReport = NULL) {
-      "Clear data from RAM and save report as .report file in the current working directory.
+    clearAndSave = function(dialog = TRUE, nameReport = NULL, clearData = TRUE) {
+      "Clear data (optionally) from RAM and save report as .report file in the
+      current working directory.
       Use nameReport to give a different location and different name as in
-      *.clearAndSave('D:/exampleFolder/example'). Note: The folder must exist beforehand.
+      *.clearAndSave(F, 'D:/exampleFolder/example'). Note: The folder must exist beforehand.
       To read the file again, use the function ntsworkflow::loadReport"
 
       if (dialog) {
@@ -1560,7 +1562,8 @@ Report <- setRefClass(
         nameReport <- stringr::str_match(deparse(sys.call()), "^(.*)\\$clearAndSave")[, 2]
         nameReport <- paste0(nameReport, ".report")
       }
-      .self$clearData()
+      if (clearData)
+        .self$clearData()
       saveRDS(.self, file = nameReport)
     },
     view = function() {

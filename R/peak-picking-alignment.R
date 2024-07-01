@@ -323,7 +323,7 @@ alignment_BfG_cpp_par <- function(peaklists, ppm_dev, DeltaRT, mz_dev_unit,
 #' Ternes, T. A. (2021). Open source feature detection for non‐target LC‐MS 
 #' analytics. Rapid Communications in Mass Spectrometry, e9206. doi:10.1002/rcm.9206  
 #' 
-#' @seeaslo `peakpicking_BfG_cpp`
+#' @seealso `peakpicking_BfG_cpp`
 #' @returns `data.frame` of the peak inventory (peak table)
 #' @export
 FindPeaks_BfG <- function(daten,  

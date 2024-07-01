@@ -1,4 +1,5 @@
-test_that("dbas processing can find IS in test files", {
+test_that("dbas processing can find IS in test files, these can be saved without
+          removing files from memory", {
   test <- Report$new()
   test$changeSettings("pol", "pos")
   test$addDB(F, "/scratch/nts/MS2_db_v11.db")
@@ -11,8 +12,21 @@ test_that("dbas processing can find IS in test files", {
   expect_equal(nrow(test$peakList), 6)
   expect_contains(test$peakList$comp_name, "Olmesartan-d6")
   pth <- withr::local_tempfile(fileext = ".report")
-  test$clearAndSave(F, pth)
-  file.exists(pth)
+  test$clearAndSave(F, pth, clearData = F)
+  expect_true(file.exists(pth))
+  expect_s4_class(test$rawData[[1]], "xcmsRaw") 
   test2 <- loadReport(F, pth)
   expect_contains(test2$peakList$comp_name, "Olmesartan-d6")
 })
+
+test_that("Processing an empty file returns an empty report", {
+  test <- Report$new()
+  test$changeSettings("pol", "pos")
+  test$addDB(F, "/scratch/nts/MS2_db_v11.db")
+  test$addIS(F, test_path("fixtures", "IS_table_pos.csv"))
+  test$addRawFiles(F, test_path("fixtures", "RH_pos_20220602_no_peaks.mzXML"))
+  test$process_all()
+  expect_equal(nrow(test$peakList), 0)
+  expect_equal(nrow(test$ISresults), 0)
+})
+
