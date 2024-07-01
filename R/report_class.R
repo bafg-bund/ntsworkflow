@@ -670,7 +670,7 @@ Report <- setRefClass(
             tryCatch(
               ms1Spec <- xcms::getSpec(rawLink, scanrange = c(ind - 1, ind, ind + 1)),
               error = function(cnd) {
-                log_error("Error in getSpec() for peakID = {thisID}: {conditionMessage(cnd)}")
+                log_warn("In getSpec() for peakID = {thisID}: {conditionMessage(cnd)}")
                 failvar <<- TRUE
               }
             )
