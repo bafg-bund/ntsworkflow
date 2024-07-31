@@ -43,3 +43,5 @@ sqlite_local
 *.o
 *.so
 
+tests/kevin
+

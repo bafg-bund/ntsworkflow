@@ -42,6 +42,10 @@ annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
   alig <- as.data.frame(alig)
   alig$mean_RT <- round(alig$mean_RT / 60, 2)
   compLib <- read.csv(compLibPath)
+  if (any(sapply(compLib$rt, is.na)) || any(sapply(compLib$mz, is.na))) {
+    warning("Compound library format not recognized, check for NAs")
+    return(NULL)
+  }
   if (!all(c("mz", "name") %in% colnames(compLib)) ||
     nrow(compLib) == 0 || !inherits(compLib$mz, "numeric") ||
     !inherits(compLib$name, "character")) {
@@ -53,8 +57,8 @@ annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
     warning("There are duplicated compound names")
     return(NULL)
   }
-
-  # filter alig
+  
+  # Filter alig
   filter_alig <- function(compLibRow) {
     stopifnot(nrow(compLibRow) == 1)
     aligFilt <- alig[abs(alig$mean_mz - compLibRow$mz) <= mztol, ]
@@ -77,11 +81,13 @@ annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
       for (i in seq_len(nrow(aligFilt))) {
         intens <- intCols[
           intCols$alignmentID == aligFilt$alignmentID[i],
-          grep("^Int_", colnames(intCols))
+          grep("^Int_", colnames(intCols)),
+          drop = T
         ]
+        intensVec <- as.numeric(intens)
         highSamp <- as.numeric(
           stringr::str_match(
-            names(intens[which.max(intens)]),
+            names(intens[which.max(intensVec)]),
             "^Int_(\\d+)$"
           )[, 2]
         )
