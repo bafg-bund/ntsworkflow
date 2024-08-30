@@ -1,3 +1,0 @@
-library(ntsworkflow)
-runPeakPicking()
-

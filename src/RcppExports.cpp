@@ -61,6 +61,47 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// timesTwo
+NumericVector timesTwo(NumericVector x);
+RcppExport SEXP _ntsworkflow_timesTwo(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(timesTwo(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test_loop
+int test_loop();
+RcppExport SEXP _ntsworkflow_test_loop() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(test_loop());
+    return rcpp_result_gen;
+END_RCPP
+}
+// peakPickingBfGC_test
+NumericMatrix peakPickingBfGC_test(double mz, double mz_step, std::vector<double> XIC, std::vector<double> scantime, double min_intensity, int sn, int noisescans, double peakwidth_min, double peakwidth_max, int maxPeaksPerSignal);
+RcppExport SEXP _ntsworkflow_peakPickingBfGC_test(SEXP mzSEXP, SEXP mz_stepSEXP, SEXP XICSEXP, SEXP scantimeSEXP, SEXP min_intensitySEXP, SEXP snSEXP, SEXP noisescansSEXP, SEXP peakwidth_minSEXP, SEXP peakwidth_maxSEXP, SEXP maxPeaksPerSignalSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type mz(mzSEXP);
+    Rcpp::traits::input_parameter< double >::type mz_step(mz_stepSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type XIC(XICSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type scantime(scantimeSEXP);
+    Rcpp::traits::input_parameter< double >::type min_intensity(min_intensitySEXP);
+    Rcpp::traits::input_parameter< int >::type sn(snSEXP);
+    Rcpp::traits::input_parameter< int >::type noisescans(noisescansSEXP);
+    Rcpp::traits::input_parameter< double >::type peakwidth_min(peakwidth_minSEXP);
+    Rcpp::traits::input_parameter< double >::type peakwidth_max(peakwidth_maxSEXP);
+    Rcpp::traits::input_parameter< int >::type maxPeaksPerSignal(maxPeaksPerSignalSEXP);
+    rcpp_result_gen = Rcpp::wrap(peakPickingBfGC_test(mz, mz_step, XIC, scantime, min_intensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal));
+    return rcpp_result_gen;
+END_RCPP
+}
 // peakPickingBfGC
 NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC, std::vector<double> scantime, double min_intensity, int sn, int noisescans, double peakwidth_min, double peakwidth_max, int maxPeaksPerSignal);
 RcppExport SEXP _ntsworkflow_peakPickingBfGC(SEXP mzSEXP, SEXP mz_stepSEXP, SEXP XICSEXP, SEXP scantimeSEXP, SEXP min_intensitySEXP, SEXP snSEXP, SEXP noisescansSEXP, SEXP peakwidth_minSEXP, SEXP peakwidth_maxSEXP, SEXP maxPeaksPerSignalSEXP) {
@@ -87,6 +128,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ntsworkflow_correlates_with", (DL_FUNC) &_ntsworkflow_correlates_with, 3},
     {"_ntsworkflow_correlation", (DL_FUNC) &_ntsworkflow_correlation, 1},
     {"_ntsworkflow_alignmentBfGC", (DL_FUNC) &_ntsworkflow_alignmentBfGC, 4},
+    {"_ntsworkflow_timesTwo", (DL_FUNC) &_ntsworkflow_timesTwo, 1},
+    {"_ntsworkflow_test_loop", (DL_FUNC) &_ntsworkflow_test_loop, 0},
+    {"_ntsworkflow_peakPickingBfGC_test", (DL_FUNC) &_ntsworkflow_peakPickingBfGC_test, 10},
     {"_ntsworkflow_peakPickingBfGC", (DL_FUNC) &_ntsworkflow_peakPickingBfGC, 10},
     {NULL, NULL, 0}
 };

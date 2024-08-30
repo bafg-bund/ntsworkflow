@@ -2552,7 +2552,6 @@ server <- function(input, output, session) {
     
     # PP single sample ####
     if (input$PPRadioSingleAll == "one" && is.numeric(selected) && !sampleList[selected, "deleted"]) {
-    
       removeSampleAgain <- FALSE
       # if sample is not in RAM we need to load it first - afterwards it will be removed again
       if (!sampleList[selected, "RAM"]) { 
@@ -2616,7 +2615,6 @@ server <- function(input, output, session) {
           return(NULL)
         if (!inRam) 
           datenx <- xcms::xcmsRaw(datenx@filepath@.Data, includeMSn = TRUE)
-        
         ntsworkflow::FindPeaks_BfG(daten = datenx, 
                                           mz_min, 
                                           mz_max, 

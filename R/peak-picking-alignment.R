@@ -47,7 +47,7 @@ peakpicking_BfG_cpp <- function(
   
   XIC <- xcms::rawEIC(rawData, mzrange = c(i,i+mz_step))
   XIC <- XIC$intensity
-  
+ 
   maxima <- peakPickingBfGC(
     mz = i, mz_step = mz_step, XIC, scantime = rawData@scantime, 
     min_intensity = int_threshold, sn = sn, noisescans = NoiseScans, 
@@ -55,7 +55,7 @@ peakpicking_BfG_cpp <- function(
     maxPeaksPerSignal = maxPeaksPerSignal
   )
 
-    if (nrow(maxima) > 0) {
+  if (nrow(maxima) > 0) {
     for (j in 1:nrow(maxima)) {
       mass_spectrum <- xcms::getScan(rawData, maxima[j,5], mzrange = c(i,i+mz_step))
       exactmass <- 0

@@ -17,6 +17,18 @@ alignmentBfGC <- function(peaklistR, mz_dev, DeltaRT, mz_dev_unit) {
     .Call(`_ntsworkflow_alignmentBfGC`, peaklistR, mz_dev, DeltaRT, mz_dev_unit)
 }
 
+timesTwo <- function(x) {
+    .Call(`_ntsworkflow_timesTwo`, x)
+}
+
+test_loop <- function() {
+    .Call(`_ntsworkflow_test_loop`)
+}
+
+peakPickingBfGC_test <- function(mz, mz_step, XIC, scantime, min_intensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal) {
+    .Call(`_ntsworkflow_peakPickingBfGC_test`, mz, mz_step, XIC, scantime, min_intensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal)
+}
+
 peakPickingBfGC <- function(mz, mz_step, XIC, scantime, min_intensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal) {
     .Call(`_ntsworkflow_peakPickingBfGC`, mz, mz_step, XIC, scantime, min_intensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal)
 }

@@ -61,3 +61,6 @@ crosses 0. This function uses `peakpicking_BfG_cpp` which in turn uses the C++ f
 Ternes, T. A. (2021). Open source feature detection for non‐target LC‐MS 
 analytics. Rapid Communications in Mass Spectrometry, e9206. doi:10.1002/rcm.9206
 }
+\seealso{
+`peakpicking_BfG_cpp`
+}
