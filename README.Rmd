@@ -47,10 +47,10 @@ To cite this work please use the following citation or run `citation("ntsworkflo
 
 ## Installation
 
-ntsworkflow is designed for use on servers and currently only works on Linux-based systems. It is usually run on CentOS or Ubuntu.
+ntsworkflow is designed for use on servers and currently only works on Linux-based systems. 
 
 ### Step 1: Install dependencies
-To use the package, you must first install some dependencies. R (v4.4.0) and Java JRE and JDK (v1.8) (for rcdk package). 
+To use the package, you must first install some dependencies. R (v4.4.0) and Java JRE and JDK (v1.8) (for rcdk package). Compilation of C++ code requires GCC v13. 
 
 #### Installation on Ubuntu
 Using `apt`, the packages r-base, default-jre and default-jdk are needed. Installing Rstudio server for WSL2 was done through the website instructions (deb package).
@@ -101,10 +101,10 @@ Using `apt`, the packages r-base, default-jre and default-jdk are needed. Instal
 
 Installation of xcms takes a long time due to all the dependencies. If you can, use a pre-installed library folder.
 
-The bioconductor version for R 4.3.0 is Bioconductor 3.17. 
+The bioconductor version for R 4.4.0 is Bioconductor 3.19, this may need updating
 ```{r, eval=FALSE}
 install.packages("BiocManager")
-BiocManager::install(version = "3.17")
+BiocManager::install(version = "3.19")
 BiocManager::install("xcms")  
 ```
 
@@ -116,11 +116,8 @@ The Windows .exe can be downloaded directly from Sourceforge. For Linux, the pro
 
 This will compile the program and create the `genform` executable, which must be moved to the `~/bin` folder.
 
-### Step 2: Install the ntsworkflow package
-Install the ntsworkflow package by using RStudio menu Tools --> Install Packages... Under "Install from:" select "Package Archive File" and choose the `.tar.gz` file containing the package.
-
-#### Installing from source
-For this you need devtools.
+#### Compile from source
+Use devtools.
 
 Installation of gert for devtools requires libgit2-dev on Ubuntu.
 

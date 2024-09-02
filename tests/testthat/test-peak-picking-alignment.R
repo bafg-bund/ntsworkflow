@@ -49,10 +49,41 @@ test_that("peakpicking works for Olmesartan-d6 test file", {
   expect_true(is.data.frame(dfPeakList))
   expect_equal(nrow(dfPeakList), 3)
   dfPeakList <- f(450, 451)
-  expect_true(is.matrix(dfPeakList), info = "If no peaks found, returns logi 
-              matrix with 0 rows")
-  expect_equal(nrow(dfPeakList), 0, info = "If no peaks found, returns logi 
-               matrix with 0 rows")
-  
+  expect_true(is.data.frame(dfPeakList), info = "If no peaks found, returns df with 0 rows")
+  expect_equal(nrow(dfPeakList), 0, info = "If no peaks found, returns df with 0 rows")
   
 })
+
+test_that("File with no peaks returns an emptly peaklist", {
+  rd <- xcms::xcmsRaw(test_path("fixtures", "RH_pos_20220602_no_peaks.mzXML"), includeMSn = T)
+  mi <- 100
+  ma <- 1000
+  mz_step <- 0.02
+  
+  x <- FindPeaks_BfG(
+    daten = rd, 
+    mz_min = mi, 
+    mz_max = ma, 
+    mz_step = 0.02,
+    rt_min = 120,
+    rt_max = 1200,
+    sn = 3,
+    int_threshold = 10,
+    peak_NoiseScans = 30,
+    precursormzTol = 20,
+    peakwidth_min = 5,
+    peakwidth_max = 60,
+    maxPeaksPerSignal = 10
+  )
+  
+  expect_true(is.data.frame(x), info = "If no peaks found, returns df with 0 rows")
+  expect_equal(nrow(x), 0, info = "If no peaks found, returns df with 0 rows")
+  
+})
+
+
+
+
+
+
+

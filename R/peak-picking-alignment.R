@@ -340,33 +340,7 @@ FindPeaks_BfG <- function(daten,
                           peakwidth_max,
                           maxPeaksPerSignal) {
   
-  RT_Tol_scan <- 3
-  mz_Tol_ppm <- 20
   
-  rt_min_scan <- min(which(daten@scantime > rt_min))
-  rt_max_scan <- max(which(daten@scantime < rt_max))
-  if (is.infinite(rt_min_scan)) rt_min_scan <- 1
-  if (is.infinite(rt_max_scan)) rt_max_scan <- length(daten@scantime)
- 
- 
-  massrange <- c(mz_min, mz_min+round((mz_max-mz_min)/10))
-  pl <- NULL
-  
-  # Run peak picking algorithm
-  plrows <- lapply(seq(mz_min, mz_max, by = mz_step*0.5), peakpicking_BfG_cpp,
-               rawData = daten, mz_step = mz_step,
-               rt_min_scan = rt_min_scan,
-               rt_max_scan = rt_max_scan, 
-               sn = sn,
-               int_threshold = int_threshold,
-               NoiseScans = peak_NoiseScans,
-               precursormzTol = precursormzTol,
-               peakwidth_min = peakwidth_min,
-               peakwidth_max = peakwidth_max,
-               maxPeaksPerSignal = maxPeaksPerSignal)
-  
-  pl <- do.call("rbind", plrows)
-
   cn <- c(
     "mz",
     "RT",
@@ -387,10 +361,44 @@ FindPeaks_BfG <- function(daten,
     "SN",
     "InSourceFragmentOf"
   )
+ 
+  
+  RT_Tol_scan <- 3
+  mz_Tol_ppm <- 20
+  
+  
+  sctLarger <- daten@scantime > rt_min
+  sctSmaller <- daten@scantime < rt_max
+  if (all(!sctLarger) || all(!sctLarger))
+    return(as.data.frame(matrix(NA, 0, 18, dimnames = list(NULL, cn))))
+  rt_min_scan <- min(which(sctLarger))
+  rt_max_scan <- max(which(sctSmaller))
+  
+ 
+  massrange <- c(mz_min, mz_min+round((mz_max-mz_min)/10))
+  pl <- NULL
+  
+  # Run peak picking algorithm
+  plrows <- lapply(seq(mz_min, mz_max, by = mz_step*0.5), peakpicking_BfG_cpp,
+               rawData = daten, mz_step = mz_step,
+               rt_min_scan = rt_min_scan,
+               rt_max_scan = rt_max_scan, 
+               sn = sn,
+               int_threshold = int_threshold,
+               NoiseScans = peak_NoiseScans,
+               precursormzTol = precursormzTol,
+               peakwidth_min = peakwidth_min,
+               peakwidth_max = peakwidth_max,
+               maxPeaksPerSignal = maxPeaksPerSignal)
+  
+  if (all(vapply(plrows, is.null, logical(1))))
+    return(as.data.frame(matrix(NA, 0, 18, dimnames = list(NULL, cn))))
+  
+  pl <- do.call("rbind", plrows)
   
   # if nothing found, return empty peaklist
   if (is.null(pl)) 
-    return(matrix(NA, 0, 18, dimnames = list(NULL, cn)))
+    return(as.data.frame(matrix(NA, 0, 18, dimnames = list(NULL, cn))))
   
   if (nrow(pl) >= 1) {
     
