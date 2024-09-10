@@ -45,15 +45,21 @@ peakpicking_BfG_cpp <- function(
   
   maxima <- NULL
   
-  XIC <- xcms::rawEIC(rawData, mzrange = c(i,i+mz_step))
+  XIC <- xcms::rawEIC(rawData, mzrange = c(i, i+mz_step))
   XIC <- XIC$intensity
- 
-  maxima <- peakPickingBfGC(
-    mz = i, mz_step = mz_step, XIC, scantime = rawData@scantime, 
-    min_intensity = int_threshold, sn = sn, noisescans = NoiseScans, 
-    peakwidth_min = peakwidth_min, peakwidth_max = peakwidth_max, 
-    maxPeaksPerSignal = maxPeaksPerSignal
+  stopifnot(is.double(XIC), length(XIC) > 5)
+  tryCatch(
+    maxima <- peakPickingBfGC(
+      mz = i, mz_step = mz_step, XIC, scantime = rawData@scantime, 
+      min_intensity = int_threshold, sn = sn, noisescans = NoiseScans, 
+      peakwidth_min = peakwidth_min, peakwidth_max = peakwidth_max, 
+      maxPeaksPerSignal = maxPeaksPerSignal
+    ),
+    error = function(cnd) {
+      stop("Error in i ", i)
+    }
   )
+  
 
   if (nrow(maxima) > 0) {
     for (j in 1:nrow(maxima)) {
@@ -115,14 +121,22 @@ correlates_with_r <- function(aligned_intensities, zeile, koeffizient){
 #' 
 #' @export
 alignment_BfG_cpp <- function(peaklists, mz_dev, DeltaRT, mz_dev_unit){
+  
+  # Convert peaklist to matrix for C++, only take the first 3 columns,
+  # mz, rt, intensity
   peaklistC <- list()
   for (i in 1:length(peaklists)) {
     peaklistC[[i]] <- as.matrix(peaklists[[i]][,1:3])
   }
+  
   # set mz_dev_unit to integer 1 or 2, 1 for ppm, 2 for mDa
   stopifnot(mz_dev_unit %in% c("ppm", "mDa"))
   mz_dev_unit <- switch(mz_dev_unit, ppm = 1, mDa = 2)
   
+  # alignedtable has a column for each peaklist the number in the cell
+  # represents the rownumber in that peaklist of the feature
+  # so a one in column 1 is the first feature in the first peaklist.
+  # A 0 means that no matching feature was found.
   alignedtable <- alignmentBfGC(peaklistC, mz_dev, DeltaRT, mz_dev_unit)
   grouped2 <- matrix(0,nrow=nrow(alignedtable-1),ncol=length(peaklists)*6+4)
   
@@ -141,6 +155,7 @@ alignment_BfG_cpp <- function(peaklists, mz_dev, DeltaRT, mz_dev_unit){
       paste0("gruppe_",as.character(i))
     )
     
+    # Goes throgh each row of alignedtable
     for (j in 1:(nrow(alignedtable))) {
       if (alignedtable[j,i] > 0) {
         grouped2[j,i*6-1] <- peaklists[[i]]$peak_id_all[alignedtable[j,i]]
@@ -150,7 +165,7 @@ alignment_BfG_cpp <- function(peaklists, mz_dev, DeltaRT, mz_dev_unit){
         grouped2[j,i*6+3] <- peaklists[[i]]$MS2scan[alignedtable[j,i]]
         grouped2[j,i*6+4] <- peaklists[[i]]$Gruppe[alignedtable[j,i]]
       }
-      
+      # Compute average m/z and RT for this row
       if (i == (ncol(alignedtable))) {
         grouped2[j,1] <- mean(grouped2[j,which(alignedtable[j,] > 0)*6])
         grouped2[j,2] <- mean(grouped2[j,which(alignedtable[j,] > 0)*6+1])

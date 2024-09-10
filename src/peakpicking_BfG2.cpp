@@ -1,7 +1,5 @@
-#include <RcppArmadillo.h>
-using namespace Rcpp;
 
-// [[Rcpp::depends(RcppArmadillo)]]
+
 
 // Copyright 2016-2024 Bundesanstalt für Gewässerkunde
 // This file is part of ntsworkflow
@@ -17,23 +15,26 @@ using namespace Rcpp;
 // You should have received a copy of the GNU General Public License along 
 // with ntsworkflow. If not, see <https://www.gnu.org/licenses/>.
 
+#include <RcppArmadillo.h>
+using namespace Rcpp;
 
+// [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::export]]
 NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC,  
                               std::vector<double> scantime, double min_intensity, int sn, 
                               int noisescans, double peakwidth_min, double peakwidth_max,
                               int maxPeaksPerSignal) {
   
+   
   std::vector<double> derivative((XIC.size()-1));
   std::vector<int> maxima(XIC.size(), 0);
-  int anzahlmaxima=0;
+  int anzahlmaxima = 0;
   int j = 0;
-  /*int noisescans = 100;*/
+  
   double min_intensity2 = 0.1;
-  // maxPeaksPerSignal, this depends heavily on how noisy the chromatogram is and should be adjustable
-  //int maxPeaksPerSignal = 100;
-
+  
   // determine if the min intensity is set too high, at least for the first maxima calculation
+  // Set the min_intensity2 to 90%-tile intensity
   std::vector<double> intensities(XIC.size(), 0);
   intensities.assign(XIC.begin(), XIC.end());
   std::sort(intensities.begin(), intensities.end());
@@ -47,7 +48,7 @@ NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC
   for(int i = 1; (unsigned)i < (XIC.size()-1); ++i) {
 	  derivative[i] = XIC[i+1] - XIC[i];
 	  if ((derivative[(i-1)] > 0) && (derivative[i] <= 0) && (XIC[i] >= min_intensity2)) {
-	 	  maxima[anzahlmaxima] = i;
+	 	  maxima.at(anzahlmaxima) = i;
 	 	  anzahlmaxima++;
 	  }
   }
@@ -59,94 +60,98 @@ NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC
   std::vector<int> amountofpeaks(anzahlmaxima, 0);
   double intensity = 0;
   int noisecounter = 0;
-  	 
+
+
   for (int i = 0; i < anzahlmaxima; ++i) { 
     
-  	/* find start of peak (left_end) */
-	  j = maxima[i]-1;
-  	while ((derivative[j] > 0) && (j > 0)) {
-  		j--;
-   	}
-  	left_end[i] = j+1; 
-  	
-  	/* find end of peak (right_end) */
-	  j = maxima[i];
-   	while (((unsigned)j < derivative.size()) && (derivative[j] < 0)) {
-  		j++;
-   	}
-   	
-  	right_end[i] = j; 
-  	
-  	/* 1st noiselevel calculation based on mean intensity around the peak */
-  	intensity = 0;
-  	noisecounter = 0;  
-		    	
-  	j = left_end[i];
-  	while ((j > (left_end[i]-noisescans)) && (j > 0)) {
-  		j--;
-  		noisecounter++;
-   		intensity += XIC[j];
-  	}
-  	
-  
-  	noiselevel[i] = intensity/noisecounter;
-  	
-	  amountofpeaks[i] = 1;
-  	/* check if two peaks belong together */
-  	if ((i > 0) && (maxima[i] > 0)) {
-  	  // determine if the current peak and the previous peak are next to each 
-  	  // other (and we are not at the beginning)
-  		if ((right_end[i-1] >= left_end[i]) && (maxima[i-1] > 0)) {
-  		  // Determine if the valley between the current and previous 
-  		  // peak is higher than half the height of the smallest peak
-  		  // if this is the case the peaks belong together and will be joined
-  			if ((XIC[left_end[i]]-noiselevel[i-1]) > 
-             (std::min(XIC[maxima[i]],XIC[maxima[i-1]])-noiselevel[i-1])/2) {
-  			  // Determine if the smallest of the two peaks is higher than half the 
-  			  // higher of the two peaks
-  				if (std::min(XIC[maxima[i-1]],XIC[maxima[i]])-noiselevel[i-1] > 
-               (std::max(XIC[maxima[i-1]],XIC[maxima[i]])-noiselevel[i-1])/2) {
-  					amountofpeaks[i] = amountofpeaks[i]+amountofpeaks[i-1];
-  				} else {
-  					if (amountofpeaks[i-1] > maxPeaksPerSignal) {
-  						noiselevel[i-1] = XIC[maxima[i-1]];
-  					  // if the previous peak is deemed to be noisy, then it is deleted
-  					  // by setting the left end to the current left end
+    /* find start of peak (left_end) */
+    j = maxima[i]-1;
+    while ((derivative[j] > 0) && (j > 0)) {
+      j--;
+    }
+    left_end[i] = j+1; 
+    
+    /* find end of peak (right_end) */
+    j = maxima[i];
+    while (((unsigned)j < derivative.size()) && (derivative[j] < 0)) {
+      j++;
+    }
+    
+    right_end[i] = j; 
+    
+    /* 1st noiselevel calculation based on mean intensity around the peak */
+    intensity = 0;
+    noisecounter = 0;  
+    
+    j = left_end[i];
+    while ((j > (left_end[i]-noisescans)) && (j > 0)) {
+      j--;
+      noisecounter++;
+      intensity += XIC[j];
+    }
+    
+    
+    noiselevel[i] = intensity/noisecounter;
+    
+    amountofpeaks[i] = 1;
+    /* check if two peaks belong together */
+    if ((i > 0) && (maxima[i] > 0)) {
+      // determine if the current peak and the previous peak are next to each 
+      // other (and we are not at the beginning)
+      if ((right_end[i-1] >= left_end[i]) && (maxima[i-1] > 0)) {
+        // Determine if the valley between the current and previous 
+        // peak is higher than half the height of the smallest peak
+        // if this is the case the peaks belong together and will be joined
+        if ((XIC[left_end[i]]-noiselevel[i-1]) > 
+              (std::min(XIC[maxima[i]],XIC[maxima[i-1]])-noiselevel[i-1])/2) {
+          // Determine if the smallest of the two peaks is higher than half the 
+          // higher of the two peaks
+          if (std::min(XIC[maxima[i-1]],XIC[maxima[i]])-noiselevel[i-1] > 
+                (std::max(XIC[maxima[i-1]],XIC[maxima[i]])-noiselevel[i-1])/2) {
+            amountofpeaks[i] = amountofpeaks[i]+amountofpeaks[i-1];
+          } else {
+            if (amountofpeaks[i-1] > maxPeaksPerSignal) {
+              noiselevel[i-1] = XIC[maxima[i-1]];
+              // if the previous peak is deemed to be noisy, then it is deleted
+              // by setting the left end to the current left end
               left_end[i-1] = left_end[i];
-  					}
-
-  					// Here we look to see if the intensity has 'levelled off' by 
-  					// looking at the next 2 peaks
-  					// this basically ends a tailing after it is no longer decreasing
-  					if ((XIC[maxima[i-1]] > XIC[maxima[i]]) && (anzahlmaxima > i+2)) {
-  						if (std::min({XIC[maxima[i]], XIC[maxima[i+1]], XIC[maxima[i+2]]}) > 
-                   (std::max({XIC[maxima[i]], XIC[maxima[i+1]], XIC[maxima[i+2]]}))/2) {
-  							right_end[i] = right_end[i-1];
-  							amountofpeaks[i] = amountofpeaks[i-1];
-  						}
-  					}
-  				}
-  				
-  				if (XIC[maxima[i-1]] > XIC[maxima[i]]) {
-  				  maxima[i] = maxima[i-1];
-  				}
-  				
-  				noiselevel[i] = noiselevel[i-1];
+            }
+            
+            // Here we look to see if the intensity has 'levelled off' by 
+            // looking at the next 2 peaks
+            // this basically ends a tailing after it is no longer decreasing
+            if ((XIC[maxima[i-1]] > XIC[maxima[i]]) && (anzahlmaxima > i+2)) {
+              if (std::min({XIC[maxima[i]], XIC[maxima[i+1]], XIC[maxima[i+2]]}) > 
+                    (std::max({XIC[maxima[i]], XIC[maxima[i+1]], XIC[maxima[i+2]]}))/2) {
+                right_end[i] = right_end[i-1];
+                amountofpeaks[i] = amountofpeaks[i-1];
+              }
+            }
+          }
+          
+          if (XIC[maxima[i-1]] > XIC[maxima[i]]) {
+            maxima[i] = maxima[i-1];
+          }
+          
+          noiselevel[i] = noiselevel[i-1];
           left_end[i] = left_end[i-1];
           maxima[i-1] = 0;
           left_end[i-1] = 0;
           right_end[i-1] = 0;
           noiselevel[i-1] = 0;
           amountofpeaks[i-1] = 0;
-    			} else { 
-            if (amountofpeaks[i-1] < maxPeaksPerSignal) {
-              noiselevel[i] = noiselevel[i-1];
-            }
+        } else { 
+          if (amountofpeaks[i-1] < maxPeaksPerSignal) {
+            noiselevel[i] = noiselevel[i-1];
           }
-    		}
-    	}
-  	}
-	
+        }
+      }
+    }
+  }
+
+	 
+
+
 	// min_intensity = 1;
 	
 	/* delete maxima that have been set to 0, those below intensity threshold and
@@ -170,8 +175,8 @@ NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC
 	// in some cases amountofpeaks can be larger then 10...
 	// To correct for this set all back to 10
 	for (int k = 0; k < anzahlmaxima; ++k) {
-	  if (amountofpeaks[k] > maxPeaksPerSignal) {
-	    amountofpeaks[k] = maxPeaksPerSignal;
+	  if (amountofpeaks.at(k) > maxPeaksPerSignal) {
+	    amountofpeaks.at(k) = maxPeaksPerSignal;
 	  }
 	}
 	
@@ -340,7 +345,8 @@ NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC
 	maxima.resize(anzahlmaxima); 
    
   NumericMatrix ergebnis(anzahlmaxima, 16);
-   
+
+
   for(int i = 0; i < anzahlmaxima; ++i) { 
     ergebnis(i,0) = 0;
     ergebnis(i,1) = scantime[maxima[i]];
@@ -361,5 +367,6 @@ NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC
 	}
      
   return(ergebnis);
+ 
 }
 

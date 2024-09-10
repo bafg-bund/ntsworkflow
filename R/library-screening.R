@@ -173,7 +173,6 @@ annotate_grouped_mz_rt <- function(alig, compLibPath, mztol, rttol) {
 #'   by the column "alignementID" (compound identifiers and results of the
 #'   spectral comparison)
 #'
-#' @import dplyr
 #' @export
 annotate_grouped <- function(sampleListLocal,
                              peakListList,
@@ -321,7 +320,7 @@ annotate_grouped <- function(sampleListLocal,
   # NAs are ignored, but that doesnt matter anyway
   alignmentTableDfList <- split(alignmentTableDf, alignmentTableDf$intMax)
 
-  # preload tables for faster speed
+  # preload tables for speed
   if (!useCustom) {
     fragTable <- tbl(dbi, "fragment") %>% collect()
     expTable <- tbl(dbi, "experiment") %>% collect()
