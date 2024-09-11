@@ -48,18 +48,15 @@ peakpicking_BfG_cpp <- function(
   XIC <- xcms::rawEIC(rawData, mzrange = c(i, i+mz_step))
   XIC <- XIC$intensity
   stopifnot(is.double(XIC), length(XIC) > 5)
-  tryCatch(
-    maxima <- peakPickingBfGC(
-      mz = i, mz_step = mz_step, XIC, scantime = rawData@scantime, 
-      min_intensity = int_threshold, sn = sn, noisescans = NoiseScans, 
-      peakwidth_min = peakwidth_min, peakwidth_max = peakwidth_max, 
-      maxPeaksPerSignal = maxPeaksPerSignal
-    ),
-    error = function(cnd) {
-      stop("Error in i ", i)
-    }
-  )
+  stopifnot(length(rawData@scantime) == length(XIC))
   
+  maxima <- peakPickingBfGC(
+    mz = i, mz_step = mz_step, XIC, scantime = rawData@scantime, 
+    min_intensity = int_threshold, sn = sn, noisescans = NoiseScans, 
+    peakwidth_min = peakwidth_min, peakwidth_max = peakwidth_max, 
+    maxPeaksPerSignal = maxPeaksPerSignal
+  )
+
 
   if (nrow(maxima) > 0) {
     for (j in 1:nrow(maxima)) {

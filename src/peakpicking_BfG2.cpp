@@ -121,8 +121,9 @@ NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC
             // looking at the next 2 peaks
             // this basically ends a tailing after it is no longer decreasing
             if ((XIC[maxima[i-1]] > XIC[maxima[i]]) && (anzahlmaxima > i+2)) {
-              if (std::min({XIC[maxima[i]], XIC[maxima[i+1]], XIC[maxima[i+2]]}) > 
-                    (std::max({XIC[maxima[i]], XIC[maxima[i+1]], XIC[maxima[i+2]]}))/2) {
+              double lowInt = std::min({XIC[maxima[i]], XIC[maxima[i+1]], XIC[maxima[i+2]]});
+              double halfHighInt = (std::max({XIC[maxima[i]], XIC[maxima.at(i+1)], XIC[maxima.at(i+2)]}))/2;
+              if ( lowInt > halfHighInt ) {
                 right_end[i] = right_end[i-1];
                 amountofpeaks[i] = amountofpeaks[i-1];
               }
@@ -159,7 +160,7 @@ NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC
 	j = 0;
 	for (int i = 0; i < anzahlmaxima; ++i) { 
 	  if ((maxima[i] > 0) && (XIC[maxima[i]] > min_intensity) && 
-         (scantime[right_end[i]]-scantime[left_end[i]] > peakwidth_min)) {
+         (scantime.at(right_end[i])-scantime.at(left_end[i]) > peakwidth_min)) {
 	  	maxima[j] = maxima[i];
       left_end[j] = left_end[i];
       right_end[j] = right_end[i];
@@ -193,7 +194,7 @@ NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC
                 (i == anzahlmaxima-1)) {
 			if ((amountofpeaks_sum > maxPeaksPerSignal) && (peaksectionstartid != i)) {
 				for (int n = peaksectionstartid; n < i; n++) {
-					maxima[n] = 0;
+					maxima.at(n) = 0;
 				}
 			}
 			peaksectionstartid = i;
@@ -232,15 +233,15 @@ NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC
 		j = left_end[i];
 		otherMaximum = i-1;
 		while ((j > (left_end[i]-noisescans)) && (j > 0)) {
-  		if ((otherMaximum >= 0) && (right_end[otherMaximum] >= j)) {
+  		if ((otherMaximum >= 0) && (right_end.at(otherMaximum) >= j)) {
   		/* if there is another peak, jump to the beginning of that peak*/
-			j = left_end[otherMaximum];
+			j = left_end.at(otherMaximum);
 			otherMaximum -= 1;
   		} else {
   			j--;
-				noiseRegion[noisecounter] = XIC[j];
+				noiseRegion.at(noisecounter) = XIC.at(j);
 			  noisecounter++;
-				intensity += XIC[j];
+				intensity += XIC.at(j);
 			}
 		}
   				
@@ -249,20 +250,20 @@ NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC
 		otherMaximum = i+1;
 		/*while ((j < (right_end[i]+noisescans)) && (j < XIC.nrow()-1)) {*/
 		while ((j < (right_end[i]+noisescans)) && ((unsigned)j < XIC.size()-1)) {
-  		if ((otherMaximum < anzahlmaxima) && (left_end[otherMaximum] <= j)) {
+  		if ((otherMaximum < anzahlmaxima) && (left_end.at(otherMaximum) <= j)) {
   			/* if there is another peak, jump to the beginning of that peak*/
-  			j = right_end[otherMaximum];
+  			j = right_end.at(otherMaximum);
   			otherMaximum += 1;
   		} else {
   			j++;
-  			noiseRegion[noisecounter] = XIC[j];
+  			noiseRegion.at(noisecounter) = XIC.at(j);
 				noisecounter++;
-				intensity += XIC[j];
+				intensity += XIC.at(j);
 			}
 		}
 		
 		std::sort(noiseRegion.begin(), noiseRegion.begin()+noisecounter);
-		noisedeviation[i] = noiseRegion[noisecounter*0.9]-noiseRegion[noisecounter*0.1];
+		noisedeviation[i] = noiseRegion.at(noisecounter*0.9)-noiseRegion.at(noisecounter*0.1);
     noiselevel[i] = intensity/noisecounter;
 	} 
 	
@@ -333,9 +334,9 @@ NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC
       FWHM_right[j] = FWHM_right[i];
       amountofpeaks[j] = amountofpeaks[i];
       for (int ii = left_end[i]; ii < right_end[i]; ++ii) {
-      	if ((XIC[ii] >= noiselevel[i]) && (XIC[ii+1] >= noiselevel[i])) {
-      	  area[j] += ((XIC[ii]-noiselevel[i]) + (XIC[ii+1]-noiselevel[i])) * 
-      	    (scantime[ii+1] - scantime[ii])/2;
+      	if ((XIC[ii] >= noiselevel[i]) && (XIC.at(ii+1) >= noiselevel[i])) {
+      	  area[j] += ((XIC[ii]-noiselevel[i]) + (XIC.at(ii+1)-noiselevel[i])) * 
+      	    (scantime.at(ii+1) - scantime[ii])/2;
       	}
       }
       j++;
