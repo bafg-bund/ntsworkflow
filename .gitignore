@@ -44,4 +44,4 @@ sqlite_local
 *.so
 
 tests/kevin
-
+tests/ole
