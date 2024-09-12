@@ -18,7 +18,7 @@
 #include <RcppArmadillo.h>
 using namespace Rcpp;
 
-//' Finds peaks in an ion chromatogram
+//' Find peaks in an ion chromatogram
 //'
 //' @description Peak finding algorithm using maxima detection by 1st derivative, 
 //' an iterative search method and no chromatogram smoothing. The method is 
@@ -109,7 +109,14 @@ NumericMatrix peakPickingBfGC(
   double intensity = 0;
   int noisecounter = 0;
 
-  // Loop through each peak
+  // --Loop through each local maximum to merge adjacent maxima--
+  // 
+  // If the intensity of the valley between the current maximum
+  // and the previous one is lower than 1/2 of the lower of the two
+  // maxima, then the current maximum is merged with the previous one
+  // and the new maximum gets the intensity of the higher maximum.
+  // The merging is done by setting the previous peak's intensity to
+  // zero (this way it is marked for deletion later)
   for (int i = 0; i < anzahlmaxima; ++i) { 
     
     // Find start of peak (left_end) 
