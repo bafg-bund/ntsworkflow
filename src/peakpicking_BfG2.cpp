@@ -341,15 +341,29 @@ NumericMatrix peakPickingBfGC(
 	maxima.resize(anzahlmaxima); 
 	
 	
-	/*calculate FWHM*/
+	// -- Determine FWHM -- 
+	// We determine the RT of the left end of half peak heigh and the right end 
+	// of half peak height. This is done by starting at the left end of the peak
+	// and working backwards and vice versa for the right end. The actual position
+	// is likely to be between two scans, so the slope computed between the two
+	// scans and the corresponding scan time is computed
 	std::vector<double> FWHM_left(anzahlmaxima,0);
 	std::vector<double> FWHM_right(anzahlmaxima,0);
 	double slope = 0;
+	// Loop through all maxima
 	for (int i = 0; i < anzahlmaxima; ++i) { 
+	  // Find the position of half height on the left side by starting at the left
+	  // end of the peak and moving right until the intensity is no longer less
+	  // than half of the peak apex intensity. j is then the scan number of half height
+	  // We must make sure that j never goes beyond the end of the spectrum 
 	  j = left_end[i];
-	  while (XIC[j]-noiselevel[i] < (XIC[maxima[i]]-noiselevel[i])/2) {
+	  while ((unsigned)j < XIC.size() && 
+          (XIC[j]-noiselevel[i] < (XIC[maxima[i]]-noiselevel[i])/2)) {
 		  j++;
 	  }
+	  
+	  // Compute the slope at this position and use this to compute the scantime
+	  // between scans
 	  slope = (XIC[j]-XIC[j-1])/(scantime[j]-scantime[j-1]);
 	  if (slope == 0) {
 	  	FWHM_left[i] = scantime[j];
@@ -357,13 +371,15 @@ NumericMatrix peakPickingBfGC(
 	  	FWHM_left[i] = scantime[j-1]+(XIC[maxima[i]]/2 - XIC[j-1] + noiselevel[i])/slope;
 	  }
 	  
+	  // Find the position of half height on the right side analogously to the 
+	  // left side. Make sure j never goes beyond the beginning of the XIC
 	  j = right_end[i];
-	  while (XIC[j]-noiselevel[i] < (XIC[maxima[i]]-noiselevel[i])/2) {
+	  while (j > 0 && (XIC[j]-noiselevel[i] < (XIC[maxima[i]]-noiselevel[i])/2)) {
 		  j--;
 	  }
     
-    // j+1 might be longer than XIC
-	  if ((unsigned)j+1 >= XIC.size()) {
+    // j+1 might be longer than XIC, in which case no slope can be computed
+	  if ((unsigned)j+1 > XIC.size()) {
 	    slope = 0;
 	  } else {
 	    slope = (XIC[j+1]-XIC[j])/(scantime[j+1]-scantime[j]);
@@ -376,7 +392,7 @@ NumericMatrix peakPickingBfGC(
 	  }
 	}
 	
-	/* delete too broad peaks (2 x FWHM > peakwidth_max) and calculate area*/
+	// -- Delete peaks that are too broad (2 x FWHM > peakwidth_max) and calculate area --
 	j = 0;
 	std::vector<double> area(anzahlmaxima, 0);
 	
