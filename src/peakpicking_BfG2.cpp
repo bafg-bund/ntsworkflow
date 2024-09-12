@@ -352,6 +352,7 @@ NumericMatrix peakPickingBfGC(
 	double slope = 0;
 	// Loop through all maxima
 	for (int i = 0; i < anzahlmaxima; ++i) { 
+	  
 	  // Find the position of half height on the left side by starting at the left
 	  // end of the peak and moving right until the intensity is no longer less
 	  // than half of the peak apex intensity. j is then the scan number of half height
@@ -379,7 +380,7 @@ NumericMatrix peakPickingBfGC(
 	  }
     
     // j+1 might be longer than XIC, in which case no slope can be computed
-	  if ((unsigned)j+1 > XIC.size()) {
+	  if ((unsigned)j+1 >= XIC.size()) {
 	    slope = 0;
 	  } else {
 	    slope = (XIC[j+1]-XIC[j])/(scantime[j+1]-scantime[j]);
