@@ -17,7 +17,7 @@
 
 #include <RcppArmadillo.h>
 using namespace Rcpp;
-
+// [[Rcpp::depends(RcppArmadillo)]]
 //' Find peaks in an ion chromatogram
 //'
 //' @description Peak finding algorithm using maxima detection by 1st derivative, 
@@ -55,8 +55,7 @@ using namespace Rcpp;
 //'  col 14: Baseline of peak (intensity)
 //'  col 15: m/z of this chromatogram
 //'  col 16: 0 (placeholder for ms2 scan number)
-//' 
-// [[Rcpp::depends(RcppArmadillo)]]
+//' @export
 // [[Rcpp::export]]
 NumericMatrix peakPickingBfGC(
     double mz, 

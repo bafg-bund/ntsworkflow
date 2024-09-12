@@ -17,6 +17,44 @@ alignmentBfGC <- function(peaklistR, mz_dev, DeltaRT, mz_dev_unit) {
     .Call(`_ntsworkflow_alignmentBfGC`, peaklistR, mz_dev, DeltaRT, mz_dev_unit)
 }
 
+#' Find peaks in an ion chromatogram
+#'
+#' @description Peak finding algorithm using maxima detection by 1st derivative, 
+#' an iterative search method and no chromatogram smoothing. The method is 
+#' published in Dietrich, C., Wick, A., & Ternes, T. A. (2021). 
+#' Open source feature detection for non‐target LC‐MS analytics. 
+#' Rapid Communications in Mass Spectrometry, e9206. https://doi.org/10.1002/rcm.9206 
+#'
+#' @param mz m/z of current ion chromatogram (Da)
+#' @param mz_step binning width used to extract chromatogram (da)
+#' @param XIC ion chromatogram (intensities)
+#' @param scantime Scan time of each index in XIC (in s) 
+#' @param min_intensity Minimum intensity for peak-picking
+#' @param sn Minimum signal-to-noise ratio
+#' @param noisescans Number of scans before and after peak to determine noise
+#' @param peakwidth_min Minimum width of a peak
+#' @param peakwidth_max Maximum width of a peak
+#' @param maxPeaksPerSignal Maximum number of sub-peaks (direction changes) within a peak
+#' 
+#' @return A numeric matrix of class Rcpp::numericMatrix.
+#'  rows: peaks found. cols: 16 peak descriptors.
+#'  col 1: 0 (placeholder for m/z)
+#'  col 2: Retention time of peak (s)
+#'  col 3: 0 (Placeholder for peak intensity)
+#'  col 4: Intensity found in chromatogram 
+#'  col 5: Scan number of peak apex
+#'  col 6: Scantime of peak start
+#'  col 7: Scantime of peak end
+#'  col 8: Scan number of peak start
+#'  col 9: Scan number of peak end
+#'  col 10: UNKNOWN noisedeviation
+#'  col 11: Peak area
+#'  col 12: Left RT of peak at half height (s)
+#'  col 13: Right RT of peak at half height (s)
+#'  col 14: Baseline of peak (intensity)
+#'  col 15: m/z of this chromatogram
+#'  col 16: 0 (placeholder for ms2 scan number)
+#' @export
 peakPickingBfGC <- function(mz, mz_step, XIC, scantime, min_intensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal) {
     .Call(`_ntsworkflow_peakPickingBfGC`, mz, mz_step, XIC, scantime, min_intensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal)
 }
