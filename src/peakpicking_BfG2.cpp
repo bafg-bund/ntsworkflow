@@ -18,12 +18,58 @@
 #include <RcppArmadillo.h>
 using namespace Rcpp;
 
+//' Finds peaks in an ion chromatogram
+//'
+//' @description Peak finding algorithm using maxima detection by 1st derivative, 
+//' an iterative search method and no chromatogram smoothing. The method is 
+//' published in Dietrich, C., Wick, A., & Ternes, T. A. (2021). 
+//' Open source feature detection for non‐target LC‐MS analytics. 
+//' Rapid Communications in Mass Spectrometry, e9206. https://doi.org/10.1002/rcm.9206 
+//'
+//' @param mz m/z of current ion chromatogram (Da)
+//' @param mz_step binning width used to extract chromatogram (da)
+//' @param XIC ion chromatogram (intensities)
+//' @param scantime Scan time of each index in XIC (in s) 
+//' @param min_intensity Minimum intensity for peak-picking
+//' @param sn Minimum signal-to-noise ratio
+//' @param noisescans Number of scans before and after peak to determine noise
+//' @param peakwidth_min Minimum width of a peak
+//' @param peakwidth_max Maximum width of a peak
+//' @param maxPeaksPerSignal Maximum number of sub-peaks (direction changes) within a peak
+//' 
+//' @return A numeric matrix of class Rcpp::numericMatrix.
+//'  rows: peaks found. cols: 16 peak descriptors.
+//'  col 1: 0 (placeholder for m/z)
+//'  col 2: Retention time of peak (s)
+//'  col 3: 0 (Placeholder for peak intensity)
+//'  col 4: Intensity found in chromatogram 
+//'  col 5: Scan number of peak apex
+//'  col 6: Scantime of peak start
+//'  col 7: Scantime of peak end
+//'  col 8: Scan number of peak start
+//'  col 9: Scan number of peak end
+//'  col 10: UNKNOWN noisedeviation
+//'  col 11: Peak area
+//'  col 12: Left RT of peak at half height (s)
+//'  col 13: Right RT of peak at half height (s)
+//'  col 14: Baseline of peak (intensity)
+//'  col 15: m/z of this chromatogram
+//'  col 16: 0 (placeholder for ms2 scan number)
+//' 
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::export]]
-NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC,  
-                              std::vector<double> scantime, double min_intensity, int sn, 
-                              int noisescans, double peakwidth_min, double peakwidth_max,
-                              int maxPeaksPerSignal) {
+NumericMatrix peakPickingBfGC(
+    double mz, 
+    double mz_step, 
+    std::vector<double> XIC,  
+    std::vector<double> scantime, 
+    double min_intensity, 
+    int sn, 
+    int noisescans, 
+    double peakwidth_min, 
+    double peakwidth_max,
+    int maxPeaksPerSignal
+  ) {
   
    
   std::vector<double> derivative((XIC.size()-1));
@@ -43,6 +89,7 @@ NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC
   	min_intensity2 = min_intensity;
   }
   
+  // Detection of local maxima within the chromatogramm
   // calculate the derivative and where the derivative crosses 0 from positive to negative
   derivative[0] = XIC[1] - XIC[0];
   for(int i = 1; (unsigned)i < (XIC.size()-1); ++i) {
@@ -53,6 +100,7 @@ NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC
 	  }
   }
   
+  // Determine peak boundaries
   maxima.resize(anzahlmaxima);
   std::vector<int> left_end(anzahlmaxima, 0);	 
   std::vector<int> right_end(anzahlmaxima, 0);
@@ -61,17 +109,17 @@ NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC
   double intensity = 0;
   int noisecounter = 0;
 
-
+  // Loop through each peak
   for (int i = 0; i < anzahlmaxima; ++i) { 
     
-    /* find start of peak (left_end) */
+    // Find start of peak (left_end) 
     j = maxima[i]-1;
     while ((derivative[j] > 0) && (j > 0)) {
       j--;
     }
     left_end[i] = j+1; 
     
-    /* find end of peak (right_end) */
+    // find end of peak (right_end)
     j = maxima[i];
     while (((unsigned)j < derivative.size()) && (derivative[j] < 0)) {
       j++;
@@ -79,22 +127,24 @@ NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC
     
     right_end[i] = j; 
     
-    /* 1st noiselevel calculation based on mean intensity around the peak */
+    // 1st noiselevel calculation based on mean intensity in front of peak
     intensity = 0;
     noisecounter = 0;  
     
+    // Compute average intensity in the area before the peak by summing all
+    // intensities in a loop and then dividing by the number of iterations
     j = left_end[i];
     while ((j > (left_end[i]-noisescans)) && (j > 0)) {
       j--;
       noisecounter++;
-      intensity += XIC[j];
+      intensity += XIC.at(j);
     }
-    
     
     noiselevel[i] = intensity/noisecounter;
     
     amountofpeaks[i] = 1;
-    /* check if two peaks belong together */
+    // Merging of consecutive local maxima
+    // Check if two peaks belong together 
     if ((i > 0) && (maxima[i] > 0)) {
       // determine if the current peak and the previous peak are next to each 
       // other (and we are not at the beginning)
@@ -349,22 +399,22 @@ NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC
 
 
   for(int i = 0; i < anzahlmaxima; ++i) { 
-    ergebnis(i,0) = 0;
-    ergebnis(i,1) = scantime[maxima[i]];
-    ergebnis(i,2) = 0;
-    ergebnis(i,3) = XIC[maxima[i]]-noiselevel[i];
-    ergebnis(i,4) = maxima[i]+1;
-    ergebnis(i,5) = scantime[left_end[i]];
-    ergebnis(i,6) = scantime[right_end[i]];
-    ergebnis(i,7) = left_end[i]+1;
-    ergebnis(i,8) = right_end[i]+1;
-    ergebnis(i,9) = noisedeviation[i];
-    ergebnis(i,10) = area[i];
-    ergebnis(i,11) = FWHM_left[i];
-    ergebnis(i,12) = FWHM_right[i];
-    ergebnis(i,13) = noiselevel[i];
-    ergebnis(i,14) = mz;
-    ergebnis(i,15) = 0; /*ms2scan*/
+    ergebnis(i,0)  = 0;                                    // placeholder m/z
+    ergebnis(i,1)  = scantime.at(maxima.at(i));            // retention time
+    ergebnis(i,2)  = 0;                                    // placeholder intensity
+    ergebnis(i,3)  = XIC.at(maxima.at(i))-noiselevel.at(i);// Intensity found in chromatogram
+    ergebnis(i,4)  = maxima.at(i)+1;                       // scan number of peak
+    ergebnis(i,5)  = scantime.at(left_end.at(i));
+    ergebnis(i,6)  = scantime.at(right_end.at(i));
+    ergebnis(i,7)  = left_end.at(i)+1;
+    ergebnis(i,8)  = right_end.at(i)+1;
+    ergebnis(i,9)  = noisedeviation.at(i);
+    ergebnis(i,10) = area.at(i);                           // peak area
+    ergebnis(i,11) = FWHM_left.at(i);                      // left RT of peak at half height (s)
+    ergebnis(i,12) = FWHM_right.at(i);                     // right RT of peak at half height (s)
+    ergebnis(i,13) = noiselevel.at(i);                     // Baseline
+    ergebnis(i,14) = mz;                                   // m/z of this chromatogram
+    ergebnis(i,15) = 0;                                    // placeholder ms2 scan number
 	}
      
   return(ergebnis);
