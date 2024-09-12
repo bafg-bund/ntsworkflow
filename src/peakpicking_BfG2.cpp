@@ -358,7 +358,7 @@ NumericMatrix peakPickingBfGC(
 	  // than half of the peak apex intensity. j is then the scan number of half height
 	  // We must make sure that j never goes beyond the end of the spectrum 
 	  j = left_end[i];
-	  while ((unsigned)j < XIC.size() && 
+	  while ((unsigned)j < XIC.size()-1 && 
           (XIC[j]-noiselevel[i] < (XIC[maxima[i]]-noiselevel[i])/2)) {
 		  j++;
 	  }
