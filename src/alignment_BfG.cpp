@@ -85,6 +85,18 @@ NumericMatrix correlation(NumericMatrix aligned_intensities)
   return(ergebnis);
 }
 
+
+//' Align peaks in separate peak lists by m/z and retention time tolerance
+//'
+//' @description This function will align the peaks in multiple peak lists by
+//' comparing the m/z and RT. 
+//'
+//' @param peaklistR list of peak tables
+//' @param mz_dev m/z tolerance
+//' @param DeltaRT RT tolerance (s)
+//' @param mz_dev_unit Units for the m/z tolerance 1 = ppm, 2 = mDa
+//' 
+//' @return A matrix of class Rcpp::integerMatrix giving the .
 // [[Rcpp::export]]
 IntegerMatrix alignmentBfGC(List peaklistR, int mz_dev, int DeltaRT, int mz_dev_unit) {  // change ppm_dev to mz_dev
   
@@ -111,7 +123,8 @@ IntegerMatrix alignmentBfGC(List peaklistR, int mz_dev, int DeltaRT, int mz_dev_
   // numbers on the same row mean they have been aligned.
   // the maximum number of rows would be reached if no feature could be
   // aligned to any to any other feature, so this would be the total number
-  // of features
+  // of features.
+  // The number of columns is the number of peaklists we are aligning
   IntegerMatrix ergebnis(maximalezeilen, peaklistelements);
   // records if features are still "open" or if they have been grabbed
   // already, by reference (pl row, pl index) 
@@ -124,7 +137,8 @@ IntegerMatrix alignmentBfGC(List peaklistR, int mz_dev, int DeltaRT, int mz_dev_
   std::fill(erledigt.begin(), erledigt.end(),false);
   std::fill(kandidaten.begin(), kandidaten.end(),false);
   
-  // This counter 
+  // This counter is unclear, it is very closely related to suchstart
+  // and seems to be always 1 more than suchstart
   int iii = 0;
   bool abbruch = false;
   bool ende = false;
@@ -184,7 +198,20 @@ IntegerMatrix alignmentBfGC(List peaklistR, int mz_dev, int DeltaRT, int mz_dev_
     // the reference feature for further comparisons
     for (int i = 0; i < peaklistelements; ++i) {
       peaklistn = as<NumericMatrix>(peaklistR[i]);
-      zeile = suchstart-1;
+      
+      // Old code was like this:
+      // zeile = suchstart-1;
+      // I do not understand this, why would you start looking after suchstart-1?
+      // This is causing out-of-bounds errors because some peaklists are shorter 
+      // than others.
+      // So you start looping through all the peaklists but only start looking in 
+      // each peak list after a certain row? What if the current peaklist doesn't 
+      // have that many rows?
+      // To me it makes more sense you start each search at the beginning of 
+      // the peaklist. 
+      zeile = 0;
+      
+      // so we start looking 
       // Schleife zählt die Zeilen mit der Bedingung der Massentoleranz
       // goes through all masses until it reaches the highest mass less than
       // mass minus tolerance

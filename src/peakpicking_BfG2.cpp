@@ -240,7 +240,7 @@ NumericMatrix peakPickingBfGC(
 	int peaksectionstartid = 0;
 	int amountofpeaks_sum = 0;
 	
-	/* check if there are peak clusters */
+	// check if there are peak clusters
 	for (int i = 1; i < anzahlmaxima; ++i) { 
 		amountofpeaks_sum += amountofpeaks[i-1];
 		if ((right_end[i-1] < left_end[i]) || 

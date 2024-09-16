@@ -168,6 +168,58 @@ keepReps <- function(alignment, samples, reps, least) {
   alignment[keep, , drop = FALSE]
 }
 
+#' Replicate feature based on regular expression
+#' 
+#' @description
+#' use a regular expression on the filename to gather the groups of samples in the batch into
+#' sets. Then apply the keepReps function on each of these sets in turn. This will be quite slow
+#' because we are looping through the sets and each set loops through each row. But it is the
+#' easiest way for now.
+#' 
+#' @param alignment alignment table (matrix, grouped)
+#' @param samples Sample IDs which should be considered (e.g. only samples and no blanks)
+#' @param sampleList Sample list dataframe with columns ID, File etc.
+#' @param regexp string length 1 regular expression by which to group the samples into replicates
+#' this is done removing the matching string with stringr::str_replace(filename, regexp, "\\1"). The 
+#' part of the regexp in brackets is kept (\\1) and so should be the same in all replicates.
+#' @param least How many times does the feature need to appear. Must be less than the number of
+#' replicates in each group. If it is higher, will be changed to the number of replicates in the group with a message.
+#'
+#' @return alignment table with rows removed where the number of aligned features 
+#' in each replicate set is less than 'least'. 
+#' @export
+#'
+keep_reps_regex <- function(alignment, samples, sampleList, regexp, least) {
+  
+  # Create group sets based on regular expression
+  sampleList$basename <- basename(sampleList$File) 
+  files <- sampleList[sampleList$ID %in% samples, "basename"] 
+  fileGroups <- stringr::str_replace(files, regexp, "\\1")
+  fileList <- split(files, fileGroups)
+  # Get the IDs of these files in a safe way
+  idsList <- lapply(fileList, function(x) sampleList[sampleList$basename %in% x, "ID", drop = T])
+  
+  # Go through each group set and run keepReps for those files only
+  for (idSet in idsList) { 
+    numReps <- length(idSet) 
+    thisLeast <- least
+    if (least > numReps) {
+      f <- paste(sampleList[sampleList$ID %in% idSet, "basename"], collapse = ", ")
+      message("The number of reqired reps in files ", f, " (", least,") is 
+              higher than the total number of replicates in the set. 'least' for 
+              this set is reduced to ", numReps)
+      thisLeast <- numReps
+    }
+      
+    # For this group of samples, run keepReps
+    alignment <- keepReps(alignment = alignment, samples = idSet, reps = numReps, least = thisLeast)
+    
+  }
+
+  # Once you have gone through all the sets, alignment can be returned
+  alignment
+}
+
 #' Remove features found in less than x samples
 #'
 #' @param alignment alignment table

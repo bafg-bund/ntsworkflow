@@ -47,8 +47,10 @@ peakpicking_BfG_cpp <- function(
   
   XIC <- xcms::rawEIC(rawData, mzrange = c(i, i+mz_step))
   XIC <- XIC$intensity
-  stopifnot(is.double(XIC), length(XIC) > 5)
-  stopifnot(length(rawData@scantime) == length(XIC))
+  stopifnot(
+    is.double(XIC), 
+    length(XIC) > 0
+  )
   
   maxima <- peakPickingBfGC(
     mz = i, mz_step = mz_step, XIC, scantime = rawData@scantime, 

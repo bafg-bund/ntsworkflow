@@ -13,6 +13,17 @@ correlation <- function(aligned_intensities) {
     .Call(`_ntsworkflow_correlation`, aligned_intensities)
 }
 
+#' Align peaks in separate peak lists by m/z and retention time tolerance
+#'
+#' @description This function will align the peaks in multiple peak lists by
+#' comparing the m/z and RT. 
+#'
+#' @param peaklistR list of peak tables
+#' @param mz_dev m/z tolerance
+#' @param DeltaRT RT tolerance (s)
+#' @param mz_dev_unit Units for the m/z tolerance 1 = ppm, 2 = mDa
+#' 
+#' @return A matrix of class Rcpp::integerMatrix giving the .
 alignmentBfGC <- function(peaklistR, mz_dev, DeltaRT, mz_dev_unit) {
     .Call(`_ntsworkflow_alignmentBfGC`, peaklistR, mz_dev, DeltaRT, mz_dev_unit)
 }

@@ -25,3 +25,4 @@ test_that("1. peakPickingBfGC returns maxima without crashing for problematic XI
   expect_equal(maxima[1,5], 1370)
 
 })
+
