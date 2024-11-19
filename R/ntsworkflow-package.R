@@ -21,6 +21,12 @@
 #' @name ntsworkflow
 #' @useDynLib ntsworkflow, .registration=TRUE
 #' @importFrom Rcpp evalCpp
+#' @importFrom Rcpp sourceCpp
 #' @import foreach
 #' @import dplyr
 NULL
+
+
+.onAttach <- function(libname, pkgname) {
+  packageStartupMessage("\nPlease cite ntsworkflow if you use it: see citation('ntsworkflow') for details.\n")
+}
