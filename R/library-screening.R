@@ -1166,13 +1166,7 @@ calc_ndp <- function(d_spec, db_spec, ndp_m = 2, ndp_n = 1, mztolu_ms2 = 0.015) 
 
 # Misc and helper functions ####
 
-#' Prepare Spectrum For Comparison
-#'
-#' @param x spectrum as data.frame columns mz, int
-#'
-#' @returns spectrum with intensities to max intensity and precursor mass removed
-#' @export
-#'
+
 normalizeMs2 <- function(x) {
   # remove precursor and noise
   compname <- attr(x, "comp_name")
