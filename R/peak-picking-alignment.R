@@ -33,11 +33,8 @@
 #' @param precursormzTol m/z tolerance for linking MS2 fragment spectra by the precursor m/z, in ppm
 #' @param maxPeaksPerSignal Maximum number of sub-peaks within a peak (direction changes) within a peak
 #'
-#' @details Uses the C++ function `peakPickingBfGC` 
-#' @returns matrix of peaks detected in the extracted ion chromatogram, each peak
+#' @returns 'matrix' of peaks detected in the extracted ion chromatogram, each peak
 #' is one row with the columns representing various parameters for the peak.
-#'
-#' @export
 peakpicking_BfG_cpp <- function(
     i, rawData, mz_step, rt_min_scan, rt_max_scan, 
     sn, int_threshold, NoiseScans, peakwidth_min, peakwidth_max,
