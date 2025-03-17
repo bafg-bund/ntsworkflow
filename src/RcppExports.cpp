@@ -61,9 +61,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// peakPickingBfGC
-NumericMatrix peakPickingBfGC(double mz, double mz_step, std::vector<double> XIC, std::vector<double> scantime, double min_intensity, int sn, int noisescans, double peakwidth_min, double peakwidth_max, int maxPeaksPerSignal);
-RcppExport SEXP _ntsworkflow_peakPickingBfGC(SEXP mzSEXP, SEXP mz_stepSEXP, SEXP XICSEXP, SEXP scantimeSEXP, SEXP min_intensitySEXP, SEXP snSEXP, SEXP noisescansSEXP, SEXP peakwidth_minSEXP, SEXP peakwidth_maxSEXP, SEXP maxPeaksPerSignalSEXP) {
+// pickPeaksOneEicCpp
+NumericMatrix pickPeaksOneEicCpp(double mz, double mz_step, std::vector<double> XIC, std::vector<double> scantime, double min_intensity, int sn, int noisescans, double peakwidth_min, double peakwidth_max, int maxPeaksPerSignal);
+RcppExport SEXP _ntsworkflow_pickPeaksOneEicCpp(SEXP mzSEXP, SEXP mz_stepSEXP, SEXP XICSEXP, SEXP scantimeSEXP, SEXP min_intensitySEXP, SEXP snSEXP, SEXP noisescansSEXP, SEXP peakwidth_minSEXP, SEXP peakwidth_maxSEXP, SEXP maxPeaksPerSignalSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -77,7 +77,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type peakwidth_min(peakwidth_minSEXP);
     Rcpp::traits::input_parameter< double >::type peakwidth_max(peakwidth_maxSEXP);
     Rcpp::traits::input_parameter< int >::type maxPeaksPerSignal(maxPeaksPerSignalSEXP);
-    rcpp_result_gen = Rcpp::wrap(peakPickingBfGC(mz, mz_step, XIC, scantime, min_intensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal));
+    rcpp_result_gen = Rcpp::wrap(pickPeaksOneEicCpp(mz, mz_step, XIC, scantime, min_intensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -87,7 +87,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ntsworkflow_correlates_with", (DL_FUNC) &_ntsworkflow_correlates_with, 3},
     {"_ntsworkflow_correlation", (DL_FUNC) &_ntsworkflow_correlation, 1},
     {"_ntsworkflow_alignmentBfGC", (DL_FUNC) &_ntsworkflow_alignmentBfGC, 4},
-    {"_ntsworkflow_peakPickingBfGC", (DL_FUNC) &_ntsworkflow_peakPickingBfGC, 10},
+    {"_ntsworkflow_pickPeaksOneEicCpp", (DL_FUNC) &_ntsworkflow_pickPeaksOneEicCpp, 10},
     {NULL, NULL, 0}
 };
 

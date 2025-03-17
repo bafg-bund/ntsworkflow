@@ -1,23 +1,10 @@
 
 
-
-// Copyright 2016-2024 Bundesanstalt für Gewässerkunde
-// This file is part of ntsworkflow
-// ntsworkflow is free software: you can redistribute it and/or modify it under the 
-// terms of the GNU General Public License as published by the Free Software 
-// Foundation, either version 3 of the License, or (at your option) any 
-// later version.
-// 
-// ntsworkflow is distributed in the hope that it will be useful, but WITHOUT ANY 
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-// 
-// You should have received a copy of the GNU General Public License along 
-// with ntsworkflow. If not, see <https://www.gnu.org/licenses/>.
-
 #include <RcppArmadillo.h>
+#include "peakPicking.h"
 using namespace Rcpp;
 // [[Rcpp::depends(RcppArmadillo)]]
+
 //' Find peaks in an ion chromatogram
 //'
 //' @description Peak finding algorithm using maxima detection by 1st derivative, 
@@ -57,7 +44,7 @@ using namespace Rcpp;
 //'  col 16: 0 (placeholder for ms2 scan number)
 //' @export
 // [[Rcpp::export]]
-NumericMatrix peakPickingBfGC(
+NumericMatrix pickPeaksOneEicCpp(
     double mz, 
     double mz_step, 
     std::vector<double> XIC,  
@@ -76,24 +63,16 @@ NumericMatrix peakPickingBfGC(
   int anzahlmaxima = 0;
   int j = 0;
   
-  double min_intensity2 = 0.1;
   
-  // determine if the min intensity is set too high, at least for the first maxima calculation
-  // Set the min_intensity2 to 90%-tile intensity
-  std::vector<double> intensities(XIC.size(), 0);
-  intensities.assign(XIC.begin(), XIC.end());
-  std::sort(intensities.begin(), intensities.end());
-  min_intensity2 = intensities[intensities.size() * 0.9];
-  if ((min_intensity2 == 0) || (min_intensity2 > min_intensity)) {
-  	min_intensity2 = min_intensity;
-  }
+  double minIntensityChecked = checkMinIntensity(XIC, min_intensity);
   
   // Detection of local maxima within the chromatogramm
-  // calculate the derivative and where the derivative crosses 0 from positive to negative
+  // calculate the derivative
+  // record where the derivative crosses 0 from positive to negative (this is the maximum point)
   derivative[0] = XIC[1] - XIC[0];
   for(int i = 1; (unsigned)i < (XIC.size()-1); ++i) {
 	  derivative[i] = XIC[i+1] - XIC[i];
-	  if ((derivative[(i-1)] > 0) && (derivative[i] <= 0) && (XIC[i] >= min_intensity2)) {
+	  if ((derivative[(i-1)] > 0) && (derivative[i] <= 0) && (XIC[i] >= minIntensityChecked)) {
 	 	  maxima.at(anzahlmaxima) = i;
 	 	  anzahlmaxima++;
 	  }
@@ -443,4 +422,24 @@ NumericMatrix peakPickingBfGC(
   return(ergebnis);
  
 }
+
+// The min intensity for the maxima calculation must be at most the 90%-tile intensity
+double checkMinIntensity(std::vector<double> eic, double oldMinIntensity) {
+  std::vector<double> eicIntensitiesSorted(eic.size(), 0);
+  eicIntensitiesSorted.assign(eic.begin(), eic.end());
+  std::sort(eicIntensitiesSorted.begin(), eicIntensitiesSorted.end());
+  
+  double newMinIntensity = eicIntensitiesSorted[eicIntensitiesSorted.size() * 0.9];
+  if ((newMinIntensity == 0) || (newMinIntensity > oldMinIntensity)) {
+    return oldMinIntensity;
+  } else {
+    return newMinIntensity;
+  }
+}
+
+
+
+// Copyright 2016-2025 Bundesanstalt für Gewässerkunde
+// This file is part of ntsworkflow
+
 

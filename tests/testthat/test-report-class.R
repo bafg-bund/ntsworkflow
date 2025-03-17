@@ -5,8 +5,8 @@ test_that("dbas processing can find IS in test files, these can be saved without
   test$addDB(F, test_path("fixtures", "CSL_olmesartan-d6.db"))
   test$addIS(F, test_path("fixtures", "IS_table_pos.csv"))
   test$addRawFiles(F, c(
-    test_path("fixtures", "RH_pos_20230812.mzXML"),
-    test_path("fixtures", "RH_pos_20230813.mzXML")
+    test_path("fixtures", "mzXML-test-files", "RH_pos_20230812.mzXML"),
+    test_path("fixtures", "mzXML-test-files", "RH_pos_20230813.mzXML")
   ))
   test$process_all()
   expect_equal(nrow(test$peakList), 2)
@@ -25,7 +25,7 @@ test_that("Processing an empty file returns an empty report", {
   test$changeSettings("pol", "pos")
   test$addDB(F, test_path("fixtures", "CSL_olmesartan-d6.db"))
   test$addIS(F, test_path("fixtures", "IS_table_pos.csv"))
-  test$addRawFiles(F, test_path("fixtures", "RH_pos_20220602_no_peaks.mzXML"))
+  test$addRawFiles(F, test_path("fixtures", "mzXML-test-files", "RH_pos_20220602_no_peaks.mzXML"))
   test$process_all()
   expect_equal(nrow(test$peakList), 0)
   expect_equal(nrow(test$ISresults), 0)

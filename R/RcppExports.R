@@ -66,7 +66,7 @@ alignmentBfGC <- function(peaklistR, mz_dev, DeltaRT, mz_dev_unit) {
 #'  col 15: m/z of this chromatogram
 #'  col 16: 0 (placeholder for ms2 scan number)
 #' @export
-peakPickingBfGC <- function(mz, mz_step, XIC, scantime, min_intensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal) {
-    .Call(`_ntsworkflow_peakPickingBfGC`, mz, mz_step, XIC, scantime, min_intensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal)
+pickPeaksOneEicCpp <- function(mz, mz_step, XIC, scantime, min_intensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal) {
+    .Call(`_ntsworkflow_pickPeaksOneEicCpp`, mz, mz_step, XIC, scantime, min_intensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal)
 }
 
