@@ -178,9 +178,15 @@ pickPeaksOneEic <- function(
   )
   
   maxima <- pickPeaksOneEicCpp(
-    mz = i, mz_step = mz_step, XIC, scantime = rawData@scantime, 
-    min_intensity = int_threshold, sn = sn, noisescans = NoiseScans, 
-    peakwidth_min = peakwidth_min, peakwidth_max = peakwidth_max, 
+    mz = i, 
+    mz_step = mz_step, 
+    XIC, 
+    scantime = rawData@scantime, 
+    minIntensity = int_threshold,
+    sn = sn,
+    noisescans = NoiseScans, 
+    peakwidth_min = peakwidth_min,
+    peakwidth_max = peakwidth_max, 
     maxPeaksPerSignal = maxPeaksPerSignal
   )
 
