@@ -80,28 +80,13 @@ NumericMatrix pickPeaksOneEicCpp(
   std::vector<int> endLoc(anzahlmaxima, 0);
   std::vector<double> noiselevel(anzahlmaxima, 0);
   std::vector<int> peaksInPeak(anzahlmaxima, 0);
-  double intensity = 0;
-  int noisecounter = 0;
-  int indLook = 0;
+  
   
   for (int apexNum = 0; apexNum < anzahlmaxima; ++apexNum) { 
     
     startLoc[apexNum] = getPeakStartLoc(apexLocs, eicDerivative, apexNum);
     endLoc[apexNum] = getPeakEndLoc(apexLocs, eicDerivative, apexNum);
-    
-    // 1st noiselevel calculation based on mean intensity in front of peak
-    // Compute average intensity in the area before the peak by summing all
-    // intensities in a loop and then dividing by the number of iterations
-    intensity = 0;
-    noisecounter = 0;  
-    indLook = startLoc[apexNum];
-    while ((indLook > (startLoc[apexNum]-noisescans)) && (indLook > 0)) {
-      indLook--;
-      noisecounter++;
-      intensity += eic.at(indLook);
-    }
-    
-    noiselevel[apexNum] = intensity/noisecounter;
+    noiselevel[apexNum] = getNoiseLevel(startLoc, eic, noisescans, apexNum);
     
     peaksInPeak[apexNum] = 1;
     // Merging of consecutive local maxima (Check if two peaks belong together) 
@@ -182,7 +167,6 @@ NumericMatrix pickPeaksOneEicCpp(
 
 	
 	// delete maxima that have been set to 0, those below intensity threshold and too narrow ones
-	j = 0;
 	for (int i = 0; i < anzahlmaxima; ++i) { 
 	  if ((apexLocs[i] > 0) && (eic[apexLocs[i]] > minIntensity) && 
          (scantime.at(endLoc[i])-scantime.at(startLoc[i]) > peakwidth_min)) {
@@ -198,7 +182,7 @@ NumericMatrix pickPeaksOneEicCpp(
 	apexLocs.resize(anzahlmaxima); 
 	
 	// 190722 KJ
-	// in some cases peaksInPeak can be larger then 10...
+	// in some cases peaksInPeak can be larger then 10... why I have no idea
 	// To correct for this set all back to 10
 	for (int k = 0; k < anzahlmaxima; ++k) {
 	  if (peaksInPeak.at(k) > maxPeaksPerSignal) {
@@ -213,8 +197,7 @@ NumericMatrix pickPeaksOneEicCpp(
 	for (int i = 1; i < anzahlmaxima; ++i) { 
 		peaksInPeak_sum += peaksInPeak[i-1];
 		if ((endLoc[i-1] < startLoc[i]) || 
-          (std::min(eic[apexLocs[i]],eic[apexLocs[i-1]]) < 
-            std::max(eic[apexLocs[i-1]],eic[apexLocs[i]])/2) || 
+          (std::min(eic[apexLocs[i]],eic[apexLocs[i-1]]) < std::max(eic[apexLocs[i-1]],eic[apexLocs[i]])/2) || 
               ((apexLocs[i]-apexLocs[i-1]) > noisescans) || 
                 (i == anzahlmaxima-1)) {
 			if ((peaksInPeak_sum > maxPeaksPerSignal) && (peaksectionstartid != i)) {
@@ -244,6 +227,8 @@ NumericMatrix pickPeaksOneEicCpp(
 	
 			
 	/* accurate noise calculation */
+	double intensity = 0;
+	int noisecounter = 0;
 	std::vector<double> noisedeviation(anzahlmaxima,0);
 	std::vector<double> noiseRegion(noisescans*2,0);
 	int otherMaximum;
@@ -273,7 +258,6 @@ NumericMatrix pickPeaksOneEicCpp(
   	/* check if there are peaks after this one, otherwise add the respective scan to the noiseRegion*/
 		j = endLoc[i];
 		otherMaximum = i+1;
-		/*while ((j < (endLoc[i]+noisescans)) && (j < eic.nrow()-1)) {*/
 		while ((j < (endLoc[i]+noisescans)) && ((unsigned)j < eic.size()-1)) {
   		if ((otherMaximum < anzahlmaxima) && (startLoc.at(otherMaximum) <= j)) {
   			/* if there is another peak, jump to the beginning of that peak*/
@@ -292,7 +276,7 @@ NumericMatrix pickPeaksOneEicCpp(
     noiselevel[i] = intensity/noisecounter;
 	} 
 	
-	/* delete apexLocs that are below S/N treshold */
+	/* delete apexLocs that are below S/N threshold */
 	j = 0;
 	for (int i = 0; i < anzahlmaxima; ++i) { 
 	  if (eic[apexLocs[i]]-noiselevel[i] >= noisedeviation[i]*sn) {	
@@ -388,12 +372,10 @@ NumericMatrix pickPeaksOneEicCpp(
 	apexLocs.resize(anzahlmaxima); 
    
   NumericMatrix ergebnis(anzahlmaxima, 16);
-
-
   for(int i = 0; i < anzahlmaxima; ++i) { 
-    ergebnis(i,0)  = 0;                                    // placeholder m/z
+    ergebnis(i,0)  = 0;                                      // placeholder m/z
     ergebnis(i,1)  = scantime.at(apexLocs.at(i));            // retention time
-    ergebnis(i,2)  = 0;                                    // placeholder intensity
+    ergebnis(i,2)  = 0;                                      // placeholder intensity
     ergebnis(i,3)  = eic.at(apexLocs.at(i))-noiselevel.at(i);// Intensity found in chromatogram
     ergebnis(i,4)  = apexLocs.at(i)+1;                       // scan number of peak
     ergebnis(i,5)  = scantime.at(startLoc.at(i));
@@ -464,6 +446,20 @@ int getPeakEndLoc(const std::vector<int>& apexLocs, const std::vector<double>& e
     indLook++;
   }
   return indLook;
+}
+
+
+double getNoiseLevel(const std::vector<int>& startLoc, const std::vector<double>& eic, const int noisescans, int apexNum) {
+  // 1st noiselevel calculation based on mean intensity in front of peak
+  double intensity = 0;
+  int noisecounter = 0;  
+  int indLook = startLoc[apexNum];
+  while ((indLook > (startLoc[apexNum]-noisescans)) && (indLook > 0)) {
+    indLook--;
+    noisecounter++;
+    intensity += eic.at(indLook);
+  }
+  return intensity / noisecounter;
 }
 
 // Copyright 2016-2025 Bundesanstalt für Gewässerkunde

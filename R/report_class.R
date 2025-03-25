@@ -408,7 +408,7 @@ Report <- setRefClass(
       "Internal function to integrate peaks during processing"
 
       getPeakAtWidth <- function(widthi) {
-        resul <- ntsworkflow::peakpicking_BfG_cpp(
+        resul <- pickPeaksOneEic(
           i = comp_mzi - widthi / 2,
           rawData = rawLinki, mz_step = widthi,
           rt_min_scan = minIndi,
