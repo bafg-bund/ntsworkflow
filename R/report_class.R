@@ -1,17 +1,3 @@
-# Copyright 2016-2024 Bundesanstalt für Gewässerkunde
-# This file is part of ntsworkflow
-# ntsworkflow is free software: you can redistribute it and/or modify it under the 
-# terms of the GNU General Public License as published by the Free Software 
-# Foundation, either version 3 of the License, or (at your option) any 
-# later version.
-# 
-# ntsworkflow is distributed in the hope that it will be useful, but WITHOUT ANY 
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License along 
-# with ntsworkflow. If not, see <https://www.gnu.org/licenses/>.
-
 
 #' A reference class for database screening.
 #'
@@ -408,7 +394,7 @@ Report <- setRefClass(
       "Internal function to integrate peaks during processing"
 
       getPeakAtWidth <- function(widthi) {
-        resul <- ntsworkflow::peakpicking_BfG_cpp(
+        resul <- pickPeaksOneEic(
           i = comp_mzi - widthi / 2,
           rawData = rawLinki, mz_step = widthi,
           rt_min_scan = minIndi,
@@ -2379,3 +2365,5 @@ Report <- setRefClass(
   )
 )
 
+# Copyright 2025 Bundesanstalt für Gewässerkunde
+# This file is part of ntsworkflow

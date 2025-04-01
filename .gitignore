@@ -42,6 +42,7 @@ sqlite_local
 # binary files created by c++
 *.o
 *.so
+*.dll
 
 tests/kevin
 tests/ole

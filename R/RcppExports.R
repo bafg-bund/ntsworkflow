@@ -30,7 +30,7 @@ alignmentBfGC <- function(peaklistR, mz_dev, DeltaRT, mz_dev_unit) {
 
 #' Find peaks in an ion chromatogram
 #'
-#' @description Peak finding algorithm using maxima detection by 1st derivative, 
+#' @description Peak finding algorithm using apex detection by 1st derivative, 
 #' an iterative search method and no chromatogram smoothing. The method is 
 #' published in Dietrich, C., Wick, A., & Ternes, T. A. (2021). 
 #' Open source feature detection for non‐target LC‐MS analytics. 
@@ -38,9 +38,9 @@ alignmentBfGC <- function(peaklistR, mz_dev, DeltaRT, mz_dev_unit) {
 #'
 #' @param mz m/z of current ion chromatogram (Da)
 #' @param mz_step binning width used to extract chromatogram (da)
-#' @param XIC ion chromatogram (intensities)
-#' @param scantime Scan time of each index in XIC (in s) 
-#' @param min_intensity Minimum intensity for peak-picking
+#' @param eic extracted ion chromatogram (just intensities)
+#' @param scantime Scan time of each index in eic (in s) 
+#' @param minIntensity Minimum intensity for peak-picking
 #' @param sn Minimum signal-to-noise ratio
 #' @param noisescans Number of scans before and after peak to determine noise
 #' @param peakwidth_min Minimum width of a peak
@@ -66,7 +66,7 @@ alignmentBfGC <- function(peaklistR, mz_dev, DeltaRT, mz_dev_unit) {
 #'  col 15: m/z of this chromatogram
 #'  col 16: 0 (placeholder for ms2 scan number)
 #' @export
-peakPickingBfGC <- function(mz, mz_step, XIC, scantime, min_intensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal) {
-    .Call(`_ntsworkflow_peakPickingBfGC`, mz, mz_step, XIC, scantime, min_intensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal)
+pickPeaksOneEicCpp <- function(mz, mz_step, eic, scantime, minIntensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal) {
+    .Call(`_ntsworkflow_pickPeaksOneEicCpp`, mz, mz_step, eic, scantime, minIntensity, sn, noisescans, peakwidth_min, peakwidth_max, maxPeaksPerSignal)
 }
 
