@@ -8,31 +8,13 @@ carry out simple data analysis. It is designed as a basic peak-picking
 and annotation algorithm which feeds into more specialized workflows for
 different tasks.
 
-## License
-
-Copyright 2016-2023 Bundesanstalt für Gewässerkunde (Federal Institute
-of Hydrology)
-
-ntsworkflow is free software: you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation, either version 3 of the License, or (at your
-option) any later version.
-
-ntsworkflow is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-Public License for more details.
-
-You should have received a copy of the GNU General Public License along
-with ntsworkflow. If not, see <https://www.gnu.org/licenses/>.
-
 If you use the package or any derivative thereof, please cite the work.
 To cite this work please use the following citation or run
 `citation("ntsworkflow")`.
 
 > Kevin S. Jewell, Christian Dietrich, Toni Köppe, Franziska Thron, Arne
 > Wick and Thomas A. Ternes (2023). ntsworkflow: A Non-Target Screening
-> Data Evaluation Tool. R package version 0.2.2.
+> Data Evaluation Tool. R package version 0.2.5.
 
 ### Peer-reviewed articles reporting the development of ntsworkflow
 
@@ -47,12 +29,13 @@ To cite this work please use the following citation or run
 ## Installation
 
 ntsworkflow is designed for use on servers and currently only works on
-Linux-based systems. It is usually run on CentOS or Ubuntu.
+Linux-based systems.
 
 ### Step 1: Install dependencies
 
-To use the package, you must first install some dependencies. R (v4.3.0)
-and Java JRE and JDK (v1.8) (for rcdk package).
+To use the package, you must first install some dependencies. R (v4.4.0)
+and Java JRE and JDK (v1.8) (for rcdk package). Compilation of C++ code
+requires GCC v13.
 
 #### Installation on Ubuntu
 
@@ -83,7 +66,9 @@ instructions (deb package).
       "iterators", 
       "doParallel", 
       "Rcpp", 
-      "RcppArmadillo",  
+      "RcppArmadillo",
+      "future",
+      "furrr"
       
       # chemistry
       "rcdk",  
@@ -104,11 +89,12 @@ instructions (deb package).
 Installation of xcms takes a long time due to all the dependencies. If
 you can, use a pre-installed library folder.
 
-The bioconductor version for R 4.3.0 is Bioconductor 3.17.
+The bioconductor version for R 4.4.0 is Bioconductor 3.19, this may need
+updating
 
 ``` r
 install.packages("BiocManager")
-BiocManager::install(version = "3.17")
+BiocManager::install(version = "3.19")
 BiocManager::install("xcms")  
 ```
 
@@ -129,15 +115,9 @@ and in the folder with the .cpp files run the following:
 This will compile the program and create the `genform` executable, which
 must be moved to the `~/bin` folder.
 
-### Step 2: Install the ntsworkflow package
+#### Compile from source
 
-Install the ntsworkflow package by using RStudio menu Tools –\> Install
-Packages… Under “Install from:” select “Package Archive File” and choose
-the `.tar.gz` file containing the package.
-
-#### Installing from source
-
-For this you need devtools.
+Use devtools.
 
 Installation of gert for devtools requires libgit2-dev on Ubuntu.
 
@@ -151,3 +131,21 @@ documentation by typing `browseVignettes("ntsworkflow")`.
 When peak-picking multiple samples, if the first sample is marked as a
 blank the app will hang with an out-of-bounds index error. To avoid this
 do not mark samples as blanks until after the peak-picking is complete.
+
+## License
+
+Copyright 2025 Bundesanstalt für Gewässerkunde (Federal Institute of
+Hydrology)
+
+ntsworkflow is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+ntsworkflow is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with ntsworkflow. If not, see <https://www.gnu.org/licenses/>.
