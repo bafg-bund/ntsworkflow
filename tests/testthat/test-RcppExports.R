@@ -1,16 +1,16 @@
-test_that("1. peakPickingBfGC returns maxima without crashing for problematic XIC", {
+test_that("Pick-picking cpp functions returns maxima without crashing for problematic XIC", {
   # Load the fixture data
   testXic <- readRDS(test_path("fixtures", "xic_352.33_2019mq1_RcppExports1.RDS"))
     
   testScantime <- readRDS(test_path("fixtures", "scantime_2019mq1_RcppExports1.RDS.RDS"))
   
   # Call the function
-  maxima <- peakPickingBfGC(
+  maxima <- pickPeaksOneEicCpp(
     mz = 352.31, 
     mz_step = 0.02, 
-    XIC = testXic, 
+    eic = testXic, 
     scantime = testScantime, 
-    min_intensity = 1, 
+    minIntensity = 1, 
     sn = 1, 
     noisescans = 30, 
     peakwidth_min = 5, 
