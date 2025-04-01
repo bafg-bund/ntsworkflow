@@ -168,3 +168,6 @@ alignment_BfG_cpp <- function(peaklists, mz_dev, DeltaRT, mz_dev_unit){
   
   grouped2
 }
+
+# Copyright 2025 Bundesanstalt für Gewässerkunde
+# This file is part of ntsworkflow
