@@ -28,14 +28,35 @@ To cite this work please use the following citation or run
 
 ## Installation
 
-ntsworkflow is designed for use on servers and currently only works on
-Linux-based systems.
+R (v4.4.2) and Java JRE and JDK (v1.8) (for rcdk package) are needed.
+Compilation of C++ code requires GCC v13.
 
-### Step 1: Install dependencies
+The following guide uses [renv](https://rstudio.github.io/renv/) to
+manage the package dependencies. To start a new project use
+`renv::init()`.
 
-To use the package, you must first install some dependencies. R (v4.4.0)
-and Java JRE and JDK (v1.8) (for rcdk package). Compilation of C++ code
-requires GCC v13.
+#### Install the Bioconductor package xcms
+
+``` r
+renv::install("bioc::xcms")
+```
+
+#### Install Genform (optional)
+
+The Windows .exe can be downloaded directly from Sourceforge. It must be
+put on the system path.
+
+For Linux, the program needs to be compiled from source. Download the
+source files and in the folder with the .cpp files run the following:
+`g++ main.cpp ms*.cpp -o genform`. This will compile the program and
+create the `genform` executable, which must be moved to the `~/bin`
+folder.
+
+#### Install ntsworkflow
+
+``` r
+renv::install("bafg-bund/ntsworkflow")
+```
 
 #### Installation on Ubuntu
 
@@ -43,81 +64,12 @@ Using `apt`, the packages r-base, default-jre and default-jdk are
 needed. Installing Rstudio server for WSL2 was done through the website
 instructions (deb package).
 
-#### Install CRAN packages
-
-``` r
- install.packages(
-    c(
-      "tidyverse", 
-      
-      # shiny and co:
-      "shiny",  
-      "shinyBS",  
-      "shinyFiles", 
-      "tcltk2",  
-      "DT",  
-      
-      # Database
-      "RSQLite",  
-      "DBI",  
-      
-      # base extensions
-      "foreach",  
-      "iterators", 
-      "doParallel", 
-      "Rcpp", 
-      "RcppArmadillo",
-      "future",
-      "furrr"
-      
-      # chemistry
-      "rcdk",  
-     
-      # clustering
-      "dtw", 
-      "parallelDist",
-      
-      # utils
-      "htmltools" 
-      "yaml"  
-      )
-    )
-```
-
-#### Install Bioconductor package xcms
-
-Installation of xcms takes a long time due to all the dependencies. If
-you can, use a pre-installed library folder.
-
-The bioconductor version for R 4.4.0 is Bioconductor 3.19, this may need
-updating
-
-``` r
-install.packages("BiocManager")
-BiocManager::install(version = "3.19")
-BiocManager::install("xcms")  
-```
-
 xcms requires mzR which in turn requires ncdf4 which needs the nc-config
 script to be installed. Prior to installing xcms you therefore need to
-install ncdf4. If, for some reason, using `BiocManager::install` or
-`install.packages` does not work, you can use `apt`
-(`sudo apt install r-cran-ncdf4`) on Ubuntu. This installs ncdf4 into
-`/usr/lib/R/site-library`.
-
-#### Install Genform
-
-The Windows .exe can be downloaded directly from Sourceforge. For Linux,
-the program needs to be compiled from source. Download the source files
-and in the folder with the .cpp files run the following:
-`g++ main.cpp ms*.cpp -o genform`
-
-This will compile the program and create the `genform` executable, which
-must be moved to the `~/bin` folder.
-
-#### Compile from source
-
-Use devtools.
+install ncdf4. If, for some reason, using `renv::install`,
+`BiocManager::install` or `install.packages` does not work, you can use
+`apt` (`sudo apt install r-cran-ncdf4`) on Ubuntu. This installs ncdf4
+into `/usr/lib/R/site-library`.
 
 Installation of gert for devtools requires libgit2-dev on Ubuntu.
 
