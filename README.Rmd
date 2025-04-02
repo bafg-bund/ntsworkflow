@@ -83,13 +83,13 @@ Using `apt`, the packages r-base, default-jre and default-jdk are needed. Instal
 
 #### Install Bioconductor package xcms
 
-Installation of xcms takes a long time due to all the dependencies. If you can, use a pre-installed library folder.
+Installation of xcms takes a long time due to all the dependencies.
 
-The bioconductor version for R 4.4.0 is Bioconductor 3.19, this may need updating
 ```{r, eval=FALSE}
-install.packages("BiocManager")
-BiocManager::install(version = "3.19")
-BiocManager::install("xcms")  
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("xcms")
 ```
 
 xcms requires mzR which in turn requires ncdf4 which needs the nc-config script to be installed. Prior to installing xcms you therefore need to install ncdf4. If, for some reason, using `BiocManager::install` or `install.packages` does not work, you can use `apt` (`sudo apt install r-cran-ncdf4`) on Ubuntu. This installs ncdf4 into `/usr/lib/R/site-library`.
