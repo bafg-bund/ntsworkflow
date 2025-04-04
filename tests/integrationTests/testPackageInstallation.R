@@ -17,3 +17,4 @@ if (suppressWarnings(suppressMessages(require(ntsworkflow))))
 
 detach("package:ntsworkflow", unload = T)
 setwd(oldWd)
+renv::activate(oldWd)
