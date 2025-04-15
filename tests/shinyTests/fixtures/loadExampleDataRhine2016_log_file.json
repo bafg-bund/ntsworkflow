@@ -1,0 +1,20 @@
+[
+  {
+    "Peakpicking_Settings": ["Unknown"],
+    "Mass_Range": [100, 200],
+    "mz_Step": [0.02],
+    "RT_Range_min": [2, 20],
+    "Peakwidth_s": [5, 60],
+    "Noise_Scans": [30],
+    "SN": [3],
+    "Int_Threshold": [10],
+    "Dynamic_Tolerance_componentization": [false],
+    "mz_margin_Componentization_ppm": [5],
+    "RT_Tolerance_Componentization": [1.5]
+  },
+  {},
+  {},
+  {},
+  {},
+  []
+]

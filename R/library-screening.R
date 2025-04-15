@@ -395,7 +395,7 @@ annotate_grouped <- function(sampleListLocal,
           expTable = expTable,
           compTable = compTable
         )
-        db_spectra <- lapply(db_spectra, ntsworkflow::normalizeMs2)
+        db_spectra <- lapply(db_spectra, normalizeMs2)
         viabExp$db_available <- vapply(db_spectra, Negate(is.null), logical(1))
         viabExp <- viabExp[viabExp$db_available, ]
         if (nrow(viabExp) == 0) {
@@ -414,7 +414,7 @@ annotate_grouped <- function(sampleListLocal,
                                                 peakMz, peakRt)
       attr(ms2spektrum, "precursor_mz") <- peakMz
       colnames(ms2spektrum) <- c("mz", "int")
-      ms2spektrumNorm <- ntsworkflow::normalizeMs2(ms2spektrum)
+      ms2spektrumNorm <- normalizeMs2(ms2spektrum)
       # cut off low intensity fragments if desired
       if (intCutData != 0) {
         ms2spektrumNorm <- ms2spektrumNorm[ms2spektrumNorm$int >= intCutData, ]

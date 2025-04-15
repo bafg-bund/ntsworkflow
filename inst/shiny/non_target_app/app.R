@@ -1,20 +1,3 @@
-# Copyright 2016-2024 Bundesanstalt für Gewässerkunde
-# This file is part of ntsworkflow
-# ntsworkflow is free software: you can redistribute it and/or modify it under the 
-# terms of the GNU General Public License as published by the Free Software 
-# Foundation, either version 3 of the License, or (at your option) any 
-# later version.
-# 
-# ntsworkflow is distributed in the hope that it will be useful, but WITHOUT ANY 
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License along 
-# with ntsworkflow. If not, see <https://www.gnu.org/licenses/>.
-
-
-# Non-Target App
-# written by: Christian Dietrich, Kevin Jewell, Toni Köppe
 
 
 library(shiny)
@@ -1914,7 +1897,7 @@ server <- function(input, output, session) {
         ppsettingsx$int_threshold <- int_threshold_i
         ppsettingsx$sn <- sn_i
       }
-      pl <- ntsworkflow::FindPeaks_BfG(
+      pl <- ntsworkflow::pickPeaksMzRange(
         daten = datenx, 
         mz_min, 
         mz_max, 
@@ -2562,11 +2545,21 @@ server <- function(input, output, session) {
       }
       
       overallp$set(0.2, detail = "Peak-Picking")
-      peaklist[[selected]] <<- ntsworkflow::FindPeaks_BfG(daten = datenList[[selected]], 
-                      mz_min, mz_max, mz_step, rt_min, rt_max, sn, 
-                      int_threshold, peak_NoiseScans, precursormzTol, 
-                      PeakWidth_min,PeakWidth_max,maxNumPeaks
-                      )
+      peaklist[[selected]] <<- ntsworkflow::pickPeaksMzRange(
+        daten = datenList[[selected]], 
+        mz_min,
+        mz_max,
+        mz_step,
+        rt_min,
+        rt_max,
+        sn,
+        int_threshold,
+        peak_NoiseScans,
+        precursormzTol,
+        PeakWidth_min,
+        PeakWidth_max,
+        maxNumPeaks
+      )
         
       
       peakPickSettings[[selected]] <<- settings
@@ -2615,7 +2608,7 @@ server <- function(input, output, session) {
           return(NULL)
         if (!inRam) 
           datenx <- xcms::xcmsRaw(datenx@filepath@.Data, includeMSn = TRUE)
-        ntsworkflow::FindPeaks_BfG(daten = datenx, 
+        ntsworkflow::pickPeaksMzRange(daten = datenx, 
                                           mz_min, 
                                           mz_max, 
                                           mz_step,
@@ -4266,4 +4259,5 @@ server <- function(input, output, session) {
 
 shinyApp(ui = ui, server = server)
 
-
+# Copyright 2025 Bundesanstalt für Gewässerkunde
+# This file is part of ntsworkflow
