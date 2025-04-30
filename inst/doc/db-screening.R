@@ -13,10 +13,10 @@ library(ntsworkflow)
 test <- Report$new()
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  test$addRawFiles()
+# test$addRawFiles()
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  test$addRawFilesDir()
+# test$addRawFilesDir()
 
 ## -----------------------------------------------------------------------------
 listOfFiles <- c(
@@ -36,7 +36,7 @@ test$addIS(dialog = FALSE, "IS_table_pos.csv")
 test$IS
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  test$settings
+# test$settings
 
 ## ----results='asis', echo=FALSE-----------------------------------------------
 values <- sapply(test$settings, function(x) if (length(x) > 1) Reduce(paste, x) else paste(x))
@@ -66,33 +66,33 @@ test$plotMS1(1)
 test$plotMS2(1)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  test$deleteFP("Benzyl-dimethyl-hexadecylammonium")
+# test$deleteFP("Benzyl-dimethyl-hexadecylammonium")
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  test$falsePos <- test$falsePos[test$falsePos != "Guanosine"]
+# test$falsePos <- test$falsePos[test$falsePos != "Guanosine"]
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  test$deleteBackground(3, 2)  # will not delete IS peaks
-#  test$deleteBackground(3, 2, includeIS = TRUE)
+# test$deleteBackground(3, 2)  # will not delete IS peaks
+# test$deleteBackground(3, 2, includeIS = TRUE)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  test$peakList <- test$peakList[!is.na(test$peakList$int_a), ]
+# test$peakList <- test$peakList[!is.na(test$peakList$int_a), ]
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  test$reIntegrate()
+# test$reIntegrate()
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  test$saveSettings()
+# test$saveSettings()
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  test$clearAndSave()
-#  
-#  # Or, if you want to give it another name or location
-#  test$clearAndSave("D:\\testFolder\\example_test")
+# test$clearAndSave()
+# 
+# # Or, if you want to give it another name or location
+# test$clearAndSave("D:\\testFolder\\example_test")
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  newName <- ntsworkflow::loadReport("example_test.report")
+# newName <- ntsworkflow::loadReport("example_test.report")
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  write.csv(test$peakList, file = "new_peaklist.csv")
+# write.csv(test$peakList, file = "new_peaklist.csv")
 

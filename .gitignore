@@ -1,5 +1,3 @@
-# Retrieved 2017-Oct-12 from https://github.com/github/gitignore/blob/master/R.gitignore
-# Licensed under CC0-1.0 https://github.com/github/gitignore/blob/master/LICENSE
 
 # History files
 .Rhistory
@@ -44,5 +42,6 @@ sqlite_local
 *.so
 *.dll
 
+.Rprofile
 tests/kevin
 tests/ole

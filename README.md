@@ -28,7 +28,7 @@ To cite this work please use the following citation or run
 
 ## Installation
 
-R (v4.4.2) and Java JRE and JDK (v1.8) (for rcdk package) are needed.
+R 4.5.0 and Java JRE and JDK (v1.8) (for rcdk package) are needed.
 Compilation of C++ code requires GCC v13.
 
 The following guide uses [renv](https://rstudio.github.io/renv/) to
@@ -60,7 +60,7 @@ renv::install("bafg-bund/ntsworkflow")
 
 #### Installation on Ubuntu
 
-Using `apt`, the packages r-base, default-jre and default-jdk are
+Using `apt`, the packages `r-base`, `default-jre` and `default-jdk` are
 needed. Installing Rstudio server for WSL2 was done through the website
 instructions (deb package).
 
@@ -71,7 +71,7 @@ install ncdf4. If, for some reason, using `renv::install`,
 `apt` (`sudo apt install r-cran-ncdf4`) on Ubuntu. This installs ncdf4
 into `/usr/lib/R/site-library`.
 
-Installation of gert for devtools requires libgit2-dev on Ubuntu.
+Installation of `gert` for `devtools` requires `libgit2-dev` on Ubuntu.
 
 ## Help files
 
