@@ -22,7 +22,7 @@ devtools::build(path = file.path(Sys.getenv("RENV_PATHS_CELLAR"), "ntsworkflow",
 renv::deactivate()
 
 install.packages("/beegfs/nts/renv_package_cellar/ntsworkflow/ntsworkflow_0.2.6.tar.gz")
-
+library(ntsworkflow)
 
 renv::activate()
 # only run this on windows
