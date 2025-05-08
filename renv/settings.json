@@ -1,5 +1,5 @@
 {
-  "bioconductor.version": "3.20",
+  "bioconductor.version": "3.21",
   "external.libraries": [
     "/usr/lib64/R/library"
   ],
