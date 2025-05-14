@@ -13,8 +13,8 @@ To cite this work please use the following citation or run
 `citation("ntsworkflow")`.
 
 > Kevin S. Jewell, Christian Dietrich, Toni Köppe, Franziska Thron, Arne
-> Wick and Thomas A. Ternes (2023). ntsworkflow: A Non-Target Screening
-> Data Evaluation Tool. R package version 0.2.5.
+> Wick and Thomas A. Ternes (2025). ntsworkflow: A Non-Target Screening
+> Data Evaluation Tool. R package version 0.2.7.
 
 ### Peer-reviewed articles reporting the development of ntsworkflow
 
@@ -33,7 +33,7 @@ Compilation of C++ code requires GCC v13.
 
 The following guide uses [renv](https://rstudio.github.io/renv/) to
 manage the package dependencies. To start a new project use
-`renv::init()`.
+`renv::init(bioconductor = TRUE)`.
 
 #### Install the Bioconductor package xcms
 
@@ -78,12 +78,6 @@ Installation of `gert` for `devtools` requires `libgit2-dev` on Ubuntu.
 After loading the package with `library(ntsworkflow)`, You can find
 documentation by typing `browseVignettes("ntsworkflow")`.
 
-## Known bugs
-
-When peak-picking multiple samples, if the first sample is marked as a
-blank the app will hang with an out-of-bounds index error. To avoid this
-do not mark samples as blanks until after the peak-picking is complete.
-
 ## License
 
 Copyright 2025 Bundesanstalt für Gewässerkunde (Federal Institute of
@@ -101,3 +95,10 @@ Public License for more details.
 
 You should have received a copy of the GNU General Public License along
 with ntsworkflow. If not, see <https://www.gnu.org/licenses/>.
+
+## Change log
+
+### 0.2.7
+
+In `Report$integRes`, the column `samp` contains only the sample name
+(previously sample path)

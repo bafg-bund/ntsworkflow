@@ -1,0 +1,36 @@
+citHeader("ntsworkflow: A Non-Target Screening Data Processing Tool. Federal Institute of Hydrology, Koblenz, Germany")
+
+bibentry(
+  bibtype="Article",
+  title="Comparing mass, retention time and MS2 spectra as criteria for the automated screening of small molecules in aqueous environmental samples analyzed by LC-QToF-MS/MS",
+  journal="Rapid Communications in Mass Spectrometry",
+  volume= "34",
+  number="1",
+  pages="e8541",
+  year="2019",
+  author="Jewell, Kevin S. and Kunkel, Uwe and Ehlig, Björn and Thron, Franziska and Schlüsener, Michael and Dietrich, Christian and Wick, Arne and Ternes, Thomas A.",
+  textVersion="Jewell, K. S., Kunkel, U., Ehlig, B., Thron, F., Schlüsener, M., Dietrich, C., Wick, A., & Ternes, T. A. (2019). Comparing mass, retention time and MS2 spectra as criteria for the automated screening of small molecules in aqueous environmental samples analyzed by LC-QToF-MS/MS. Rapid Communications in Mass Spectrometry, 34, e8541. https://doi.org/10.1002/rcm.8541"
+)
+
+bibentry(
+  bibtype="Article",
+  title= "Open source feature detection for non‐target LC‐MS analytics",
+  author= "Dietrich, Christian and Wick, Arne and Ternes, Thomas A",
+  journal= "Rapid Communications in Mass Spectrometry",
+  year= "2021",
+  pages= "e9206",
+  textVersion="Dietrich, C., Wick, A., & Ternes, T. A. (2021). Open source feature detection for non‐target LC‐MS analytics. Rapid Communications in Mass Spectrometry, e9206. https://doi.org/10.1002/rcm.9206 "
+)
+
+bibentry(
+  bibtype="Article",
+  title= "Application of a non-target workflow for the identification of specific contaminants using the example of the Nidda river basin",
+  author= "Köppe, Toni and Jewell, Kevin S. and Dietrich, Christian and Wick, Arne and Ternes, Thomas A.",
+  journal= "Water Research",
+  year= "2020",
+  pages= "115703",
+  volume= "178",
+  textVersion="Köppe, T., Jewell, K. S., Dietrich, C., Wick, A., & Ternes, T. A. (2020). Application of a non-target workflow for the identification of specific contaminants using the example of the Nidda river basin. Water Research, 178, 115703. https://doi.org/10.1016/j.watres.2020.115703"
+)
+
+

@@ -18,10 +18,12 @@ build_vignettes_to_inst()
 
 # only run this on linux
 devtools::build(path = file.path(Sys.getenv("RENV_PATHS_CELLAR"), "ntsworkflow", glue::glue("ntsworkflow_{desc::desc_get_version()}.tar.gz")), binary = TRUE)
+renv::install("ntsworkflow@0.2.7")
 
+# To test installing in user R library folder, need to temporarily deactivate renv
 renv::deactivate()
 
-install.packages("/beegfs/nts/renv_package_cellar/ntsworkflow/ntsworkflow_0.2.6.tar.gz")
+install.packages("/beegfs/nts/renv_package_cellar/ntsworkflow/ntsworkflow_0.2.7.tar.gz")
 
 
 library(ntsworkflow)
