@@ -1105,17 +1105,12 @@ Report <- setRefClass(
       "Delete all occurances of a compound given by name. Only one compound can be given. Name must
       match exactly. Compound is added to list of falsePos (see fields). If indices = 0, then
       compound is always deleted, in all samples and also in future processed samples.
-      Otherwise it is only deleted in the specified samples (by index number or name without quotes)."
-      stopifnot(length(substanceName) == 1)
-      # convert samp names to indices
-      indices <- substitute(indices)
-      if (indices != 0) {
-        var_pos <- setNames(as.list(seq_along(rawFiles)), basename(rawFiles))
-        indices <- eval(indices, var_pos)
-      }
+      Otherwise it is only deleted in the specified samples (by index)."
+      stopifnot(length(substanceName) == 1, is.numeric(indices))
+      if (length(indices) > 1 && 0 %in% indices)
+        stop("indices can be either 0 (all files) or the file index or indices as given by $rawFiles")
 
-
-      if (substanceName %in% peakList$comp_name && indices == 0) {
+      if (substanceName %in% peakList$comp_name && length(indices) == 1 && indices[1] == 0) {
         # get all peakIDs corresponding to this substance
         delIDs <- peakList[peakList$comp_name == substanceName, "peakID"]
 
@@ -1127,7 +1122,7 @@ Report <- setRefClass(
           tempdf <- data.frame(name = substanceName, sampNum = 0, stringsAsFactors = FALSE)
           falsePos <<- rbind(falsePos, tempdf)
         }
-      } else if (substanceName %in% peakList$comp_name && indices != 0) {
+      } else if (substanceName %in% peakList$comp_name && indices[1] != 0) {
         samps <- basename(rawFiles[indices])
         delIDs <- peakList[peakList$comp_name == substanceName &
           peakList$samp %in% samps, "peakID"]
@@ -1372,7 +1367,7 @@ Report <- setRefClass(
       
       tempcai <- paste(peakList$comp_name, peakList$adduct, peakList$isotopologue, sep = "|")
       allComps <- unique(tempcai)
-      allSamps <- rawFiles[indices]
+      allSamps <- basename(rawFiles[indices])
 
       cc <- rep(allComps, times = length(allSamps))
       ss <- rep(allSamps, each = length(allComps))

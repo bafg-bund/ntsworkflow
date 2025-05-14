@@ -63,10 +63,6 @@ Installation of `gert` for `devtools` requires `libgit2-dev` on Ubuntu.
 ## Help files
 After loading the package with `library(ntsworkflow)`, You can find documentation by typing `browseVignettes("ntsworkflow")`. 
 
-## Known bugs
-
-When peak-picking multiple samples, if the first sample is marked as a blank the app will hang with an out-of-bounds index error. To avoid this do not mark samples as blanks until after the peak-picking is complete.
-
 ## License
 
 Copyright 2025 Bundesanstalt für Gewässerkunde (Federal Institute of Hydrology)
@@ -82,3 +78,10 @@ FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along 
 with ntsworkflow. If not, see <https://www.gnu.org/licenses/>.
+
+
+## Change log
+
+### 0.2.7
+
+In `Report$integRes`, the column `samp` contains only the sample name (previously sample path)
