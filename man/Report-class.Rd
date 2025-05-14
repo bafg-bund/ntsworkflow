@@ -121,7 +121,7 @@ includeIS. Removal is based on intensity ratio, see settings.}
 \item{\code{deleteFP(substanceName, indices = 0)}}{Delete all occurances of a compound given by name. Only one compound can be given. Name must
 match exactly. Compound is added to list of falsePos (see fields). If indices = 0, then
 compound is always deleted, in all samples and also in future processed samples.
-Otherwise it is only deleted in the specified samples (by index number or name without quotes).}
+Otherwise it is only deleted in the specified samples (by index).}
 
 \item{\code{getPeak(rawLinki, comp_mzi, comp_rti, minIndi, maxIndi, width, mztoli, rttoli)}}{Internal function to integrate peaks during processing}
 

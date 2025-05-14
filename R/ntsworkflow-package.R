@@ -2,7 +2,7 @@
 #' @keywords internal 
 "_PACKAGE"
 
-#' ntsworkflow: A package for non-target data processing.
+#' ntsworkflow: A package for non-target-screening data processing.
 #'
 #'
 #' @name ntsworkflow

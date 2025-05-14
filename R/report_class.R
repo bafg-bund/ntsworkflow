@@ -1422,16 +1422,18 @@ Report <- setRefClass(
       # Get the remaining results
       perDatFile <- function(proc) {
         thisSamp <- proc$samp[1]
+        thisSampRegex <- stringr::str_replace(thisSamp, "\\.", "\\\\\\.")
+        thisPath <- grep(paste0(thisSampRegex, "$"), rawFiles, value = T)
 
         # if the file is not in memory, load this file, and remember to remove it again
-        if (thisSamp %in% names(rawData)) {
+        if (thisPath %in% names(rawData)) {
           clearData <- FALSE
         } else {
-          .self$loadData(indices = which(rawFiles == thisSamp))
+          .self$loadData(indices = which(rawFiles == thisPath))
           clearData <- TRUE
         }
 
-        rawLink <- rawData[[thisSamp]]
+        rawLink <- rawData[[thisPath]]
 
         getCompDat <- function(thisCai) {
           x <- strsplit(thisCai, "\\|")[[1]]
@@ -1473,7 +1475,7 @@ Report <- setRefClass(
           # get highest peak
           compRes <- compRes[which.max(compRes$peak_intens), ]
           data.frame(
-            samp = basename(thisSamp), 
+            samp = thisSamp, 
             comp_name = thisComp,
             adduct = thisAd,
             isotopologue = thisIsot,
@@ -1495,7 +1497,7 @@ Report <- setRefClass(
         dat <- do.call("rbind", datL)
         rm(rawLink)
         if (clearData) {
-          .self$clearData(indices = which(rawFiles == thisSamp))
+          .self$clearData(indices = which(rawFiles == thisPath))
         }
         dat
       }

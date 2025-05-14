@@ -7,9 +7,9 @@
 pickPeaksOneEicCpp(
   mz,
   mz_step,
-  XIC,
+  eic,
   scantime,
-  min_intensity,
+  minIntensity,
   sn,
   noisescans,
   peakwidth_min,
@@ -22,11 +22,11 @@ pickPeaksOneEicCpp(
 
 \item{mz_step}{binning width used to extract chromatogram (da)}
 
-\item{XIC}{ion chromatogram (intensities)}
+\item{eic}{extracted ion chromatogram (just intensities)}
 
-\item{scantime}{Scan time of each index in XIC (in s)}
+\item{scantime}{Scan time of each index in eic (in s)}
 
-\item{min_intensity}{Minimum intensity for peak-picking}
+\item{minIntensity}{Minimum intensity for peak-picking}
 
 \item{sn}{Minimum signal-to-noise ratio}
 
@@ -59,7 +59,7 @@ A numeric matrix of class Rcpp::numericMatrix.
  col 16: 0 (placeholder for ms2 scan number)
 }
 \description{
-Peak finding algorithm using maxima detection by 1st derivative, 
+Peak finding algorithm using apex detection by 1st derivative, 
 an iterative search method and no chromatogram smoothing. The method is 
 published in Dietrich, C., Wick, A., & Ternes, T. A. (2021). 
 Open source feature detection for non‐target LC‐MS analytics. 

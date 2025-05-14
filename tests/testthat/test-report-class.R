@@ -68,3 +68,9 @@ test_that("False positive in multiple indicies can be deleted", {
   expect_equal(nrow(test$MS1), 0)
   expect_equal(nrow(test$EIC), 0)
 })
+
+test_that("Reintegration runs without error", {
+  test <- loadReport(F, test_path("fixtures", "testReportReintegration.report"))
+  test$reIntegrate()
+  expect_equal(nrow(test$integRes), 2)
+})
