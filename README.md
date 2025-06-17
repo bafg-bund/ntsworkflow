@@ -31,15 +31,10 @@ To cite this work please use the following citation or run
 R 4.5.0 and Java JRE and JDK (v1.8) (for rcdk package) are needed.
 Compilation of C++ code requires GCC v13.
 
-The following guide uses [renv](https://rstudio.github.io/renv/) to
-manage the package dependencies. To start a new project use
-`renv::init(bioconductor = TRUE)`.
-
 #### Install the Bioconductor package xcms
 
-``` r
-renv::install("bioc::xcms")
-```
+Follow the instructions on [bioconductor -
+xcms](https://doi.org/doi:10.18129/B9.bioc.xcms).
 
 #### Install Genform (optional)
 
@@ -55,7 +50,7 @@ folder.
 #### Install ntsworkflow
 
 ``` r
-renv::install("bafg-bund/ntsworkflow")
+remotes::install_github("bafg-bund/ntsworkflow")
 ```
 
 #### Installation on Ubuntu
@@ -64,12 +59,10 @@ Using `apt`, the packages `r-base`, `default-jre` and `default-jdk` are
 needed. Installing Rstudio server for WSL2 was done through the website
 instructions (deb package).
 
-xcms requires mzR which in turn requires ncdf4 which needs the nc-config
-script to be installed. Prior to installing xcms you therefore need to
-install ncdf4. If, for some reason, using `renv::install`,
-`BiocManager::install` or `install.packages` does not work, you can use
-`apt` (`sudo apt install r-cran-ncdf4`) on Ubuntu. This installs ncdf4
-into `/usr/lib/R/site-library`.
+xcms requires *mzR* which in turn requires *ncdf4* which needs the
+`nc-config` script to be installed. Prior to installing xcms you
+therefore need to install *ncdf4*. Use `sudo apt install r-cran-ncdf4`.
+This installs *ncdf4* into `/usr/lib/R/site-library`.
 
 Installation of `gert` for `devtools` requires `libgit2-dev` on Ubuntu.
 
