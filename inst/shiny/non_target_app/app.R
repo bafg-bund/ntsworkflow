@@ -1715,14 +1715,17 @@ server <- function(input, output, session) {
     batchTable <- cbind(dirname(batchFiles),basename(batchFiles),round(file.size(batchFiles)/1000000,1),sampleTypes[batchFilesSampleType],batchFilesRAM)
     colnames(batchTable) <- c("Dir","File","Size","SampleType","RAM")
     output$BatchProcessTable <- DT::renderDataTable(
-      DT::datatable(batchTable,
-                    selection=list(target="cell"),
-                    options = list(
-                      columnDefs = list(
-                        list(targets = 0, render = JS("function(data, type, row, meta) {","return type === 'display' && data.length > 10 ?","'<span title=\"' + data + '\">' + data.substr(0, 7) + '...</span>' : data;","}"))
-                      )
-                    ),
-                    callback = JS('table.page("next").draw(false);')
+      DT::datatable(
+        batchTable,
+        selection=list(target="cell"),
+        options = list(
+          columnDefs = list(
+            list(
+              targets = 0, 
+              render = JS("function(data, type, row, meta) {","return type === 'display' && data.length > 10 ?","'<span title=\"' + data + '\">' + data.substr(0, 7) + '...</span>' : data;","}"))
+          )
+        ),
+        callback = JS('table.page("next").draw(false);')
       )
     )
   })
