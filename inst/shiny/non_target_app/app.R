@@ -70,21 +70,22 @@ ui <- fluidPage(
       #### Add Sample, Save, Load ####
       shinyFilesButton("addSample", "Add Sample", "Please select a data file", TRUE),
       actionButton("BatchProcess","Batch Process"),
-      bsModal("BatchProcessPopup","Batch Process","BatchProcess", size = "large", 
-              DT::dataTableOutput("BatchProcessTable"),
-              shinyFilesButton("BatchProcessAddFiles","Add Files", "Please select a data file", TRUE),
-              actionButton("BatchProcessRemoveFiles","Remove Files"),
-              actionButton("BatchProcessStart","Go"),
-              fluidRow(column(6, checkboxInput("batchBlank", "Pick blanks at 1/x intensity threshold and 1/y sn")),
-                       column(1, h5("x:", align = "right")),
-                       column(2, numericInput("batchBlankIntFactor", NULL, 10, 1, NA, step = 1, "100%")),
-                       column(1, h5("y:", align = "right")),
-                       column(2, numericInput("batchBlankSnFactor", NULL, 2, 1, NA, step = 1, "100%"))),
-              checkboxInput("batchAlign", "Align peaks after peak-picking"),
-              fluidRow(column(6, checkboxInput("saveBatch", "Save after processing")),
-                       column(6, textInput("saveBatchName", NULL, 
-                                           format(lubridate::now(), "%Y%m%d"),"100%", 
-                                           "Name (default: date)")))
+      bsModal(
+        "BatchProcessPopup", "Batch Process", "BatchProcess", size = "large", 
+        DT::dataTableOutput("BatchProcessTable"),
+        shinyFilesButton("BatchProcessAddFiles","Add Files", "Please select a data file", TRUE),
+        actionButton("BatchProcessRemoveFiles","Remove Files"),
+        actionButton("BatchProcessStart","Go"),
+        fluidRow(column(6, checkboxInput("batchBlank", "Pick blanks at 1/x intensity threshold and 1/y sn")),
+                 column(1, h5("x:", align = "right")),
+                 column(2, numericInput("batchBlankIntFactor", NULL, 10, 1, NA, step = 1, "100%")),
+                 column(1, h5("y:", align = "right")),
+                 column(2, numericInput("batchBlankSnFactor", NULL, 2, 1, NA, step = 1, "100%"))),
+        checkboxInput("batchAlign", "Align peaks after peak-picking"),
+        fluidRow(column(6, checkboxInput("saveBatch", "Save after processing")),
+                 column(6, textInput("saveBatchName", NULL, 
+                                     format(lubridate::now(), "%Y%m%d"),"100%", 
+                                     "Name (default: date)")))
               
       ),
       hr(),
@@ -1695,6 +1696,7 @@ server <- function(input, output, session) {
                   filetypes=c('mzML', 'mzXML'))
   observeEvent(input$BatchProcessAddFiles, {
     req(is.list(input$BatchProcessAddFiles))
+    
     dateiInfo <- parseFilePaths(home, input$BatchProcessAddFiles)
     dateiInfo <- as.data.frame(lapply(dateiInfo, as.character), stringsAsFactors = FALSE)
     additionalFiles <- dateiInfo$datapath
@@ -1712,7 +1714,13 @@ server <- function(input, output, session) {
     # mark files with sample types
     batchFilesSampleType <<- c(batchFilesSampleType, types)
     
-    batchTable <- cbind(dirname(batchFiles),basename(batchFiles),round(file.size(batchFiles)/1000000,1),sampleTypes[batchFilesSampleType],batchFilesRAM)
+    batchTable <- cbind(
+      dirname(batchFiles),
+      basename(batchFiles),
+      round(file.size(batchFiles)/1000000,1),
+      sampleTypes[batchFilesSampleType],
+      batchFilesRAM
+    )
     colnames(batchTable) <- c("Dir","File","Size","SampleType","RAM")
     output$BatchProcessTable <- DT::renderDataTable(
       DT::datatable(
