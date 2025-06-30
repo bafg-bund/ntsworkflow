@@ -1,7 +1,6 @@
 
 
 library(shiny)
-library(shinyBS)
 library(DT)
 library(tcltk2)
 library(shinyFiles)
@@ -12,17 +11,14 @@ library(future)
 
 #### Set-up ####
 
-
 if (exists("datenList") && length(datenList) > 0) {
   message("Using available data from current environment, click load from 
           environment to use this data. To start a new session, close the app
           and clear the environment.")
 } else {
   message("Starting new session.")
-  sampleList <<- data.frame(ID = numeric(), File = character(), 
-                            sampleType = character(), optMzStep = numeric(), 
-                            RAM = logical(), deleted = logical(), 
-                            stringsAsFactors = F)
+  sampleList <<- data.frame(ID = numeric(), File = character(), sampleType = character(), optMzStep = numeric(), 
+                            RAM = logical(), deleted = logical(), stringsAsFactors = F)
   datenList <<- list()
   peaklist <<- list()
   peakPickSettings <<- list()
@@ -61,7 +57,6 @@ if (exists("datenList") && length(datenList) > 0) {
   counter <<- 0
 }
 
-
 #### UI ####
 ui <- fluidPage(
   sidebarLayout(
@@ -69,25 +64,6 @@ ui <- fluidPage(
       width = 2,
       #### Add Sample, Save, Load ####
       shinyFilesButton("addSample", "Add Sample", "Please select a data file", TRUE),
-      actionButton("BatchProcess","Batch Process"),
-      bsModal(
-        "BatchProcessPopup", "Batch Process", "BatchProcess", size = "large", 
-        DT::dataTableOutput("BatchProcessTable"),
-        shinyFilesButton("BatchProcessAddFiles","Add Files", "Please select a data file", TRUE),
-        actionButton("BatchProcessRemoveFiles","Remove Files"),
-        actionButton("BatchProcessStart","Go"),
-        fluidRow(column(6, checkboxInput("batchBlank", "Pick blanks at 1/x intensity threshold and 1/y sn")),
-                 column(1, h5("x:", align = "right")),
-                 column(2, numericInput("batchBlankIntFactor", NULL, 10, 1, NA, step = 1, "100%")),
-                 column(1, h5("y:", align = "right")),
-                 column(2, numericInput("batchBlankSnFactor", NULL, 2, 1, NA, step = 1, "100%"))),
-        checkboxInput("batchAlign", "Align peaks after peak-picking"),
-        fluidRow(column(6, checkboxInput("saveBatch", "Save after processing")),
-                 column(6, textInput("saveBatchName", NULL, 
-                                     format(lubridate::now(), "%Y%m%d"),"100%", 
-                                     "Name (default: date)")))
-              
-      ),
       hr(),
       DT::dataTableOutput("sampleTable"),
       shinyFilesButton("load", "Load", "Please select an RDS file", FALSE),
@@ -95,10 +71,10 @@ ui <- fluidPage(
       actionButton("loadEnv", "Load env.")
     ),
     
-    #### Sample info ####
     mainPanel(width = 10,
       tabsetPanel(
         type = "tabs",
+        #### Sample info ####
         tabPanel(
           "Sample info",
           fluidRow(column(width = 5, strong("Sample ID:")),
@@ -139,7 +115,6 @@ ui <- fluidPage(
             column(6, textInput("blankRegex", "Blank regex:", 
                                placeholder = "e.g., '_MQ_' or '_blank_'"))
           ),
-          
           hr(),
           fluidRow(
             column(4, numericInput("numcores", 
@@ -148,6 +123,8 @@ ui <- fluidPage(
             column(3, actionButton("updateMem", "Update"))
           )
         ),
+        
+        #### TIC ####
         tabPanel(
           "TIC",
           plotOutput(
@@ -172,6 +149,7 @@ ui <- fluidPage(
             dblclick = "MSplot_dblclick"
           )
         ),
+        #### XIC ####
         tabPanel(
           "XIC",
           fluidRow(
@@ -211,6 +189,7 @@ ui <- fluidPage(
         tabPanel("Peak Picking",
                  tabsetPanel(
                    type = "tabs",
+                   #### PP parameters tab ####
                    tabPanel(
                      "Parameters",
                      wellPanel(fluidRow(
@@ -349,49 +328,65 @@ ui <- fluidPage(
                      ),
                      hr()
                    ),
-                   #### Data tab ####
-                   tabPanel("Data",
+                   #### Batch process ####
+                   tabPanel(
+                     "Batch process",
+                     DT::dataTableOutput("BatchProcessTable"),
+                     shinyFilesButton("BatchProcessAddFiles","Add Files", "Please select a data file", TRUE),
+                     actionButton("BatchProcessRemoveFiles","Remove Files"),
+                     actionButton("BatchProcessStart","Go"),
+                     fluidRow(
+                       column(6, checkboxInput("batchBlank", "Pick blanks at 1/x intensity threshold and 1/y sn")),
+                       column(1, h5("x:", align = "right")),
+                       column(2, numericInput("batchBlankIntFactor", NULL, 10, 1, NA, step = 1, "100%")),
+                       column(1, h5("y:", align = "right")),
+                       column(2, numericInput("batchBlankSnFactor", NULL, 2, 1, NA, step = 1, "100%"))
+                     ),
+                     checkboxInput("batchAlign", "Align peaks after peak-picking"),
+                     fluidRow(
+                       column(6, checkboxInput("saveBatch", "Save after processing")),
+                       column(6, textInput("saveBatchName", NULL, format(lubridate::now(), "%Y%m%d"),"100%", 
+                                           "Name (default: date)"))
+                     )
+                   ),
+                    #### PP Data tab ####
+                    tabPanel(
+                      "Data",
+                        fluidRow(
+                          column(
+                            width = 6,
                             fluidRow(
-                              column(
-                                width = 6,
-                                fluidRow(
-                                  actionButton("PeakPick_ShowAll", "All", width = "10%"),
-                                  actionButton("PeakPick_GetChlorinated", "Cl", width = "10%"),
-                                  actionButton("PeakPick_GetBrominated", "Br", width = "10%"),
-                                  actionButton("PeakPick_HideFalsePositives", 
-                                               "Hide False Positives", width = "30%"),
-                                  actionButton("peakpick_random", "Random Sort", width = "20%")
-                                ),
-                                DT::dataTableOutput("PeakPickingTable"),
-                                tags$script(
-                                  ' $(document).on("keydown", function (e) {Shiny.onInputChange("lastkeypresscode", [e.keyCode,Math.random()]);switch(e.keyCode){case 38: case 40: case 33: case 34: e.preventDefault()};});'
-                                ),
-                                shinySaveButton("PickPeaksTableExport","Export .csv", 
-                                                "Save file as...", filetype = list(csv = "csv"))
+                              actionButton("PeakPick_ShowAll", "All", width = "10%"),
+                              actionButton("PeakPick_GetChlorinated", "Cl", width = "10%"),
+                              actionButton("PeakPick_GetBrominated", "Br", width = "10%"),
+                              actionButton("PeakPick_HideFalsePositives", 
+                                           "Hide False Positives", width = "30%"),
+                              actionButton("peakpick_random", "Random Sort", width = "20%")
+                            ),
+                            DT::dataTableOutput("PeakPickingTable"),
+                            tags$script(
+                              ' $(document).on("keydown", function (e) {Shiny.onInputChange("lastkeypresscode", [e.keyCode,Math.random()]);switch(e.keyCode){case 38: case 40: case 33: case 34: e.preventDefault()};});'
+                            ),
+                            shinySaveButton("PickPeaksTableExport","Export .csv", 
+                                            "Save file as...", filetype = list(csv = "csv"))
+                          ),
+                          column(
+                            width = 6,
+                            plotOutput(
+                              "PeakPickXIC",
+                              brush = brushOpts(
+                                id = "PeakPickXIC_brush",
+                                resetOnNew = TRUE,
+                                delay = 6000
                               ),
-                              column(
-                                width = 6,
-                                plotOutput(
-                                  "PeakPickXIC",
-                                  brush = brushOpts(
-                                    id = "PeakPickXIC_brush",
-                                    resetOnNew = TRUE,
-                                    delay = 6000
-                                  ),
-                                  dblclick = "PeakPickXIC_dblclick"
-                                ),
-                                plotOutput("PeakPickMS"),
-                                plotOutput("PeakPickMS2",
-                                           click = "PeakPickMS2_click"),
-                                bsModal(
-                                  "PeakPickMS2popup",
-                                  "MS2 data",
-                                  "PeakPickMS2_click",
-                                  size = "small",
-                                  DT::dataTableOutput("PeakPickMS2Table")
-                                )
-                              )
-                            )),
+                              dblclick = "PeakPickXIC_dblclick"
+                            ),
+                            plotOutput("PeakPickMS"),
+                            plotOutput("PeakPickMS2", click = "PeakPickMS2_click"),
+                            DT::dataTableOutput("PeakPickMS2Table")
+                          )
+                        )
+                      ),
                    #### Components tab ####
                    tabPanel("Components",  
                             fluidRow(
@@ -2954,7 +2949,7 @@ server <- function(input, output, session) {
     ComponentXIC_ranges$y <<- c(0,max(peaklist[[selected]]$Intensity[peaklist[[selected]]$Gruppe == peaklist[[selected]]$Gruppe[peakPickSettings[[selected]]$PPTableRow]]))
   })
   
-  observeEvent(input$PeakPickMS2_click, {#copy the recent MS2 spectrum into a table and print it in a separate window (bsModal)
+  observeEvent(input$PeakPickMS2_click, {
     output$PeakPickMS2Table <- DT::renderDataTable(
       DT::datatable(ms2spektrumR(),
                     colnames = c("Fragment m/z","Intensity"),
@@ -2964,7 +2959,6 @@ server <- function(input, output, session) {
       %>% formatRound(columns = "mz",digits = 4)
       %>% formatSignif(columns = "intensity",digits = 3)
     )
-    toggleModal(session,"PeakPickMS2popup",toggle="toggle")
   })
   
   observeEvent(input$PeakPick_GetChlorinated,{

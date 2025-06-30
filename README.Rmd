@@ -50,11 +50,13 @@ remotes::install_github("bafg-bund/ntsworkflow")
 ```
 
 #### Installation on Ubuntu
-Using `apt`, the packages `r-base`, `default-jre` and `default-jdk` are needed. Installing Rstudio server for WSL2 was done through the website instructions (deb package).
 
-xcms requires *mzR* which in turn requires *ncdf4* which needs the `nc-config` script to be installed. Prior to installing xcms you therefore need to install *ncdf4*. Use `sudo apt install r-cran-ncdf4`. This installs *ncdf4* into `/usr/lib/R/site-library`.
+We recommend using the PPA `r2u` and installing dependencies via `apt`. This takes care of all the dependencies.
 
-Installation of `gert` for `devtools` requires `libgit2-dev` on Ubuntu.
+The bash command for installing dependencies is:
+```
+sudo apt install r-cran-tidyverse r-cran-rsqlite r-cran-shiny r-cran-shinyfiles r-cran-shinybs r-cran-dt r-cran-tcltk2 r-cran-foreach r-cran-doparallel r-cran-iterators r-cran-rcpp r-cran-rcpparmadillo r-cran-yaml r-cran-jsonlite r-cran-zoo r-cran-rcdk r-cran-future r-cran-furrr r-cran-paralleldist r-bioc-xcms
+```
 
 ## Help files
 After loading the package with `library(ntsworkflow)`, You can find documentation by typing `browseVignettes("ntsworkflow")`. 

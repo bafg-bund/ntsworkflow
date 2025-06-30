@@ -1,8 +1,8 @@
 Package: ntsworkflow
 Type: Package
 Title: A Non-Target Screening Data Processing Tool. Federal Institute of Hydrology, Koblenz, Germany
-Version: 0.2.7
-Date: 2025-04-30
+Version: 0.2.8
+Date: 2025-06-30
 Authors@R: c(
              person(
                c("Kevin", "S."), "Jewell", email = "Jewell@bafg.de", role = c("aut", "cre"),
@@ -33,7 +33,6 @@ Imports:
     DBI,
     shiny,
     shinyFiles,
-    shinyBS,
     DT,
     tcltk2,
     foreach,
@@ -42,7 +41,12 @@ Imports:
     Rcpp (>= 1.0.7),
     RcppArmadillo,
     yaml,
-    jsonlite
+    jsonlite,
+    zoo,
+    future,
+    furrr,
+    parallelDist,
+    xcms
 RoxygenNote: 7.3.2
 Suggests:
     rcdk,
@@ -53,3 +57,5 @@ Encoding: UTF-8
 LinkingTo: Rcpp, RcppArmadillo
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+SystemRequirements: C++11
+

@@ -1,7 +1,7 @@
 
 
 # Prepare testReport.report object ####
-
+library(testthat)
 test <- Report$new()
 test$changeSettings("pol", "pos")
 test$addDB(F, test_path("fixtures", "CSL_olmesartan-d6.db"))
