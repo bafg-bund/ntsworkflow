@@ -21,7 +21,7 @@ If you use the package or any derivative thereof, please cite the work.
 To cite this work please use the following citation or run `citation("ntsworkflow")`.
 
 > Kevin S. Jewell, Christian Dietrich, Toni Köppe, Franziska Thron, Arne Wick and Thomas A. Ternes (2025). 
-> ntsworkflow: A Non-Target Screening Data Evaluation Tool. R package version 0.2.7.
+> ntsworkflow: A Non-Target Screening Data Evaluation Tool. R package version 0.2.8.
 
 ### Peer-reviewed articles reporting the development of ntsworkflow
 
@@ -31,17 +31,11 @@ To cite this work please use the following citation or run `citation("ntsworkflo
 
 ## Installation
 
-R 4.5.0 and Java JRE and JDK (v1.8) (for rcdk package) are needed. Compilation of C++ code requires GCC v13.
+R 4.5.1 and Java JRE and JDK (v1.8) (for `rcdk`) are needed. Compilation of C++ code requires GCC v13.
 
-#### Install the Bioconductor package xcms
+#### Install the Bioconductor package `xcms`
 
-Follow the instructions on [bioconductor - xcms](https://doi.org/doi:10.18129/B9.bioc.xcms).
-
-#### Install Genform (optional)
-The Windows .exe can be downloaded directly from Sourceforge. It must be put on the system path.
-
-For Linux, the program needs to be compiled from source. Download the source files and in the folder with the .cpp files run the following:
-`g++ main.cpp ms*.cpp -o genform`. This will compile the program and create the `genform` executable, which must be moved to the `~/bin` folder.
+It is recommended to install `xcms` first. Follow the instructions on [bioconductor - xcms](https://doi.org/doi:10.18129/B9.bioc.xcms).
 
 #### Install ntsworkflow
 
@@ -49,11 +43,17 @@ For Linux, the program needs to be compiled from source. Download the source fil
 remotes::install_github("bafg-bund/ntsworkflow")
 ```
 
+#### Install Genform (optional)
+The Windows .exe can be downloaded directly from Sourceforge. It must be put on the system path.
+
+For Linux, the program needs to be compiled from source. Download the source files and in the folder with the .cpp files run the following:
+`g++ main.cpp ms*.cpp -o genform`. This will compile the program and create the `genform` executable, which must be moved to the `~/bin` folder.
+
+
 #### Installation on Ubuntu
 
-We recommend using the PPA `r2u` and installing dependencies via `apt`. This takes care of all the dependencies.
+We recommend using the PPA `r2u` and installing dependencies via `apt`. The bash command for installing dependencies is:
 
-The bash command for installing dependencies is:
 ```
 sudo apt install r-cran-tidyverse r-cran-rsqlite r-cran-shiny r-cran-shinyfiles r-cran-shinybs r-cran-dt r-cran-tcltk2 r-cran-foreach r-cran-doparallel r-cran-iterators r-cran-rcpp r-cran-rcpparmadillo r-cran-yaml r-cran-jsonlite r-cran-zoo r-cran-rcdk r-cran-future r-cran-furrr r-cran-paralleldist r-bioc-xcms
 ```
@@ -76,10 +76,3 @@ FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along 
 with ntsworkflow. If not, see <https://www.gnu.org/licenses/>.
-
-
-## Change log
-
-### 0.2.7
-
-In `Report$integRes`, the column `samp` contains only the sample name (previously sample path)

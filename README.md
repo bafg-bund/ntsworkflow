@@ -14,7 +14,7 @@ To cite this work please use the following citation or run
 
 > Kevin S. Jewell, Christian Dietrich, Toni Köppe, Franziska Thron, Arne
 > Wick and Thomas A. Ternes (2025). ntsworkflow: A Non-Target Screening
-> Data Evaluation Tool. R package version 0.2.7.
+> Data Evaluation Tool. R package version 0.2.8.
 
 ### Peer-reviewed articles reporting the development of ntsworkflow
 
@@ -28,13 +28,19 @@ To cite this work please use the following citation or run
 
 ## Installation
 
-R 4.5.0 and Java JRE and JDK (v1.8) (for rcdk package) are needed.
-Compilation of C++ code requires GCC v13.
+R 4.5.1 and Java JRE and JDK (v1.8) (for `rcdk`) are needed. Compilation
+of C++ code requires GCC v13.
 
-#### Install the Bioconductor package xcms
+#### Install the Bioconductor package `xcms`
 
-Follow the instructions on [bioconductor -
-xcms](https://doi.org/doi:10.18129/B9.bioc.xcms).
+It is recommended to install `xcms` first. Follow the instructions on
+[bioconductor - xcms](https://doi.org/doi:10.18129/B9.bioc.xcms).
+
+#### Install ntsworkflow
+
+``` r
+remotes::install_github("bafg-bund/ntsworkflow")
+```
 
 #### Install Genform (optional)
 
@@ -47,24 +53,12 @@ source files and in the folder with the .cpp files run the following:
 create the `genform` executable, which must be moved to the `~/bin`
 folder.
 
-#### Install ntsworkflow
-
-``` r
-remotes::install_github("bafg-bund/ntsworkflow")
-```
-
 #### Installation on Ubuntu
 
-Using `apt`, the packages `r-base`, `default-jre` and `default-jdk` are
-needed. Installing Rstudio server for WSL2 was done through the website
-instructions (deb package).
+We recommend using the PPA `r2u` and installing dependencies via `apt`.
+The bash command for installing dependencies is:
 
-xcms requires *mzR* which in turn requires *ncdf4* which needs the
-`nc-config` script to be installed. Prior to installing xcms you
-therefore need to install *ncdf4*. Use `sudo apt install r-cran-ncdf4`.
-This installs *ncdf4* into `/usr/lib/R/site-library`.
-
-Installation of `gert` for `devtools` requires `libgit2-dev` on Ubuntu.
+    sudo apt install r-cran-tidyverse r-cran-rsqlite r-cran-shiny r-cran-shinyfiles r-cran-shinybs r-cran-dt r-cran-tcltk2 r-cran-foreach r-cran-doparallel r-cran-iterators r-cran-rcpp r-cran-rcpparmadillo r-cran-yaml r-cran-jsonlite r-cran-zoo r-cran-rcdk r-cran-future r-cran-furrr r-cran-paralleldist r-bioc-xcms
 
 ## Help files
 
@@ -88,10 +82,3 @@ Public License for more details.
 
 You should have received a copy of the GNU General Public License along
 with ntsworkflow. If not, see <https://www.gnu.org/licenses/>.
-
-## Change log
-
-### 0.2.7
-
-In `Report$integRes`, the column `samp` contains only the sample name
-(previously sample path)
