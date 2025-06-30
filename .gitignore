@@ -46,3 +46,4 @@ sqlite_local
 .Rprofile
 tests/kevin
 tests/ole
+local
