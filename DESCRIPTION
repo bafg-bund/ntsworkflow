@@ -44,6 +44,7 @@ Imports:
     jsonlite,
     zoo,
     future,
+    plotly,
     furrr,
     parallelDist,
     xcms
