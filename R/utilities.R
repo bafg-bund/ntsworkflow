@@ -372,5 +372,6 @@ mergeReport <- function(report1, report2) {
   x
 }
 
+
 # Copyright 2025 Bundesanstalt für Gewässerkunde
 # This file is part of ntsworkflow

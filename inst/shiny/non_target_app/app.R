@@ -8,6 +8,7 @@ library(foreach)
 library(ggplot2)
 library(ntsworkflow)
 library(future)
+library(plotly)
 
 #### Set-up ####
 
@@ -124,67 +125,10 @@ ui <- fluidPage(
           )
         ),
         
-        #### TIC ####
-        tabPanel(
-          "TIC",
-          plotOutput(
-            "TICplot",
-            brush = brushOpts(
-              id = "TICplot_brush",
-              resetOnNew = TRUE,
-              delay = 6000
-            ),
-            click = "TICplot_click",
-            dblclick = "TICplot_dblclick"
-          ),
-          hr(),
-          plotOutput(
-            "MSPlot",
-            brush = brushOpts(
-              id = "MSplot_brush",
-              resetOnNew = TRUE,
-              delay = 6000
-            ),
-            click = "MSplot_click",
-            dblclick = "MSplot_dblclick"
-          )
-        ),
-        #### XIC ####
-        tabPanel(
-          "XIC",
-          fluidRow(
-            column(
-              width = 3,
-              numericInput(
-                "EIC_mass",
-                "XIC m/z:",
-                value = 100,
-                width = "120px",
-                step = 0.001
-              )
-            ),
-            column(
-              width = 9,
-              numericInput(
-                "EIC_mass_delta",
-                "+/- (ppm)",
-                value = 10,
-                width = "100px",
-                step = 5
-              )
-            )
-          ),
-          plotOutput(
-            "XICplot",
-            brush = brushOpts(
-              id = "XICplot_brush",
-              resetOnNew = TRUE,
-              delay = 6000
-            ),
-            click = "XICplot_click",
-            dblclick = "XICplot_dblclick"
-          )
-        ),
+        #### TIC, EIC ####
+        tabPanel("TIC", ticPanelUi("tic")),
+        tabPanel("EIC", eicPanelUi("eic")),
+        
         #### Peak Picking tab ####
         tabPanel("Peak Picking",
                  tabsetPanel(
@@ -642,20 +586,15 @@ server <- function(input, output, session) {
   #### Set-up ####
   options(shiny.maxRequestSize = 3000 * 1024^2)
   
-  `%notin%` <- function(x, y) !(x %in% y)
-  
   # Genform is a command line program
   GENFORM_LOC <- "/usr/local/bin/"
   
   # reactive values
-  TICplot_ranges <- reactiveValues(x = NULL, y = NULL)
-  TICplot_RT <- reactiveValues(x = 1)
+
   XICplot_ranges <- reactiveValues(x = NULL, y = NULL)
   PPXIC_ranges <- reactiveValues(x = NULL, y = NULL)
   ComponentXIC_ranges <- reactiveValues(x = NULL, y = NULL)
   FAXIC_ranges <- reactiveValues(x = NULL, y = NULL)
-  masse <- reactiveValues(mz = 100, y = 100)
-  MSplot_ranges <- reactiveValues(x = NULL, y = NULL)
   
   # update ui
   
@@ -669,50 +608,8 @@ server <- function(input, output, session) {
   
   # Plotting functions ####
   
-  MSplot_plotten <- function() {
-    output$MSPlot <- renderPlot({
-      plot(
-        spektrum,
-        type = "h",
-        xlim = MSplot_ranges$x,
-        ylim = MSplot_ranges$y,
-        main = "MS Spectrum",
-        xlab = "m/z",
-        ylab = "Intensity",
-        xaxs = "i",
-        yaxs = "i"
-      )
-      text(x=masse$mz,y=masse$y,label=round(masse$mz,4),pos=4,offset=0.2)
-      
-    })
-  }
   
-  XICplot_plotten <- function() {
-    output$XICplot <- renderPlot({
-      delta <- input$EIC_mass*input$EIC_mass_delta/1000000 
-      if (length(datenList[[selected]]@env$intensity) == 1) {
-        plot(x=0,y=0)
-      } else {
-        XIC <- xcms::rawEIC(
-          datenList[[selected]],
-          mzrange = c(input$EIC_mass - delta / 2, input$EIC_mass + delta / 2)
-        )
-        plot(
-          x = datenList[[selected]]@scantime / 60,
-          y = XIC$intensity,
-          type = "l",
-          xlim = XICplot_ranges$x,
-          ylim = XICplot_ranges$y,
-          main = "XIC",
-          xlab = "RT",
-          ylab = "Intensity",
-          xaxs = "i",
-          yaxs = "i"
-        )
-      }  
-      counter <<- counter + 1
-    })
-  }
+  
   
   PeakPickXIC_plotten <- function(zeile, dataSel){
      
@@ -2125,11 +2022,6 @@ server <- function(input, output, session) {
         ), 1), "min"))
       
       output$mzsteprecommendation <- renderText(paste("Recomm.: ", sampleListR()[sampleListR()$ID == selectedR(), "optMzStep"]))
-      output$TICplot <- renderPlot({
-        plot(x = datenList[[selected]]@scantime/60, y = datenList[[selected]]@tic, type = "l", xlim = TICplot_ranges$x, ylim = TICplot_ranges$y,main = "TIC",xlab="RT",ylab="Intensity",xaxs = "i",yaxs="i")
-        lines(x = TICplot_RT$x, y = max(datenList[[selected]]@tic), type = "h", col = "red")
-      })
-      XICplot_plotten()   
       
       output$PeakPickXIC <- renderPlot(NULL)
       output$PeakPickMS <- renderPlot(NULL)
@@ -2444,55 +2336,10 @@ server <- function(input, output, session) {
   })
   
   
-  # TIC ####
+  # TIC, EIC ####
   
-  observeEvent(input$TICplot_brush, {
-    TICplot_ranges$x <- c(input$TICplot_brush$xmin,input$TICplot_brush$xmax)
-    TICplot_ranges$y <- c(input$TICplot_brush$ymin,input$TICplot_brush$ymax)
-  })
-  
-  observeEvent(input$TICplot_click, {
-    TICplot_RT$x <- input$TICplot_click$x
-    position <- which(abs(datenList[[selected]]@scantime-TICplot_RT$x*60)==min(abs(datenList[[selected]]@scantime-TICplot_RT$x*60)))
-    spektrum <<- xcms::getScan(datenList[[selected]],position)
-    MSplot_plotten()
-  })
-  
-  observeEvent(input$TICplot_dblclick, {
-    TICplot_ranges$x <- NULL
-    TICplot_ranges$y <- NULL
-  })
-  
-  observeEvent(input$MSplot_click, {
-    massesAboveInt <<- c(0,spektrum[spektrum[,2]>input$MSplot_click$y,1])
-    masse$y <- input$MSplot_click$y
-    masse$mz <- massesAboveInt[which.min(abs(massesAboveInt-input$MSplot_click$x))]
-  })
-  
-  observeEvent(input$MSplot_dblclick, {
-    MSplot_ranges$x <- c(min(spektrum[,1]),max(spektrum[,1]))
-    MSplot_ranges$y <- NULL
-  })
-  
-  observeEvent(input$MSplot_brush, {
-    MSplot_ranges$x <- c(input$MSplot_brush$xmin,input$MSplot_brush$xmax)
-    MSplot_ranges$y <- c(input$MSplot_brush$ymin,input$MSplot_brush$ymax)
-  })
-  
-  
-  
-  #### XIC ####
-  
-  observeEvent(input$XICplot_brush, {
-    XICplot_ranges$x <- c(input$XICplot_brush$xmin,input$XICplot_brush$xmax)
-    XICplot_ranges$y <- c(input$XICplot_brush$ymin,input$XICplot_brush$ymax)
-  })
-  
-  observeEvent(input$XICplot_dblclick, {
-    XICplot_ranges$x <- NULL
-    XICplot_ranges$y <- NULL
-  })
-  
+  ticPanelServer("tic", msFileList = datenList, msFileSelected = selectedR)
+  eicPanelServer("eic", msFileList = datenList, msFileSelected = selectedR)
   
   
   #### Peak Picking ####

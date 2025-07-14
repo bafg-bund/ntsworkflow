@@ -2361,6 +2361,5 @@ Report <- setRefClass(
     }
   )
 )
-
-# Copyright 2025 Bundesanstalt für Gewässerkunde
+# Copyright 2025 Bundesanstalt für Gewässerkunde (Federal Institute of Hydrology)
 # This file is part of ntsworkflow
