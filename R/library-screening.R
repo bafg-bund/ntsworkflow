@@ -176,7 +176,7 @@ annotate_grouped <- function(sampleListLocal,
                                "LC-ESI-Orbitrap QExactive"
                              ),
                              chrom_method =
-                               "dx.doi.org/10.1016/j.chroma.2015.11.014",
+                               "bfg_nts_rp1",
                              ndp_m = 2,
                              ndp_n = 1,
                              mztolu_ms2 = 0.015,
@@ -184,7 +184,7 @@ annotate_grouped <- function(sampleListLocal,
                              intCutData = 0,
                              numcores = 1,
                              datenListLocal,
-                             expGroups = "BfG") {
+                             expGroups = "bfg") {
   # open database connection or open custom database (.yaml)
   if (grepl("\\.yaml$", db_path)) {
     useCustom <- TRUE
@@ -248,7 +248,7 @@ annotate_grouped <- function(sampleListLocal,
           polarity == polarity_i, CE %in% allCe, CES %in% allces,
           instrument %in% instrument_i
         )
-      rtTable <- tbl(dbi, "retention_time") %>% filter(chrom_method == chrom_method_i)
+      rtTable <- tbl(dbi, "retentionTime") %>% filter(chrom_method == chrom_method_i)
 
       allExps <- expTable %>%
         inner_join(paraTable, by = "parameter_id") %>%
@@ -614,7 +614,7 @@ ms2_search <- function(data_path, db_path,
                        rttolm = 1, mztolu = 0.5,
                        mztolu_fine = 0.005,
                        chromatography =
-                         "dx.doi.org/10.1016/j.chroma.2015.11.014",
+                         "bfg_nts_rp1",
                        pol = "pos", CE_s = 30:40, CES_s = 0:15,
                        instr = "LC-ESI-QTOF TripleTOF 5600 SCIEX",
                        ceunit = c("V", "eV"),
@@ -626,7 +626,7 @@ ms2_search <- function(data_path, db_path,
   if (inherits(data_path, "character")) {
     data_path <- normalizePath(data_path)
   }
-  #browser()
+
   if (db_path == "Z:\\G\\G2\\HRMS\\Spektrendatenbank\\sqlite\\MS2_db_v7.db") {
     stop("Copy database to the local harddrive, do not use copy on Z")
   }
@@ -636,7 +636,7 @@ ms2_search <- function(data_path, db_path,
   # get list of all compounds in db with rt
   expTable <- tbl(db, "experiment")
   paraTable <- tbl(db, "parameter")
-  rtTable <- tbl(db, "retention_time")
+  rtTable <- tbl(db, "retentionTime")
   compTable <- tbl(db, "compound")
   suspects <- compTable %>%
     left_join(rtTable, by = "compound_id") %>%

@@ -14,7 +14,7 @@
 #' @field settings A list with settings for all processing steps.
 #' The settings list contains the following fields and defaults:
 #' \code{list(db_path = NULL, rttolm = 1, mztolu = 0.05, mztolu_fine = 0.005, chromatography =
-#' "dx.doi.org/10.1016/j.chroma.2015.11.014", pol = "pos", CE_s = 30:40, CES_s = 0:15, instr =
+#' "bfg_nts_rp1", pol = "pos", CE_s = 30:40, CES_s = 0:15, instr =
 #' "LC-ESI-QTOF TripleTOF 5600 SCIEX", ceunit = c("V", "eV"), comparison = "dot_product", threshold
 #' = 400, rt_res = 1.5, EIC_extraction = 0.05, baseline_noise_MS1 = 0.5, sn = 3, rtoffset = 0,
 #' IS_rtoffset = 0, ISrttolm = 1, blank_int_factor = 3, rtTolReinteg = 1, mzTolReinteg = 0.005,
@@ -24,8 +24,7 @@
 #' \code{rttolm}: retention time tolerance for the suspect search.
 #' \code{mztolu}: m/z tolerance for the spectrum extraction (MS2 precursor mass).
 #' \code{mztolu_fine}: m/z tolerance for precursor mass in MS1.
-#' \code{chromatography} Is the chromatographic method allowed from the SDB, use DOI of paper in
-#' which method is described.
+#' \code{chromatography} Is the chromatographic method allowed from the SDB.
 #' \code{pol}: polarity.
 #' \code{CE_s}: allowed collision energies from SDB.
 #' \code{CES_s}: allowed collision energy spreads from SDB.
@@ -103,7 +102,7 @@ Report <- setRefClass(
         rttolm = 1, mztolu = 0.05,
         mztolu_fine = 0.005,
         chromatography =
-          "dx.doi.org/10.1016/j.chroma.2015.11.014",
+          "bfg_nts_rp1",
         pol = "pos", CE_s = 30:40, CES_s = 0:15,
         instr = c("LC-ESI-QTOF TripleTOF 5600 SCIEX", "LC-ESI-QTOF TripleTOF 6600 SCIEX"),
         ceunit = c("V", "eV"),
@@ -494,7 +493,7 @@ Report <- setRefClass(
           # get list of all compounds in db with rt
           expTable <- tbl(db, "experiment")
           paraTable <- tbl(db, "parameter")
-          rtTable <- tbl(db, "retention_time")
+          rtTable <- tbl(db, "retentionTime")
           compTable <- tbl(db, "compound")
           suspects <- compTable %>%
             left_join(rtTable, by = "compound_id") %>%
