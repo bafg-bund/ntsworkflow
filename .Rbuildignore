@@ -11,3 +11,6 @@
 ^MS2_db_v7.db$
 ^.Rprofile$
 ^local$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

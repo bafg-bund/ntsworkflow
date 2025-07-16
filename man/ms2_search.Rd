@@ -10,7 +10,7 @@ ms2_search(
   rttolm = 1,
   mztolu = 0.5,
   mztolu_fine = 0.005,
-  chromatography = "dx.doi.org/10.1016/j.chroma.2015.11.014",
+  chromatography = "bfg_nts_rp1",
   pol = "pos",
   CE_s = 30:40,
   CES_s = 0:15,

@@ -17,7 +17,7 @@ annotate_grouped(
   CES = c(0, 15),
   instrument = c("LC-ESI-QTOF TripleTOF 5600 SCIEX", "LC-ESI-QTOF TripleTOF 6600 SCIEX",
     "LC-ESI-Orbitrap QExactive"),
-  chrom_method = "dx.doi.org/10.1016/j.chroma.2015.11.014",
+  chrom_method = "bfg_nts_rp1",
   ndp_m = 2,
   ndp_n = 1,
   mztolu_ms2 = 0.015,
@@ -25,7 +25,7 @@ annotate_grouped(
   intCutData = 0,
   numcores = 1,
   datenListLocal,
-  expGroups = "BfG"
+  expGroups = "bfg"
 )
 }
 \arguments{
