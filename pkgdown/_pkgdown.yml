@@ -24,6 +24,8 @@ navbar:
         href: articles/db-screening.html
       - text: Using peak-picking
         href: articles/peak-picking.html
+      - text: Using peak-picking
+        href: articles/peak-picking.html
     - text: Reference
       href: reference/index.html
     - text: News
