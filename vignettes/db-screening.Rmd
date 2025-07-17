@@ -1,7 +1,6 @@
 ---
 title: "Introduction to DB-screening using ntsworkflow"
 author: "Department G2 (Water Chemistry), Federal Institute of Hydrology, Koblenz"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{DB-screening_en}
@@ -26,13 +25,13 @@ Data evaluation using the MS^2^ spectral database is carried out in the command 
 # Step-by-step guide
 ## Step 1 
 Attach ntsworkflow, the Rcpp warning message is normal and due to xcms 
-```{r, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE, eval = FALSE}
 library(ntsworkflow)
 ```
 
 ## Step 2 
 Create new Report object, the name "test" can be anything you wish, as long as it starts with a letter and not something already used by R.
-```{r}
+```{r, eval = FALSE}
 test <- Report$new()
 ```
 
@@ -48,7 +47,7 @@ test$addRawFilesDir()
 ```
 
 ...or you can type in the file locations, e.g. 
-```{r}
+```{r, eval = FALSE}
 listOfFiles <- c(
     "example1.mzXML",
     "example2.mzXML"
@@ -57,17 +56,17 @@ test$addRawFiles(dialog = FALSE, normalizePath(listOfFiles))
 ```
 
 You can view the current files in the report by running `*$rawFiles`. The number indicates the position of the file.
-```{r}
+```{r, eval = FALSE}
 test$rawFiles
 ```
 
 ## Step 4 
 Import an IS table. The IS table must be a csv file with 4 columns: name, formula, rt, adduct. Where formula is in the form e.g. for CBZ-IS: "C14 13CH12N 15NO", and adduct is in the form [M+H]+, [M]+, etc. This can also be done with a dialog or by typing in the path.
-```{r}
+```{r, eval = FALSE}
 # With prompt: test$addIS()
 test$addIS(dialog = FALSE, "IS_table_pos.csv")
 ```
-```{r}
+```{r, eval = FALSE}
 test$IS
 ```
 
@@ -78,7 +77,7 @@ The settings have been given default values already, to view the settings
 test$settings
 ```
 
-```{r, results='asis', echo=FALSE}
+```{r, results='asis', echo=FALSE, eval = FALSE}
 values <- sapply(test$settings, function(x) if (length(x) > 1) Reduce(paste, x) else paste(x))
 values[1] <- "D:/Example/sqlite/MS2db.db"
 knitr::kable(data.frame(Name = names(test$settings), Value = values), row.names = FALSE,
@@ -89,38 +88,38 @@ For detailed explainations of what each setting does, please refer to the docume
 
 ### Connecting the database
 The `db_path` variable needs to be set to location of the database. To change any variable use the function `*$changeSettings(parameter, value)`, where parameter is the name of the setting to change and value is the new value. To know what type of values can go in each parameter, check the documentation.
-```{r}
+```{r, eval = FALSE}
 test$addDB(dialog = FALSE, "example_database.db")
 ```
 
 ## Step 6 
 Process the files. This takes around 5 min in this example but could take much longer! All files that still need processing will be loaded into the RAM, so if you do not have much memory, add and process the files in batches (use `*.clearData()` to remove data from RAM). During processing, some information will be printed onto the console.
-```{r, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE, eval = FALSE}
 test$process_all()
 ```
 
 The results are stored in different tables. The main result file, the peak list, is stored in the `*$peakList` field, which is a `data.frame`. For example we can access part of the peak list by typing `test$peakList[1:10, c(1:3, 13)]`:
-```{r, results="asis", echo=FALSE}
+```{r, results="asis", echo=FALSE, eval = FALSE}
 knitr::kable(test$peakList[1:2, c(1:2,22,12:13)], caption="Excerpt of the peak list")
 ```
 
 There is also a table of IS integration results.
-```{r, results="asis", echo=FALSE}
+```{r, results="asis", echo=FALSE, eval = FALSE}
 knitr::kable(test$ISresults[, 1:5], caption = "IS integration results")
 ```
 
 If you want to view a specific compound's peak, or spectrum, you can use these methods:
-```{r, fig.cap="EIC plot from peak with ID 21, lamotrigine in this case.", fig.width=5, fig.height=3}
+```{r, fig.cap="EIC plot from peak with ID 21, lamotrigine in this case.", fig.width=5, fig.height=3, eval = FALSE}
 test$plotEIC(1)  # you must provide the peakID, which is found in the peak list
 ```
 
 \pagebreak
 
-```{r, fig.cap="MS^1^ plot from peak with ID 21, lamotrigine in this case.", fig.width=5, fig.height=3}
+```{r, fig.cap="MS^1^ plot from peak with ID 21, lamotrigine in this case.", fig.width=5, fig.height=3, eval = FALSE}
 test$plotMS1(1)
 ```
 
-```{r, fig.cap="MS^2^ plot from peak with ID 21, lamotrigine in this case.", fig.width=5, fig.height=3}
+```{r, fig.cap="MS^2^ plot from peak with ID 21, lamotrigine in this case.", fig.width=5, fig.height=3, eval = FALSE}
 test$plotMS2(1)
 ```
 

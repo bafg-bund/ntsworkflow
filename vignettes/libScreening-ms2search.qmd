@@ -1,0 +1,12 @@
+---
+title: "Library screening with `ms2_search()`"
+output: html_document
+vignette: >
+  %\VignetteIndexEntry{Library screening}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+`ms2_search()` is the core function for library screening used by `Report$process_all()`. The function is described in [@fig-overview-ms2_search].
+
+![Overview of algorithm](images/ms2_search_flowchart.svg){#fig-overview-ms2_search}
