@@ -567,7 +567,7 @@ annotate_grouped <- function(sampleListLocal,
 #' 
 #' @description
 #' A direct library screening approach using measurement files and the CSL 
-#' spectral libary in SQLite format.
+#' spectral library in SQLite format.
 #' 
 #'
 #' @param data_path Path to rawfiles, can be a vector of file locations or a list of xcmsRaw objects
