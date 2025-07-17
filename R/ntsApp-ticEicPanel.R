@@ -1,5 +1,5 @@
 
-
+#' @export
 ticPanelUi <- function(id) {
   tagList(
     plotlyOutput(NS(id, "ticPlot")),
@@ -8,6 +8,7 @@ ticPanelUi <- function(id) {
   )
 }
 
+#' @export
 ticPanelServer <- function(id, msFileList, msFileSelected) {
   stopifnot(is.reactive(msFileSelected))
   
@@ -45,6 +46,7 @@ ticPanelServer <- function(id, msFileList, msFileSelected) {
   })
 }
 
+#' @export
 eicPanelUi <- function(id) {
   tagList(
     fluidRow(
@@ -55,6 +57,7 @@ eicPanelUi <- function(id) {
   )
 }
 
+#' @export
 eicPanelServer <- function(id, msFileList, msFileSelected) {
   stopifnot(is.reactive(msFileSelected))
   moduleServer(id, function(input, output, session) {
