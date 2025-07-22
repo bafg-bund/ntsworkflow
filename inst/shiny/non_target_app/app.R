@@ -3856,12 +3856,12 @@ server <- function(input, output, session) {
           selected = DBI::dbReadTable(con, "experimentGroup")$name[1]
         )
       }
-      if ("retention_time" %in% DBI::dbListTables(con)) {
+      if ("retentionTime" %in% DBI::dbListTables(con)) {
         updateSelectInput(
           session, 
           "annotChromMeth", 
-          choices = DBI::dbReadTable(con, "retention_time")$chrom_method,
-          selected = DBI::dbReadTable(con, "retention_time")$chrom_method[1]
+          choices = DBI::dbReadTable(con, "retentionTime")$chrom_method,
+          selected = DBI::dbReadTable(con, "retentionTime")$chrom_method[1]
         )
       }
       DBI::dbDisconnect(con)
@@ -3919,7 +3919,7 @@ server <- function(input, output, session) {
         showNotification(
           "No retention times chosen or none available, setting BfG method as standard"
         )
-        "dx.doi.org/10.1016/j.chroma.2015.11.014"
+        "bfg_nts_rp1"
       } else {
         input$annotChromMeth
       }

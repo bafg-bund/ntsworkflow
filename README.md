@@ -14,7 +14,7 @@ To cite this work please use the following citation or run
 
 > Kevin S. Jewell, Christian Dietrich, Toni Köppe, Franziska Thron, Arne
 > Wick and Thomas A. Ternes (2025). ntsworkflow: A Non-Target Screening
-> Data Evaluation Tool. R package version 0.2.8.
+> Data Evaluation Tool. R package version 0.2.9.
 
 ### Peer-reviewed articles reporting the development of ntsworkflow
 
