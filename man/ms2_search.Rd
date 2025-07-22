@@ -63,7 +63,11 @@ ms2_search(
 a `data.frame` with hits from the CSL
 }
 \description{
+<<<<<<< HEAD
 A direct library screening approach using measurement files and the CSL
+=======
+A direct library screening approach using measurement files and the CSL 
+>>>>>>> c8f62e4 (small changes to ms2_search)
 spectral library in SQLite format.
 }
 \details{
