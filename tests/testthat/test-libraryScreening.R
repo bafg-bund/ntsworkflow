@@ -1,13 +1,13 @@
 test_that("ms2_search finds Olmesartan-d6 in sample files", {
   # Prepare paths for CSL file and sample files
-  db_path <- testthat::test_path("fixtures", "CSL_olmesartan-d6.db")
+  csl_path <- testthat::test_path("fixtures", "CSL_olmesartan-d6.db")
   data_dir <- testthat::test_path("fixtures", "mzXML-test-files")
   mzxml_files <- list.files(data_dir, pattern = "\\.mzXML$", full.names = TRUE)
   
   # Run m2_search
   results <- ms2_search(
     data_path = mzxml_files,
-    db_path = db_path
+    csl_path = csl_path
   )
   
   # Test return class
