@@ -295,13 +295,13 @@ eval_comp <- function(csl_comp, raw_data, csl_data, par) {
   csl_specs <- split(spectra, spectra$experiment_id)
   
   # Add attributes to each CSL spectrum and rename columns
-  csl_specs <- lapply(csl_specs, function(sp) {
-    res <- sp[, c("mz.x", "int")]
+  csl_specs <- lapply(csl_specs, function(spec) {
+    res <- spec[, c("mz.x", "int")]
     colnames(res) <- c("mz", "int")
-    attr(res, "precursor_mz") <- sp$mz.y[1]
-    attr(res, "comp_name") <- sp$name[1]
-    attr(res, "CAS") <- sp$CAS[1]
-    attr(res, "db_exp_ID") <- sp$experiment_id[1]
+    attr(res, "precursor_mz") <- spec$mz.y[1]
+    attr(res, "comp_name") <- spec$name[1]
+    attr(res, "CAS") <- spec$CAS[1]
+    attr(res, "db_exp_ID") <- spec$experiment_id[1]
     res
   })
   
@@ -368,35 +368,34 @@ set_mz_attribute <- function(spec, mz) {
 #' This function filters out peaks close to the precursor m/z and low-intensity 
 #' noise, normalizes intensities to a maximum of 1, and retains relevant metadata.
 #' Returns NULL if no valid peaks remain.
-filter_and_normalize_ms2 <- function(x) {
+filter_and_normalize_ms2 <- function(x) {  #Todo: x bitte umbenennen in csl_spec
   # Retrieve attributes
-  compname <- attr(x, "comp_name")
-  compmz <- attr(x, "precursor_mz")
-  expID <- try(attr(x, "db_exp_ID"))
+  compname <- attr(spec, "comp_name")
+  compmz <- attr(spec, "precursor_mz")
+  expID <- try(attr(spec, "db_exp_ID"))  # Todo use tryCatch
   
   # Remove precursor otherwise essentially MS1 checked again # TODO: What does the last part mean?
   # TODO: Remove peaks within 0.02 units of the precursor m/z
-  x <- x[x$mz < attr(x, "precursor_mz") - 0.02, ]
+  spec <- spec[spec$mz < attr(spec, "precursor_mz") - 0.02, ]
   
   # Remove low-intensity noise
-  x <- x[x$int >= 0.1, ]
+  spec <- spec[spec$int >= 0.1, ]
   
   # Check if any peak remains
-  if (length(x) == 0 || nrow(x) == 0) {
+  if (length(spec) == 0 || nrow(spec) == 0) {
     return(NULL)
   }
   
   # Normalize intensity
-  spec <- data.frame(mz = x$mz, int = x$int / max(x$int))
+  spec_clean <- data.frame(mz = spec$mz, int = spec$int / max(spec$int))
   
   # Add attributes
-  attr(spec, "comp_name") <- compname
-  attr(spec, "precursor_mz") <- compmz
+  attr(spec_clean, "comp_name") <- compname
+  attr(spec_clean, "precursor_mz") <- compmz
   if (is.numeric(expID)) {
-    attr(spec, "db_exp_ID") <- expID
+    attr(spec_clean, "db_exp_ID") <- expID
   }
-  
-  return(spec)
+  return(spec_clean)
 }
 
 
@@ -587,6 +586,7 @@ label_separate_peaks <- function(df, par, csl_comp){
     } else {
       df <- do.call("rbind", good)
     }
+    # TODO: sort peaks by intensity (highest is peak A)
   } 
   
   # Case: only one peak found — label it "A" 
