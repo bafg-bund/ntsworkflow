@@ -22,8 +22,6 @@
 #' @param CE_s Collision energy
 #' @param CES_s Collision energy spread
 #' @param instr Instruments allowed, must match the instruments listed in the library
-#' @param ceunit Collision energy units
-#' @param comparison How the spectra should be compared, at the moment only "dot_product" is allowed
 #' @param threshold Threshold score for spectral comparison (for dot_product 1000 is max)
 #' @param rt_res Resolution of two peaks in chromatography (min)
 #' @param rtoffset Retention time offset (will be added to library RTs)
@@ -69,9 +67,7 @@ ms2_search <- function(data_path, csl_path,
                        threshold = 400,
                        ndp_m = 2,
                        ndp_n = 1,
-                       compounds = NULL,
-                       ceunit = c("V", "eV"),  # Todo: Is not used
-                       comparison = "dot_product"  # Todo: Is not used
+                       compounds = NULL
 ) {
   
   # Validate and normalize data file paths
@@ -93,11 +89,9 @@ ms2_search <- function(data_path, csl_path,
     threshold = threshold
   )
   
-  # Connect to the CSL database and filter relevant data
-  csl_data <- filter_csl_data(csl_path, chromatography, pol, CE_s, CES_s, instr)
-  
-  # Filter suspects by specified compound names
-  csl_data$suspects <- filter_suspects_by_name(csl_data$suspects, compounds)
+  # Connect to the CSL, get relevant data, and filter by specified compounds
+  csl_data <- get_csl_data(csl_path, chromatography, pol, CE_s, CES_s, instr, 
+                           compounds)
   
   # Process all measurement files
   all_samps <- lapply(data_path, function(pth) {
@@ -117,7 +111,8 @@ ms2_search <- function(data_path, csl_path,
 
 # Subfunctions ####
 
-filter_csl_data <- function(csl_path, chromatography, pol, CE_s, CES_s, instr){
+get_csl_data <- function(csl_path, chromatography, pol, CE_s, CES_s, instr, 
+                         compounds){
   
   # Connect to the CSL database
   db <- DBI::dbConnect(RSQLite::SQLite(), csl_path)
@@ -152,6 +147,18 @@ filter_csl_data <- function(csl_path, chromatography, pol, CE_s, CES_s, instr){
   # Disconnect the CSL database
   DBI::dbDisconnect(db)
   
+  # Filter suspects for compounds
+  if (!is.null(compounds)) {
+    suspects <- filter(suspects, name %in% compounds)
+    if (nrow(suspects) == 0) {
+      warning("Chosen compounds and settings not available in DB")
+      return(NULL)
+    } else {
+      message("Searching compounds ", paste(unique(suspects$name), 
+                                            collapse = "; "))
+    }
+  } 
+  
   # Bundle results into a list
   csl_data <- list(
     suspects = suspects,
@@ -164,29 +171,10 @@ filter_csl_data <- function(csl_path, chromatography, pol, CE_s, CES_s, instr){
 }
 
 
-filter_suspects_by_name <- function(suspects, compounds){
-  
-  # Filter suspects for compounds
-  if (!is.null(compounds)) {
-    filtered_suspects <- filter(suspects, name %in% compounds)
-    if (nrow(suspects) == 0) {
-      warning("Chosen compounds and settings not available in DB")
-      return(NULL)
-    } else {
-      message("Searching compounds ", paste(unique(suspects$name), collapse = "; "))
-    }
-  } else {
-    filtered_suspects <- suspects
-  }
-  
-  return(filtered_suspects)
-}
-
-
+# TODO: One line description
 eval_samp <- function(pth, csl_data, par) {
   
   # Create xcmsRaw class
-  # pth = data_path[1]  # TODO: testing
   if (inherits(pth, "character")) {
     raw_data <- xcms::xcmsRaw(pth, includeMSn = TRUE)
   } else if (inherits(pth, "xcmsRaw")) {
@@ -200,7 +188,6 @@ eval_samp <- function(pth, csl_data, par) {
   splitByComp <- split(csl_data$suspects, csl_data$suspects$comp_adduct_isot)
   
   # Run evaluation for each available CSL compounds
-  # comp = splitByComp[1]  # TODO: testing
   all_csl_comps <- lapply(splitByComp, function(csl_comp) {
     eval_comp(csl_comp, raw_data, csl_data, par)
   })
@@ -229,25 +216,14 @@ eval_comp <- function(csl_comp, raw_data, csl_data, par) {
   
   # Create data frame with precursor mass and RT data
   df <- data.frame(
-    mz = raw_data@msnPrecursorMz,
-    rt = raw_data@msnRt,
+    mz = raw_data@msnPrecursorMz,  # Precursor mass (Dalton)
+    rt = raw_data@msnRt,            # Retention time (s)
     index = seq_along(raw_data@msnPrecursorMz)
   )
-  
-  # Filter matching precursor mass and RT of sample and CSL compound within the set tolerances
-  if (is.na(csl_comp$rt[1])) {
-    # If RT is unavailable, filter only by precursor mass
-    df <- df[abs(df[, "mz"] - csl_comp$mz[1]) <= mztolu, , drop = FALSE]
-  } 
-  else {
-    # Filter by precursor mass and RT with added RT offset
-    csl_comp$rt <- csl_comp$rt + par$rtoffset
-    combination <- cbind(
-      abs(df[, "mz"] - csl_comp$mz[1]) <= par$mztolu,
-      abs(df[, "rt"] - csl_comp$rt[1] * 60) <= par$rttolm * 60
-    )
-    df <- df[apply(combination, 1, all), , drop = FALSE]
-  }
+
+  # Match sample data by precursor mass and RT of csl compound within tolerances
+  df <- filter_matching_rt_mz(df, csl_comp$rt, csl_comp$mz, par$mztolu, 
+                              par$rtoffset, par$rttolm)
   
   # If no entries (matches) remain, return NULL
   if (nrow(df) == 0) {
@@ -268,7 +244,7 @@ eval_comp <- function(csl_comp, raw_data, csl_data, par) {
   data_specs <- Map(set_mz_attribute, data_specs, df[, "mz"])
   
   # Normalize each MS2 data spectrum 
-  data_specs <- lapply(data_specs, filter_and_normalize_ms2)
+  data_specs <- lapply(data_specs, clean_and_normalize_ms2)
   
   # Remove df entries with NULL spectrum
   stopifnot(nrow(df) == length(data_specs))
@@ -306,7 +282,7 @@ eval_comp <- function(csl_comp, raw_data, csl_data, par) {
   })
   
   # Normalize each MS2 CSL spectrum 
-  csl_specs <- lapply(csl_specs, filter_and_normalize_ms2)
+  csl_specs <- lapply(csl_specs, clean_and_normalize_ms2)
   
   # Remove NULL entries and check if any spectrum remains
   csl_specs <- compact(csl_specs)
@@ -356,6 +332,27 @@ eval_comp <- function(csl_comp, raw_data, csl_data, par) {
 
 # Helper functions eval_comp ####
 
+#' Match sample data by precursor mass and RT of csl compound within tolerances
+filter_matching_rt_mz <- function(df, rt, mz, mztolu, rtoffset, rttolm) {
+  # Check if RT exists
+  if (is.na(rt[1])) {
+    # If RT is unavailable, filter only by precursor mass
+    df <- df[abs(df[, "mz"] - mz[1]) <= mztolu, , drop = FALSE]
+  } 
+  else {
+    # Filter by precursor mass and RT with added RT offset
+    rt <- rt + rtoffset
+    combination <- cbind(
+      abs(df[, "mz"] - mz[1]) <= mztolu,
+      abs(df[, "rt"] - rt[1] * 60) <= rttolm * 60 # RT expected to be in seconds
+    )
+    df <- df[apply(combination, 1, all), , drop = FALSE]
+  }
+  
+  return(df)
+}
+
+
 set_mz_attribute <- function(spec, mz) {
   # Adds attribute to object
   attr(spec, "precursor_mz") <- mz
@@ -368,14 +365,13 @@ set_mz_attribute <- function(spec, mz) {
 #' This function filters out peaks close to the precursor m/z and low-intensity 
 #' noise, normalizes intensities to a maximum of 1, and retains relevant metadata.
 #' Returns NULL if no valid peaks remain.
-filter_and_normalize_ms2 <- function(x) {  #Todo: x bitte umbenennen in csl_spec
+clean_and_normalize_ms2 <- function(spec) {
   # Retrieve attributes
   compname <- attr(spec, "comp_name")
   compmz <- attr(spec, "precursor_mz")
-  expID <- try(attr(spec, "db_exp_ID"))  # Todo use tryCatch
+  expID <- expID <- tryCatch(attr(spec, "db_exp_ID"), error = function(e) NULL)
   
-  # Remove precursor otherwise essentially MS1 checked again # TODO: What does the last part mean?
-  # TODO: Remove peaks within 0.02 units of the precursor m/z
+  # Remove peaks within 0.02 units of the precursor m/z 
   spec <- spec[spec$mz < attr(spec, "precursor_mz") - 0.02, ]
   
   # Remove low-intensity noise
@@ -395,6 +391,7 @@ filter_and_normalize_ms2 <- function(x) {  #Todo: x bitte umbenennen in csl_spec
   if (is.numeric(expID)) {
     attr(spec_clean, "db_exp_ID") <- expID
   }
+  
   return(spec_clean)
 }
 
