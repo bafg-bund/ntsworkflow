@@ -469,15 +469,21 @@ Report <- setRefClass(
 
         results <- ntsworkflow::ms2_search(
           data_path = list(rawLink),
-          db_path = settings$db_path, rttolm = settings$rttolm, mztolu = settings$mztolu,
-          mztolu_fine = settings$mztolu_fine,
+          csl_path = settings$db_path, 
           chromatography = settings$chromatography,
-          pol = settings$pol, CE_s = settings$CE_s, CES_s = settings$CES_s,
+          pol = settings$pol,
+          CE_s = settings$CE_s,
+          CES_s = settings$CES_s,
           instr = settings$instr,
-          ceunit = settings$ceunit,
-          comparison = settings$comparison, threshold = settings$threshold,
-          rt_res = settings$rt_res, rtoffset = settings$rtoffset,
-          ndp_m = settings$ndp_m, ndp_n = settings$ndp_n, mztolu_ms2 = settings$mztolu_ms2,
+          rtoffset = settings$rtoffset,
+          rt_res = settings$rt_res,
+          rttolm = settings$rttolm, 
+          mztolu = settings$mztolu,
+          mztolu_fine = settings$mztolu_fine,
+          mztolu_ms2 = settings$mztolu_ms2,
+          threshold = settings$threshold, 
+          ndp_m = settings$ndp_m, 
+          ndp_n = settings$ndp_n, 
           compounds = comp_names
         )
         # if no ms2 comparison is desired i.e. threshold score = 0, for compounds not found
