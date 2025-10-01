@@ -21,4 +21,3 @@ NULL
 
 # Copyright 2025 Bundesanstalt für Gewässerkunde
 # This file is part of ntsworkflow
-
