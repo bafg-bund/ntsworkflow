@@ -9,6 +9,7 @@
 #' @useDynLib ntsworkflow, .registration=TRUE
 #' @importFrom Rcpp evalCpp
 #' @importFrom Rcpp sourceCpp
+#' @importFrom purrr pluck
 #' @import foreach
 #' @import dplyr
 NULL
