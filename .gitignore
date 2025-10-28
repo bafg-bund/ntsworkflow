@@ -34,7 +34,6 @@ vignettes/*.pdf
 *.knit.md
 
 sqlite_local
-/doc/
 /Meta/
 
 # binary files created by c++
@@ -46,4 +45,3 @@ sqlite_local
 tests/kevin
 tests/ole
 local
-docs
