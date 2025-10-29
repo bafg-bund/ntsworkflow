@@ -240,26 +240,27 @@ annotate_grouped <- function(sampleListLocal,
     } else {
       paraTable <- tbl(dbi, "parameter") %>%
         filter(
-          polarity == polarity_i, CE %in% allCe, CES %in% allces,
+          polarity == polarity_i, ce %in% allCe, ces %in% allces,
           instrument %in% instrument_i
         )
-      rtTable <- tbl(dbi, "retentionTime") %>% filter(chrom_method == chrom_method_i)
+      rtTable <- tbl(dbi, "retention_time") %>% filter(chrom_method == chrom_method_i)
       
       allExps <- expTable %>%
         inner_join(paraTable, by = "parameter_id") %>%
-        select(experiment_id, compound_id, mz, adduct, isotope, CE, CES) %>%
+        select(experiment_id, compound_id, mz, adduct, isotope, ce, ces) %>%
         left_join(compTable, by = "compound_id") %>%
         left_join(rtTable, by = "compound_id") %>%
-        select(-chrom_method, -ret_time_id, -chem_list_id, -compound_id) %>%
+        select(-chrom_method, -retention_time_id, -compound_id) %>%
         dplyr::collect()
       
       # filter by experiment group (user source selection)
-      expIdsSource <- tbl(dbi, "experimentGroup") %>%
+      expIdsSource <- tbl(dbi, "data_source") %>%
         filter(name %in% expGroups) %>%
-        left_join(tbl(dbi, "expGroupExp"), by = "experimentGroup_id") %>%
+        left_join(tbl(dbi, "experiment"), by = "data_source_id") %>%
         select(experiment_id) %>%
         collect() %>%
         .$experiment_id
+      
       allExps <- allExps[allExps$experiment_id %in% expIdsSource, ]
     }
     
@@ -305,9 +306,7 @@ annotate_grouped <- function(sampleListLocal,
   if (!useCustom) {
     fragTable <- tbl(dbi, "fragment") %>% collect()
     expTable <- tbl(dbi, "experiment") %>% collect()
-    compTable <- tbl(dbi, "compound") %>%
-      select(-chem_list_id) %>%
-      collect()
+    compTable <- tbl(dbi, "compound") %>% collect()
   }
   
   # Process list of alignmentTables
@@ -385,12 +384,12 @@ annotate_grouped <- function(sampleListLocal,
       } else {
         db_spectra <- lapply(
           viabExp$experiment_id,
-          ntsworkflow::get_spectrum_preloaded,
+          get_spectrum_preloaded,
           fragTable = fragTable,
           expTable = expTable,
           compTable = compTable
         )
-        db_spectra <- lapply(db_spectra, normalizeMs2)
+        db_spectra <- lapply(db_spectra, clean_and_normalize_ms2)
         viabExp$db_available <- vapply(db_spectra, Negate(is.null), logical(1))
         viabExp <- viabExp[viabExp$db_available, ]
         if (nrow(viabExp) == 0) {
@@ -409,7 +408,7 @@ annotate_grouped <- function(sampleListLocal,
                                                 peakMz, peakRt)
       attr(ms2spektrum, "precursor_mz") <- peakMz
       colnames(ms2spektrum) <- c("mz", "int")
-      ms2spektrumNorm <- normalizeMs2(ms2spektrum)
+      ms2spektrumNorm <- clean_and_normalize_ms2(ms2spektrum)
       # cut off low intensity fragments if desired
       if (intCutData != 0) {
         ms2spektrumNorm <- ms2spektrumNorm[ms2spektrumNorm$int >= intCutData, ]
@@ -535,8 +534,8 @@ annotate_grouped <- function(sampleListLocal,
   } else {
     hits <- hits[, c(
       "alignmentID", "mzData", "rtData", "name",
-      "CAS", "mz", "rt", "experiment_id", "formula", "SMILES", "adduct",
-      "isotope", "score", "db_available", "CE", "CES", "datenListVerwendet"
+      "cas", "mz", "rt", "experiment_id", "formula", "smiles", "adduct",
+      "isotope", "score", "db_available", "ce", "ces", "datenListVerwendet"
     )]
     colnames(hits) <- c(
       "alignmentID", "mzData", "rtData", "name",
@@ -555,4 +554,39 @@ annotate_grouped <- function(sampleListLocal,
   }
   
   hits
+}
+
+
+#' @export
+#' @import dplyr
+get_spectrum_preloaded <- function(fragTable, expTable, compTable, Exp.ID) {
+  stopifnot(length(Exp.ID) == 1)
+  
+  # Selection of Spectrum by Exp.ID
+  dbSpectrum <- fragTable %>% # Selection of database
+    filter(experiment_id == !!Exp.ID) %>% # Selection of one Experiment
+    select(mz, int)
+  
+  mz_i <- expTable %>%
+    filter(experiment_id == !!Exp.ID) %>%
+    .$mz
+  
+  meta_data <- id_to_name_preloaded(Exp.ID, expTable, compTable)
+  
+  attr(dbSpectrum, "precursor_mz") <- mz_i
+  attr(dbSpectrum, "comp_name") <- meta_data$name
+  attr(dbSpectrum, "CAS") <- meta_data$cas
+  attr(dbSpectrum, "db_exp_ID") <- Exp.ID
+  dbSpectrum
+}
+
+#' @export
+#' @import dplyr
+id_to_name_preloaded <- function(id, expTable, compTable) {
+  name <- expTable %>%
+    filter(experiment_id == !!id) %>%
+    inner_join(compTable, by = "compound_id") %>%
+    select(name, cas)
+  name$exp_ID <- id
+  name
 }

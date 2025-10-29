@@ -24,7 +24,7 @@ test_that("ms2_search finds Olmesartan-d6 in sample files", {
 })
 
 test_that("Multiple peaks are labelled by letters according to RT", {
-  csl_path <- test_path("fixtures", "csl-test-files", "CSL_v25.6.db")
+  csl_path <- test_path("fixtures", "csl-test-files", "CSL_v25.7.db")
   data_dir <- test_path("fixtures", "mzXML-test-files", "lib-screening-multi-peaks")
   mzxml_files <- list.files(data_dir, pattern = "\\.mzXML$", full.names = TRUE)
   
@@ -78,8 +78,8 @@ test_that("get_csl_data returns csl data correctly", {
   # Prepare test inputs
   chromatography <- "bfg_nts_rp1"
   pol <- "pos"
-  CE_s <- 30:40
-  CES_s <- 0:15
+  ce_s <- 30:40
+  ces_s <- 0:15
   instr <- "LC-ESI-QTOF TripleTOF 5600 SCIEX"
   compounds <- NULL  # Don't filter by compound
   
@@ -88,8 +88,8 @@ test_that("get_csl_data returns csl data correctly", {
     csl_path = test_csl_path,
     chromatography = chromatography,
     pol = pol,
-    CE_s = CE_s,
-    CES_s = CES_s,
+    ce_s = ce_s,
+    ces_s = ces_s,
     instr = instr,
     compounds = compounds
   )
@@ -112,8 +112,8 @@ test_that("get_csl_data filters suspects correctly", {
   # Prepare test inputs
   chromatography <- "bfg_nts_rp1"
   pol <- "pos"
-  CE_s <- 30:40
-  CES_s <- 0:15
+  ce_s <- 30:40
+  ces_s <- 0:15
   instr <- "LC-ESI-QTOF TripleTOF 5600 SCIEX"
   compounds <- "(2-Carboxyethyl)triphenylphosphonium"  # Compound filter
   
@@ -122,8 +122,8 @@ test_that("get_csl_data filters suspects correctly", {
     csl_path = test_csl_path,
     chromatography = chromatography,
     pol = pol,
-    CE_s = CE_s,
-    CES_s = CES_s,
+    ce_s = ce_s,
+    ces_s = ces_s,
     instr = instr,
     compounds = compounds
   )

@@ -19,8 +19,8 @@
 #' @param mztolu_fine m/z tolerance in Da (second stage)
 #' @param chromatography Chromatography name to choose the correct retention times from the library
 #' @param pol Polarity
-#' @param CE_s Collision energy
-#' @param CES_s Collision energy spread
+#' @param ce_s Collision energy
+#' @param ces_s Collision energy spread
 #' @param instr Instruments allowed, must match the instruments listed in the library
 #' @param threshold Threshold score for spectral comparison (for dot_product 1000 is max)
 #' @param rt_res Resolution of two peaks in chromatography (min)
@@ -55,8 +55,8 @@ ms2_search <- function(data_path,
                        csl_path,
                        chromatography = "bfg_nts_rp1",
                        pol = "pos",
-                       CE_s = 30:40,
-                       CES_s = 0:15,
+                       ce_s = 30:40,
+                       ces_s = 0:15,
                        instr = "LC-ESI-QTOF TripleTOF 5600 SCIEX",
                        rtoffset = 0,
                        rt_res = 1.5,
@@ -90,7 +90,7 @@ ms2_search <- function(data_path,
   )
   
   # Connect to the CSL, get relevant data, and filter by specified compounds
-  csl_data <- get_csl_data(csl_path, chromatography, pol, CE_s, CES_s, instr, 
+  csl_data <- get_csl_data(csl_path, chromatography, pol, ce_s, ces_s, instr, 
                            compounds)
   
   # Process all measurement files
@@ -111,7 +111,7 @@ ms2_search <- function(data_path,
 
 # Subfunctions ####
 
-get_csl_data <- function(csl_path, chromatography, pol, CE_s, CES_s, instr, 
+get_csl_data <- function(csl_path, chromatography, pol, ce_s, ces_s, instr, 
                          compounds){
   
   # Connect to the CSL database
@@ -120,7 +120,7 @@ get_csl_data <- function(csl_path, chromatography, pol, CE_s, CES_s, instr,
   # Get tables from the CSL database
   expTable <- tbl(db, "experiment")
   paraTable <- tbl(db, "parameter")
-  rtTable <- tbl(db, "retentionTime")
+  rtTable <- tbl(db, "retention_time")
   compTable <- tbl(db, "compound")
   
   # Filter suspects using parameters
@@ -130,18 +130,16 @@ get_csl_data <- function(csl_path, chromatography, pol, CE_s, CES_s, instr,
     left_join(expTable, by = "compound_id") %>%
     left_join(paraTable, by = "parameter_id") %>%
     filter(polarity == pol) %>%
-    filter(CE %in% CE_s) %>%
-    filter(CES %in% CES_s) %>%
+    filter(ce %in% ce_s) %>%
+    filter(ces %in% ces_s) %>%
     filter(instrument %in% instr) %>%
-    select(name, CAS, mz, rt, adduct, isotope, experiment_id, compound_id) %>%
+    select(name, cas, mz, rt, adduct, isotope, experiment_id, compound_id) %>%
     dplyr::collect() %>%
     distinct()
   
   # Collect other tables
   exptbl <- tbl(db, "experiment") %>% collect()
-  comptbl <- tbl(db, "compound") %>%
-    select(-chem_list_id) %>%
-    collect()
+  comptbl <- tbl(db, "compound") %>% collect()
   fragtbl <- tbl(db, "fragment") %>% collect()
   
   # Disconnect the CSL database
@@ -312,7 +310,7 @@ set_mz_attribute <- function(spec, mz) {
 
 collect_spectra_from_csl <- function(csl_data, experiment_ids) {
   exptt <- csl_data$exptbl %>% select(experiment_id, compound_id, mz)
-  compt <- csl_data$comptbl %>% select(compound_id, CAS, name)
+  compt <- csl_data$comptbl %>% select(compound_id, cas, name)
   spectra <- filter(csl_data$fragtbl, experiment_id %in% experiment_ids) %>%
     select(mz, int, experiment_id) %>%
     left_join(exptt, by = "experiment_id") %>%
@@ -336,7 +334,7 @@ comp_metadata_as_attribute <- function(spec) {
   colnames(res) <- c("mz", "int")
   attr(res, "precursor_mz") <- spec$mz.y[1]
   attr(res, "comp_name") <- spec$name[1]
-  attr(res, "CAS") <- spec$CAS[1]
+  attr(res, "cas") <- spec$cas[1]
   attr(res, "db_exp_ID") <- spec$experiment_id[1]
   res
 }
@@ -567,7 +565,7 @@ add_comp_metadata <- function(df, csl_comp, raw_data) {
   df$comp_id <- csl_comp$compound_id[1]
   df$samp <- basename(raw_data@filepath)
   df$comp_name <- csl_comp$name[1]
-  df$comp_CAS <- csl_comp$CAS[1]
+  df$comp_cas <- csl_comp$cas[1]
   df$mz_error_mDa <- round(abs(csl_comp$mz[1] - df$real_mz) * 1000, 3)
   df$adduct <- csl_comp$adduct[1]
   df$isotopologue <- csl_comp$isotope[1]
