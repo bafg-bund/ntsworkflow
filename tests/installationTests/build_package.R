@@ -17,19 +17,9 @@ build_vignettes_to_inst <- function() {
 build_vignettes_to_inst() 
 
 # only run this on linux
-devtools::build(path = file.path(Sys.getenv("RENV_PATHS_CELLAR"), "ntsworkflow", glue::glue("ntsworkflow_{desc::desc_get_version()}.tar.gz")), binary = TRUE)
-renv::install("ntsworkflow@0.2.7")
-
-# To test installing in user R library folder, need to temporarily deactivate renv
-renv::deactivate()
-
-install.packages("/beegfs/nts/renv_package_cellar/ntsworkflow/ntsworkflow_0.2.7.tar.gz")
+devtools::build(path = file.path(Sys.getenv("INSTALLATION_NTSWORKFLOW"), glue::glue("ntsworkflow_{desc::desc_get_version()}.tar.gz")), binary = TRUE)
 
 
-library(ntsworkflow)
-
-
-renv::activate()
 # only run this on windows
 # delete .o and .so files in the src folder before building package in windows
 # unlink(list.files("src", pattern = ".*\\.o$", f = TRUE))
