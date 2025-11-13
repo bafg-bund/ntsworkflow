@@ -2,7 +2,7 @@ test_that("dbas processing can find IS in test files, these can be saved without
           removing files from memory", {
   test <- Report$new()
   test$changeSettings("pol", "pos")
-  test$addDB(F, test_path("fixtures", "CSL_olmesartan-d6.db"))
+  test$addDB(F, test_path("fixtures", "csl-test-files", "CSL_olmesartan-d6.db"))
   test$addIS(F, test_path("fixtures", "IS_table_pos.csv"))
   test$addRawFiles(F, c(
     test_path("fixtures", "mzXML-test-files", "RH_pos_20230812.mzXML"),
@@ -25,7 +25,7 @@ test_that("dbas processing can find IS in test files, these can be saved without
 test_that("Processing an empty file returns an empty report", {
   test <- Report$new()
   test$changeSettings("pol", "pos")
-  test$addDB(F, test_path("fixtures", "CSL_olmesartan-d6.db"))
+  test$addDB(F, test_path("fixtures", "csl-test-files", "CSL_olmesartan-d6.db"))
   test$addIS(F, test_path("fixtures", "IS_table_pos.csv"))
   test$addRawFiles(F, test_path("fixtures", "mzXML-test-files", "RH_pos_20220602_no_peaks.mzXML"))
   test$process_all()
@@ -73,7 +73,7 @@ test_that("Reintegration runs without error", {
   # Prepare test files for reintegration
   test <- Report$new()
   test$changeSettings("pol", "pos")
-  test$addDB(F, test_path("fixtures", "CSL_olmesartan-d6.db"))
+  test$addDB(F, test_path("fixtures", "csl-test-files", "CSL_olmesartan-d6.db"))
   test$addIS(F, test_path("fixtures", "IS_table_pos.csv"))
   test$addRawFiles(F, c(
     test_path("fixtures", "mzXML-test-files", "RH_pos_20230812.mzXML"),
