@@ -6,40 +6,32 @@
 \usage{
 ms2_search(
   data_path,
-  db_path,
-  rttolm = 1,
-  mztolu = 0.5,
-  mztolu_fine = 0.005,
+  csl_path,
   chromatography = "bfg_nts_rp1",
   pol = "pos",
   CE_s = 30:40,
   CES_s = 0:15,
   instr = "LC-ESI-QTOF TripleTOF 5600 SCIEX",
-  ceunit = c("V", "eV"),
-  comparison = "dot_product",
-  threshold = 400,
-  rt_res = 1.5,
   rtoffset = 0,
+  rt_res = 1.5,
+  rttolm = 1,
+  mztolu = 0.5,
+  mztolu_fine = 0.005,
+  mztolu_ms2 = 0.015,
+  threshold = 400,
   ndp_m = 2,
   ndp_n = 1,
-  mztolu_ms2 = 0.015,
   compounds = NULL
 )
 }
 \arguments{
 \item{data_path}{Path to rawfiles, can be a vector of file locations or a list of xcmsRaw objects}
 
-\item{db_path}{Path to spectral library}
-
-\item{rttolm}{Retention time tolerance in minutes}
-
-\item{mztolu}{m/z tolerance in Da (MS2 precursor mass)}
-
-\item{mztolu_fine}{m/z tolerance in Da (second stage)}
+\item{csl_path}{Path to the Collective Spectral Library (CSL)}
 
 \item{chromatography}{Chromatography name to choose the correct retention times from the library}
 
-\item{pol}{Polarity used}
+\item{pol}{Polarity}
 
 \item{CE_s}{Collision energy}
 
@@ -47,30 +39,32 @@ ms2_search(
 
 \item{instr}{Instruments allowed, must match the instruments listed in the library}
 
-\item{ceunit}{Collision energy units}
+\item{rtoffset}{Retention time offset (will be added to library RTs)}
 
-\item{comparison}{How the spectra should be compared, at the moment only "dot_product" is allowed}
+\item{rt_res}{Resolution of two peaks in chromatography (min)}
+
+\item{rttolm}{Retention time tolerance in minutes}
+
+\item{mztolu}{m/z tolerance in Da (MS2 precursor mass)}
+
+\item{mztolu_fine}{m/z tolerance in Da (second stage)}
+
+\item{mztolu_ms2}{m/z window for dot-product}
 
 \item{threshold}{Threshold score for spectral comparison (for dot_product 1000 is max)}
-
-\item{rt_res}{resolution of two peaks in chromatography}
-
-\item{rtoffset}{Retention time offset (will be added to library RTs)}
 
 \item{ndp_m}{Peak intensity weighting factor for dot-product}
 
 \item{ndp_n}{m/z weighting factor for dot-product}
 
-\item{mztolu_ms2}{m/z window for dot-product}
-
 \item{compounds}{character vector of compounds which should be processed}
 }
 \value{
-a `data.frame` with hits from the spectral library
+a `data.frame` with hits from the CSL
 }
 \description{
-A direct library screening approach using measurement files and the CSL 
-spectral libary in SQLite format.
+A direct library screening approach using measurement files and the CSL
+spectral library in SQLite format.
 }
 \details{
 The function is used in the Report RC to obtain the peak list. No prior peak
@@ -78,6 +72,8 @@ picking is needed for this function. The function starts from the list of
 masses provided in the spectral library and searches for these in the
 measurement data. The measurement data is in mz(X)ML format and contains DDA
 MS² spectra.
+\strong{Multiple peaks for one compound}
+Will be sorted by intensity and labelled A-Z  # TODO: Check if this is already the case
 
 ## References
   Jewell, K. S., Kunkel, U., Ehlig, B., Thron, F., Schlüsener, M., Dietrich,

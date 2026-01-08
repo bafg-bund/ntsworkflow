@@ -9,6 +9,7 @@
 #' @useDynLib ntsworkflow, .registration=TRUE
 #' @importFrom Rcpp evalCpp
 #' @importFrom Rcpp sourceCpp
+#' @importFrom purrr pluck
 #' @import foreach
 #' @import dplyr
 NULL
@@ -21,4 +22,3 @@ NULL
 
 # Copyright 2025 Bundesanstalt für Gewässerkunde
 # This file is part of ntsworkflow
-

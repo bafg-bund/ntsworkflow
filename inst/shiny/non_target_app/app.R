@@ -595,13 +595,14 @@ server <- function(input, output, session) {
   PPXIC_ranges <- reactiveValues(x = NULL, y = NULL)
   ComponentXIC_ranges <- reactiveValues(x = NULL, y = NULL)
   FAXIC_ranges <- reactiveValues(x = NULL, y = NULL)
+  cslData <- reactiveVal(NULL)
   
   # update ui
   
   # Number of threads needs to be kept low due to very high memory demands
   observeEvent(NA, updateNumericInput(
     session, "numcores",
-    value = min(round(parallel::detectCores()/3), 6),
+    value = min(round(parallel::detectCores()/3), 1),
     max = parallel::detectCores() - 1
     ), 
     once = TRUE)
@@ -3811,12 +3812,12 @@ server <- function(input, output, session) {
         in the case of no file, an adduct annotation is done."
       ),
       p(
-        "1: MS2 'Spektrendatenbank' SQLite database, E.g. MS2_db_v9.db. To add standards to 
+        "1: MS2 'Spektrendatenbank' SQLite database, E.g. CSL_v25.7.db. To add standards to the
         DB, ask G2."
       ),
       p(
         "2: Custom database in yaml format for MS2 search (incl. fragments and neutral-loss search) 
-        for fomating examples ask around G2. E.g. example_db.yaml"
+        for an example file, ask G2. E.g. example_db.yaml"
       ),
       p(
         "3: Custom database in csv format for only doing MS1 (m/z, RT) suspect 
@@ -3843,33 +3844,49 @@ server <- function(input, output, session) {
   output$dbLoc <- renderText(as.character(parseFilePaths(home, input$ms2Db)$datapath))
   
   # populate source select list and chrom method list
+  observeEvent(input$ms2Db, {
+    
+    csl_path <- parseFilePaths(home, input$ms2Db)$datapath
+    req(length(csl_path) == 1)
+    req(grepl("\\.db$", csl_path))
+    
+    # preload database
+    cslData(load_csl_data(csl_path))
+    
+  })
+ 
   observe({
-    dbPath <- as.character(parseFilePaths(home, input$ms2Db)$datapath)
-    req(length(dbPath) > 0)
-    if (grepl("\\.db$", dbPath)) {
-      con <- DBI::dbConnect(RSQLite::SQLite(), dbPath)
-      if ("experimentGroup" %in% DBI::dbListTables(con)) {
-        updateSelectInput(
-          session, 
-          "annotExpSource", 
-          choices = DBI::dbReadTable(con, "experimentGroup")$name,
-          selected = DBI::dbReadTable(con, "experimentGroup")$name[1]
-        )
-      }
-      if ("retentionTime" %in% DBI::dbListTables(con)) {
-        updateSelectInput(
-          session, 
-          "annotChromMeth", 
-          choices = DBI::dbReadTable(con, "retentionTime")$chrom_method,
-          selected = DBI::dbReadTable(con, "retentionTime")$chrom_method[1]
-        )
-      }
-      DBI::dbDisconnect(con)
+    req(cslData())
+    
+    if (!is.null(cslData()$data_source)) {
+      
+      data_sources <- unique(cslData()$data_source$name)
+      data_sources <- data_sources[!is.na(data_sources)]
+      
+      updateSelectInput(
+        session,
+        "annotExpSource",
+        choices = data_sources,
+        selected = data_sources[1]
+      )
+    }
+    
+    if (!is.null(cslData()$retention_time)) {
+      
+      chrom_methods <- unique(cslData()$retention_time$chrom_method)
+      chrom_methods <- chrom_methods[!is.na(chrom_methods)]
+      
+      updateSelectInput(
+        session,
+        "annotChromMeth",
+        choices = chrom_methods,
+        selected = chrom_methods[1]
+      )
     }
   })
   
   observeEvent(input$annotGo, {
-    dbPath <- as.character(parseFilePaths(home, input$ms2Db)$datapath)
+    csl_path <- as.character(parseFilePaths(home, input$ms2Db)$datapath)
     if (is.null(grouped))
       showNotification("First align the samples", type = "error")
     validate(need(!is.null(grouped), "First align the samples"))
@@ -3877,7 +3894,7 @@ server <- function(input, output, session) {
     progress$set(message = "Annotating alignment table...")
     
     # if no db chosen, annotate with peaklist component info (Cl and Br)
-    if (length(dbPath) == 0) {
+    if (length(csl_path) == 0) {
       showNotification("No database chosen, annotating just with components")
       progress$set(detail = "Searching Peaklists...")
       
@@ -3887,12 +3904,12 @@ server <- function(input, output, session) {
         alignmentTable = grouped,
         numcores = input$numcores
       )
-    } else if (grepl("\\.csv$", dbPath)) {  
+    } else if (grepl("\\.csv$", csl_path)) {  
       # csv library: just do m/z-rt screening in alignment table
       progress$set(detail = "Searching average m/z, rt")
       tryCatch(
         annotationTableNew <- ntsworkflow::annotate_grouped_mz_rt(
-          grouped, dbPath, input$annotMzTolmDa / 1000, input$annotRtTolM
+          grouped, csl_path, input$annotMzTolmDa / 1000, input$annotRtTolM
         ),
         error = function(cnd) {
           message("Error in annotation. ", cnd)
@@ -3902,16 +3919,16 @@ server <- function(input, output, session) {
         showNotification("Annotation unsuccessful, check format of csv", type = "warning")
       }
       req(exists("annotationTableNew"))
-    } else if (grepl("\\.db$", dbPath) || grepl("\\.ya?ml$", dbPath)) {
+    } else if (grepl("\\.db$", csl_path) || grepl("\\.ya?ml$", csl_path)) {
       # yaml or SQLite db: do MS2 searching
       
       # first check
       
       progress$set(detail = "Searching MS2...")
-      # make sure the source and retention time is selected
+      # make sure the data source and retention time is selected
       expSource <- if (is.null(input$annotExpSource)) {
         showNotification("No source chosen or none available, setting BfG as standard")
-        "BfG"
+        "bfg"
       } else {
         input$annotExpSource
       }
@@ -3928,7 +3945,7 @@ server <- function(input, output, session) {
         sampleListLocal = sampleList,
         peakListList = peaklist,
         alignmentTable = grouped,
-        db_path = dbPath,
+        db_path = csl_path,
         threshold_score = input$annotThresh,
         mztolu = input$annotMzTolmDa / 1000,
         rttol = input$annotRtTolM,

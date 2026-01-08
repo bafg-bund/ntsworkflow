@@ -14,7 +14,7 @@
 #' @field settings A list with settings for all processing steps.
 #' The settings list contains the following fields and defaults:
 #' \code{list(db_path = NULL, rttolm = 1, mztolu = 0.05, mztolu_fine = 0.005, chromatography =
-#' "bfg_nts_rp1", pol = "pos", CE_s = 30:40, CES_s = 0:15, instr =
+#' "bfg_nts_rp1", pol = "pos", ce_s = 30:40, ces_s = 0:15, instr =
 #' "LC-ESI-QTOF TripleTOF 5600 SCIEX", ceunit = c("V", "eV"), comparison = "dot_product", threshold
 #' = 400, rt_res = 1.5, EIC_extraction = 0.05, baseline_noise_MS1 = 0.5, sn = 3, rtoffset = 0,
 #' IS_rtoffset = 0, ISrttolm = 1, blank_int_factor = 3, rtTolReinteg = 1, mzTolReinteg = 0.005,
@@ -26,8 +26,8 @@
 #' \code{mztolu_fine}: m/z tolerance for precursor mass in MS1.
 #' \code{chromatography} Is the chromatographic method allowed from the SDB.
 #' \code{pol}: polarity.
-#' \code{CE_s}: allowed collision energies from SDB.
-#' \code{CES_s}: allowed collision energy spreads from SDB.
+#' \code{ce_s}: allowed collision energies from SDB.
+#' \code{ces_s}: allowed collision energy spreads from SDB.
 #' \code{instr}: allowed instruments from SDB.
 #' \code{ceunit}: allowed collision energy unit from SDB.
 #' \code{comparison}: algorithm to use for spectral comparison, currently only the default is allowed.
@@ -103,7 +103,7 @@ Report <- setRefClass(
         mztolu_fine = 0.005,
         chromatography =
           "bfg_nts_rp1",
-        pol = "pos", CE_s = 30:40, CES_s = 0:15,
+        pol = "pos", ce_s = 30:40, ces_s = 0:15,
         instr = c("LC-ESI-QTOF TripleTOF 5600 SCIEX", "LC-ESI-QTOF TripleTOF 6600 SCIEX"),
         ceunit = c("V", "eV"),
         comparison = "dot_product", threshold = 400,
@@ -150,7 +150,7 @@ Report <- setRefClass(
         comp_id = integer(),
         samp = character(),
         comp_name = character(),
-        comp_CAS = character(),
+        comp_cas = character(),
         mz_error_mDa = numeric(),
         rt_error_min = numeric(),
         peak_start = numeric(),
@@ -469,15 +469,21 @@ Report <- setRefClass(
 
         results <- ntsworkflow::ms2_search(
           data_path = list(rawLink),
-          db_path = settings$db_path, rttolm = settings$rttolm, mztolu = settings$mztolu,
-          mztolu_fine = settings$mztolu_fine,
+          csl_path = settings$db_path, 
           chromatography = settings$chromatography,
-          pol = settings$pol, CE_s = settings$CE_s, CES_s = settings$CES_s,
+          pol = settings$pol,
+          ce_s = settings$ce_s,
+          ces_s = settings$ces_s,
           instr = settings$instr,
-          ceunit = settings$ceunit,
-          comparison = settings$comparison, threshold = settings$threshold,
-          rt_res = settings$rt_res, rtoffset = settings$rtoffset,
-          ndp_m = settings$ndp_m, ndp_n = settings$ndp_n, mztolu_ms2 = settings$mztolu_ms2,
+          rtoffset = settings$rtoffset,
+          rt_res = settings$rt_res,
+          rttolm = settings$rttolm, 
+          mztolu = settings$mztolu,
+          mztolu_fine = settings$mztolu_fine,
+          mztolu_ms2 = settings$mztolu_ms2,
+          threshold = settings$threshold, 
+          ndp_m = settings$ndp_m, 
+          ndp_n = settings$ndp_n, 
           compounds = comp_names
         )
         # if no ms2 comparison is desired i.e. threshold score = 0, for compounds not found
@@ -493,7 +499,7 @@ Report <- setRefClass(
           # get list of all compounds in db with rt
           expTable <- tbl(db, "experiment")
           paraTable <- tbl(db, "parameter")
-          rtTable <- tbl(db, "retentionTime")
+          rtTable <- tbl(db, "retention_time")
           compTable <- tbl(db, "compound")
           suspects <- compTable %>%
             left_join(rtTable, by = "compound_id") %>%
@@ -501,10 +507,10 @@ Report <- setRefClass(
             left_join(expTable, by = "compound_id") %>%
             left_join(paraTable, by = "parameter_id") %>%
             filter(polarity == settings$pol) %>%
-            filter(CE %in% settings$CE_s) %>%
-            filter(CES %in% settings$CES_s) %>%
+            filter(CE %in% settings$ce_s) %>%
+            filter(CES %in% settings$ces_s) %>%
             filter(instrument %in% settings$instr) %>%
-            select(name, CAS, mz, rt, adduct, experiment_id, compound_id) %>%
+            select(name, cas, mz, rt, adduct, experiment_id, compound_id) %>%
             dplyr::collect() %>%
             distinct()
 
@@ -530,7 +536,7 @@ Report <- setRefClass(
             }
             specs <- lapply(msScans, getSpecScan)
             allSig <- Reduce(rbind, specs)
-            # check to see if mass is present above treshold
+            # check to see if mass is present above threshold
             allSig <- allSig[allSig[, "intensity"] >= settings$baseline_noise_MS1, , drop = FALSE]
             if (nrow(allSig) == 0) {
               return(NULL)
@@ -552,7 +558,7 @@ Report <- setRefClass(
               comp_id = compound$compound_id[1],
               samp = basename(datFile),
               comp_name = compound$name[1],
-              comp_CAS = compound$CAS[1],
+              comp_cas = compound$cas[1],
               mz_error_mDa = (allSig[, "mz"][1] - compMz) * 1000,
               rt_error_min = (allSig[, "rt"][1] - compRt) / 60,
               stringsAsFactors = FALSE
@@ -867,12 +873,12 @@ Report <- setRefClass(
       toPlot$time_min <- toPlot$time / 60
       rt_min <- peakList[peakList$peakID == ID, "rt_min"]
       comp_name <- peakList[peakList$peakID == ID, "comp_name"]
-      comp_CAS <- peakList[peakList$peakID == ID, "comp_CAS"]
+      comp_cas <- peakList[peakList$peakID == ID, "comp_cas"]
       int_i <- peakList[peakList$peakID == ID, "int_h"]
       mz <- peakList[peakList$peakID == ID, "real_mz"]
       samp <- peakList[peakList$peakID == ID, "samp"]
       e_width <- peakList[peakList$peakID == ID, "eic_extraction_width"]
-      stopifnot(length(comp_CAS) == 1)
+      stopifnot(length(comp_cas) == 1)
       start_t <- peakList[peakList$peakID == ID, "peak_start"]
       end_t <- peakList[peakList$peakID == ID, "peak_end"]
       thisPlot <- ggplot2::ggplot(toPlot, aes(x = time_min, y = int)) +
@@ -889,7 +895,7 @@ Report <- setRefClass(
           x = rt_min - 1, y = Inf, vjust = 1, hjust = 1,
           label = sprintf(
             "\nName = %s\nCAS = %s\nRT = %.1f min\nm/z = %.4f\nwidth = %.3f Da",
-            comp_name, comp_CAS, rt_min, mz, e_width
+            comp_name, comp_cas, rt_min, mz, e_width
           ),
           color = "blue", alpha = 0.5, size = 3
         ) +
@@ -1757,7 +1763,7 @@ Report <- setRefClass(
                 area = .self$peakList$int_a,
                 hght = round(.self$peakList$int_h),
                 name = .self$peakList$comp_name,
-                CAS = .self$peakList$comp_CAS,
+                cas = .self$peakList$comp_cas,
                 MS2 = round(.self$peakList$score),
                 dvmDa = round(.self$peakList$mz_error_mDa, 2),
                 dvRt = round(.self$peakList$rt_error_min, 2),
@@ -1794,7 +1800,7 @@ Report <- setRefClass(
             newId <- input$peakIDfield
             cpTbl <- compTable()
             compId <- .self$peakList[.self$peakList$peakID == newId, "comp_id"]
-            newSmiles <- cpTbl[cpTbl$compound_id == compId, "SMILES"]
+            newSmiles <- cpTbl[cpTbl$compound_id == compId, "smiles"]
             mol <- rcdk::parse.smiles(as.character(newSmiles), kekulise = TRUE)[[1]]
             img <- rcdk::view.image.2d(molecule = mol)
             graphics::plot.window(c(0, 1), c(0, 1))
