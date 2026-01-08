@@ -577,5 +577,30 @@ add_comp_metadata <- function(df, csl_comp, raw_data) {
   df
 }
 
+
+# Helper functions shiny app ####
+
+load_csl_data <- function(csl_path) {
+  
+  # Connection to the CSL database
+  con <- DBI::dbConnect(RSQLite::SQLite(), csl_path)
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+  
+  tables <- DBI::dbListTables(con)
+  
+  res <- list()
+  
+  if ("data_source" %in% tables) {
+    res$data_source <- DBI::dbReadTable(con, "data_source")
+  }
+  
+  if ("retention_time" %in% tables) {
+    res$retention_time <- DBI::dbReadTable(con, "retention_time")
+  }
+  
+  res
+}
+
+
 # Copyright 2025 Bundesanstalt für Gewässerkunde
 # This file is part of ntsworkflow
