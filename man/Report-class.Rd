@@ -22,7 +22,7 @@ method. After processing the Report can be saved for viewing in the visuallizati
 \item{\code{settings}}{A list with settings for all processing steps.
 The settings list contains the following fields and defaults:
 \code{list(db_path = NULL, rttolm = 1, mztolu = 0.05, mztolu_fine = 0.005, chromatography =
-"bfg_nts_rp1", pol = "pos", CE_s = 30:40, CES_s = 0:15, instr =
+"bfg_nts_rp1", pol = "pos", ce_s = 30:40, ces_s = 0:15, instr =
 "LC-ESI-QTOF TripleTOF 5600 SCIEX", ceunit = c("V", "eV"), comparison = "dot_product", threshold
 = 400, rt_res = 1.5, EIC_extraction = 0.05, baseline_noise_MS1 = 0.5, sn = 3, rtoffset = 0,
 IS_rtoffset = 0, ISrttolm = 1, blank_int_factor = 3, rtTolReinteg = 1, mzTolReinteg = 0.005,
@@ -34,8 +34,8 @@ use_int_threshold = "area"}.
 \code{mztolu_fine}: m/z tolerance for precursor mass in MS1.
 \code{chromatography} Is the chromatographic method allowed from the SDB.
 \code{pol}: polarity.
-\code{CE_s}: allowed collision energies from SDB.
-\code{CES_s}: allowed collision energy spreads from SDB.
+\code{ce_s}: allowed collision energies from SDB.
+\code{ces_s}: allowed collision energy spreads from SDB.
 \code{instr}: allowed instruments from SDB.
 \code{ceunit}: allowed collision energy unit from SDB.
 \code{comparison}: algorithm to use for spectral comparison, currently only the default is allowed.
