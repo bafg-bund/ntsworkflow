@@ -1,8 +1,6 @@
 
 # ntsworkflow 
 
-# 0.3
-
 
 # 0.2.10
 
@@ -12,6 +10,16 @@ Moved to CSL version 25.7. Older CSL version will no longer work.
 - Refactor library screening functions
 - Add and update integration and unit tests for library screening functions
 - Cleanup and update documentation
+
+## Other dependency version updates
+
+- R=4.5.2
+- Bioconductor=3.22
+- xcms=4.8.0
+- Rcpp=1.1.1
+- tidyverse=2.0.0
+- g++=13.3.1
+
 
 # 0.2.9
 
