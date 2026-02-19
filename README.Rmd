@@ -15,13 +15,11 @@ knitr::opts_chunk$set(
 
 # ntsworkflow
 
-The goal of ntsworkflow is to process non-target LC/GC-HRMS data and carry out simple data analysis. It is designed as a basic peak-picking and annotation algorithm which feeds into more specialized workflows for different tasks.
+The goal of ntsworkflow is to process non-target LC/GC-HRMS data and carry out simple data analysis. It is designed as a basic peak-picking and annotation algorithm which feeds into more specialized workflows for different tasks. The Collective Spectral Library (Lessmann et al., 2025) is used for library screening and peak annotation.
 
-If you use the package or any derivative thereof, please cite the work.
-To cite this work please use the following citation or run `citation("ntsworkflow")`.
+If you use the package or any derivative thereof, please cite the work. To cite this work please use the following citation or run `citation("ntsworkflow")` for more details.
 
-> Kevin S. Jewell, Christian Dietrich, Toni Köppe, Franziska Thron, Arne Wick and Thomas A. Ternes (2025). 
-> ntsworkflow: A Non-Target Screening Data Evaluation Tool. R package version 0.2.10.
+> Kevin S. Jewell, Ole Lessmann, Christian Dietrich, Toni Köppe, Franziska Prodöhl, Arne Wick and Thomas A. Ternes (2026). ntsworkflow: A Non-Target Screening Data Evaluation Tool. R package version 0.2.10. Federal Institute of Hydrology. [https://github.com/bafg-bund/ntsworkflow]
 
 ### Peer-reviewed articles reporting the development of ntsworkflow
 
@@ -29,9 +27,14 @@ To cite this work please use the following citation or run `citation("ntsworkflo
 * T. Köppe, K. S. Jewell, C. Dietrich, A. Wick, and T. A. Ternes, *Water Research*, **2020**, 178, 115703.
 * C. Dietrich, A. Wick, and T. A. Ternes, *Rapid Communications in Mass Spectrometry*, **2021**, e9206.
 
+### Citations
+
+* Lessmann, O., Jewell, K. S., Ehlig, B., Kunkel, U., Macherius, A., Winter, E., Schlüsener, M. P., & Wick, A. (2025). Collective Spectral Library (25.7) [Data set]. Federal Institute of Hydrology. https://doi.org/10.5281/zenodo.17599588 
+
+
 ## Installation
 
-R 4.5.1 and Java JRE and JDK (v1.8) (for `rcdk`) are needed. Compilation of C++ code requires GCC v13.
+R 4.5.2 and Java JRE and JDK (v1.8) (for `rcdk`) are needed. Compilation of C++ code requires g++ v13.
 
 #### Install the Bioconductor package `xcms`
 
@@ -67,7 +70,7 @@ After loading the package with `library(ntsworkflow)`, You can find documentatio
 
 ## License
 
-Copyright 2025 Bundesanstalt für Gewässerkunde (Federal Institute of Hydrology)
+Copyright 2026 Bundesanstalt für Gewässerkunde (Federal Institute of Hydrology)
 
 ntsworkflow is free software: you can redistribute it and/or modify it under the 
 terms of the GNU General Public License as published by the Free Software 
