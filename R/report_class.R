@@ -104,7 +104,15 @@ Report <- setRefClass(
         chromatography =
           "bfg_nts_rp1",
         pol = "pos", ce_s = 30:40, ces_s = 0:15,
-        instr = c("LC-ESI-QTOF TripleTOF 5600 SCIEX", "LC-ESI-QTOF TripleTOF 6600 SCIEX"),
+        instr = c(
+          "LC-ESI-QTOF TripleTOF 5600 SCIEX",
+          "LC-ESI-QTOF TripleTOF 6600 SCIEX",
+          "LC-ESI-Orbitrap QExactive Thermo",
+          "LC-ESI-QTOF Agilent 6500 Series Q-TOF",
+          "LC-ESI-QTOF TripleTOF X500R SCIEX",
+          "LC-ESI-QTOF ZenoTOF 7600 SCIEX",
+          "LC-ESI-Orbitrap Exploris 240 Thermo"
+        ),
         ceunit = c("V", "eV"),
         comparison = "dot_product", threshold = 400,
         rt_res = 0.333,
