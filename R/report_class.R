@@ -1435,8 +1435,7 @@ Report <- setRefClass(
       # Get the remaining results
       perDatFile <- function(proc) {
         thisSamp <- proc$samp[1]
-        thisSampRegex <- stringr::str_replace(thisSamp, "\\.", "\\\\\\.")
-        thisPath <- grep(paste0(thisSampRegex, "$"), rawFiles, value = T)
+        thisPath <- rawFiles[basename(rawFiles) == thisSamp]
 
         # if the file is not in memory, load this file, and remember to remove it again
         if (thisPath %in% names(rawData)) {
