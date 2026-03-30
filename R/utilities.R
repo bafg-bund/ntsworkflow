@@ -368,7 +368,6 @@ mergeReport <- function(report1, report2) {
   x$MS1 <- rbind(x$MS1, y$MS1)
   x$MS2 <- rbind(x$MS2, y$MS2)
   x$ISresults <- rbind(x$ISresults, y$ISresults)
-  
   x
 }
 

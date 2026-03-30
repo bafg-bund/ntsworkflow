@@ -2,24 +2,28 @@ Package: ntsworkflow
 Type: Package
 Title: A Non-Target Screening Data Processing Tool. Federal Institute of Hydrology, Koblenz, Germany
 Version: 0.2.10
-Date: 2026-01-08
+Date: 2026-01-27
 Authors@R: c(
              person(
-               c("Kevin", "S."), "Jewell", email = "Jewell@bafg.de", role = c("aut", "cre"),
+               c("Kevin", "S."), "Jewell", email = "jewell@bafg.de", role = c("aut", "cre"),
                comment = "Federal Institute of Hydrology (BfG) Koblenz, Germany"
               ),
               person(
-                "Christian", "Dietrich", email = "Christian.Dietrich@bafg.de", role = "aut",
+               "Ole", "Lessmann", email = "lessmann@bafg.de", role = "aut",
+               comment = "Federal Institute of Hydrology (BfG) Koblenz, Germany"
+              ),
+              person(
+                "Christian", "Dietrich", email = "christian.dietrich@bafg.de", role = "aut",
                 comment = "Federal Institute of Hydrology (BfG) Koblenz, Germany"
               ),
              person(
-               "Toni", "Köppe", email = "Koeppe@bafg.de", role = "aut",
+               "Toni", "Köppe", email = "koeppe@bafg.de", role = "aut",
                comment = "Federal Institute of Hydrology (BfG) Koblenz, Germany"),
              person(
-               "Franziska", "Thron", email = "Thron@bafg.de", role = "aut",
+               "Franziska", "Prodöhl", email = "prodoehl@bafg.de", role = "aut",
                comment = "Federal Institute of Hydrology (BfG) Koblenz, Germany"),
              person(
-               "Arne", "Wick", email = "Wick@bafg.de", role = "aut",
+               "Arne", "Wick", email = "wick@bafg.de", role = "aut",
                comment = "Federal Institute of Hydrology (BfG) Koblenz, Germany")
              )
 Description: ntsworkflow is a collection of functions for non-target-screening measurment data processing, 

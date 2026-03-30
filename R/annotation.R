@@ -168,7 +168,11 @@ annotate_grouped <- function(sampleListLocal,
                              instrument = c(
                                "LC-ESI-QTOF TripleTOF 5600 SCIEX",
                                "LC-ESI-QTOF TripleTOF 6600 SCIEX",
-                               "LC-ESI-Orbitrap QExactive"
+                               "LC-ESI-Orbitrap QExactive Thermo",
+                               "LC-ESI-QTOF Agilent 6500 Series Q-TOF",
+                               "LC-ESI-QTOF TripleTOF X500R SCIEX",
+                               "LC-ESI-QTOF ZenoTOF 7600 SCIEX",
+                               "LC-ESI-Orbitrap Exploris 240 Thermo"
                              ),
                              chrom_method =
                                "bfg_nts_rp1",

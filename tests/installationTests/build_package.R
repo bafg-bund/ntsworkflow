@@ -17,7 +17,8 @@ build_vignettes_to_inst <- function() {
 build_vignettes_to_inst() 
 
 # only run this on linux
-devtools::build(path = file.path(Sys.getenv("RENV_PATHS_CELLAR"), glue::glue("ntsworkflow_{desc::desc_get_version()}.tar.gz")), binary = TRUE)
+
+devtools::build(path = file.path(Sys.getenv("INSTALLATION_NTSWORKFLOW"), glue::glue("ntsworkflow_{desc::desc_get_version()}.tar.gz")), binary = TRUE)
 
 # only run this on windows
 # delete .o and .so files in the src folder before building package in windows

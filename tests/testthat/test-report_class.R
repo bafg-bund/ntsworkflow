@@ -84,3 +84,25 @@ test_that("Reintegration runs without error", {
   test$reIntegrate()
   expect_equal(nrow(test$integRes), 2)
 })
+
+
+test_that("Reintegration runs even with strange file names", {
+  # Prepare test files with strange names
+  tDir <- tempSaveDir <- withr::local_tempdir() 
+  oFiles <- c(
+    test_path("fixtures", "mzXML-test-files", "RH_pos_20230812.mzXML"),
+    test_path("fixtures", "mzXML-test-files", "RH_pos_20230813.mzXML"),
+    test_path("fixtures", "mzXML-test-files", "RH_pos_20220602_no_peaks.mzXML")
+  )
+  nFiles <- file.path(tDir, paste0("foobar.!, +^#_", basename(oFiles)))
+  file.copy(oFiles, nFiles)
+  
+  # Prepare test files for reintegration
+  test <- Report$new()
+  test$changeSettings("pol", "pos")
+  test$addDB(F, test_path("fixtures", "csl-test-files", "CSL_olmesartan-d6.db"))
+  test$addIS(F, test_path("fixtures", "IS_table_pos.csv"))
+  test$addRawFiles(F, nFiles)
+  suppressMessages(test$process_all())
+  expect_no_error(test$reIntegrate())
+})
