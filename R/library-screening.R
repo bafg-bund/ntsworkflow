@@ -580,6 +580,7 @@ add_comp_metadata <- function(df, csl_comp, raw_data) {
 
 # Helper functions shiny app ####
 
+#' @export
 load_csl_data <- function(csl_path) {
   
   # Connection to the CSL database

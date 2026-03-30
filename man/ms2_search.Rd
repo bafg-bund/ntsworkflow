@@ -9,8 +9,8 @@ ms2_search(
   csl_path,
   chromatography = "bfg_nts_rp1",
   pol = "pos",
-  CE_s = 30:40,
-  CES_s = 0:15,
+  ce_s = 30:40,
+  ces_s = 0:15,
   instr = "LC-ESI-QTOF TripleTOF 5600 SCIEX",
   rtoffset = 0,
   rt_res = 1.5,
@@ -33,9 +33,9 @@ ms2_search(
 
 \item{pol}{Polarity}
 
-\item{CE_s}{Collision energy}
+\item{ce_s}{Collision energy}
 
-\item{CES_s}{Collision energy spread}
+\item{ces_s}{Collision energy spread}
 
 \item{instr}{Instruments allowed, must match the instruments listed in the library}
 
