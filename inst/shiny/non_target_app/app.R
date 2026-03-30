@@ -1356,6 +1356,7 @@ server <- function(input, output, session) {
       annot <- annot[notDup, ]
       grouped2 <- merge(grouped2, annot, all.x = TRUE, by = "alignmentID")
     }
+    grouped2 <- as.data.frame(grouped2)
     # Remove ID column
     grouped2 <- subset(grouped2, , -alignmentID)
     spaltennamen <- spaltennamen[spaltennamen != "ID"]
@@ -1372,9 +1373,7 @@ server <- function(input, output, session) {
                       dom = 'ltip',
                       searchCols = filterMask
                       )
-      )
-      %>% formatRound(columns = "mean_mz",digits = 4)
-      %>% formatRound(columns = "mean_RT",digits = 1)
+      ) %>% formatRound(columns = "mean_mz",digits = 4) %>% formatRound(columns = "mean_RT",digits = 1)
     )
   }
 
@@ -3209,7 +3208,10 @@ server <- function(input, output, session) {
   # Plot alignment results #### 
   observeEvent(input$AlignmentTable_cell_clicked, {
     AlignmentTableZeile <<- input$AlignmentTable_rows_selected
+    if (is.null(AlignmentTableZeile))
+      AlignmentTableZeile <- 1
     alignmentIdSelected(grouped[AlignmentTableZeile, "alignmentID"])
+    
     if (length(AlignmentTableZeile)==1) {
       output$AlignmentXICs <- renderPlot(alignmentXICsPlotten(alignmentIdSelected()))
       output$AlignmentTrend <- renderPlot(alignmentTrendPlotten(AlignmentTableZeile, tabelle = grouped))
