@@ -17,29 +17,19 @@ build_vignettes_to_inst <- function() {
 build_vignettes_to_inst() 
 
 # only run this on linux
-devtools::build(path = file.path(Sys.getenv("RENV_PATHS_CELLAR"), "ntsworkflow", glue::glue("ntsworkflow_{desc::desc_get_version()}.tar.gz")), binary = TRUE)
-renv::install("ntsworkflow@0.2.7")
+devtools::build(path = file.path(Sys.getenv("RENV_PATHS_CELLAR"), glue::glue("ntsworkflow_{desc::desc_get_version()}.tar.gz")), binary = TRUE)
 
-# To test installing in user R library folder, need to temporarily deactivate renv
-renv::deactivate()
-
-install.packages("/beegfs/nts/renv_package_cellar/ntsworkflow/ntsworkflow_0.2.7.tar.gz")
-
-
-library(ntsworkflow)
-
-
-renv::activate()
 # only run this on windows
 # delete .o and .so files in the src folder before building package in windows
-# unlink(list.files("src", pattern = ".*\\.o$", f = TRUE))
-# devtools::build(path = "Z:/G/G2/HRMS/sw_entwicklung/ntsworkflow/windows", binary = TRUE)
-# unlink(c("src-i386", "src-x64"), recursive = TRUE)
+unlink(list.files("src", pattern = ".*\\.o$", f = TRUE))
+devtools::build(path = file.path(Sys.getenv("WINDOWS_BINARY_DIR"),  
+                                 glue::glue("ntsworkflow_{desc::desc_get_version()}_windows10.zip")), binary = TRUE)
+unlink(c("src-i386", "src-x64"), recursive = TRUE)
 
 
 #devtools::build(binary = TRUE)
 #devtools::install(build_vignettes = TRUE)
 
-# Copyright 2025 Bundesanstalt für Gewässerkunde
+# Copyright 2026 Bundesanstalt für Gewässerkunde
 # This file is part of ntsworkflow
 
