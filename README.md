@@ -11,7 +11,7 @@ is used for library screening and peak annotation.
 
 If you use the package or any derivative thereof, please cite the work.
 To cite this work please use the following citation or run
-`citation("ntsworkflow")`.
+`citation("ntsworkflow")` for more details.
 
 > Kevin S. Jewell, Ole Lessmann, Christian Dietrich, Toni Köppe,
 > Franziska Prodöhl, Arne Wick and Thomas A. Ternes (2026). ntsworkflow:
@@ -74,6 +74,10 @@ The bash command for installing dependencies is:
 
 After loading the package with `library(ntsworkflow)`, You can find
 documentation by typing `browseVignettes("ntsworkflow")`.
+
+## Miscellaneous
+
+- `ntsworkflow` uses [Semantic Versioning](https://semver.org/).
 
 ## License
 

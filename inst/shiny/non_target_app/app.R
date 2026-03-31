@@ -1550,7 +1550,7 @@ server <- function(input, output, session) {
   
   # Load environment ####
   observeEvent(input$loadEnv, {
-    if (any(c("sampleList", "datenList") %notin% ls(globalenv())))
+    if (any(!is.element(c("sampleList", "datenList"), ls(globalenv()))))
       showNotification("No data found in environment")
     req(all(c("sampleList", "datenList") %in% ls(globalenv())))
     loadp <- shiny::Progress$new(session, 0, 1)
@@ -1567,12 +1567,16 @@ server <- function(input, output, session) {
   
   # Memory usage ####
   output$memUsage <- renderText({
-    input$updateMem
-    x <- system2('free', args = "-m",stdout=TRUE)
-    used <- as.numeric(strsplit(x[2], " +")[[1]][3])
-    tot <- as.numeric(strsplit(x[2], " +")[[1]][2])
-    percentUsed <- round(100 * used / tot)
-    paste0("Current memory usage: ", percentUsed, "%")
+    if (Sys.info()["sysname"] == "Linux") {
+      input$updateMem
+      x <- system2('free', args = "-m",stdout=TRUE)
+      used <- as.numeric(strsplit(x[2], " +")[[1]][3])
+      tot <- as.numeric(strsplit(x[2], " +")[[1]][2])
+      percentUsed <- round(100 * used / tot)
+      paste0("Current memory usage: ", percentUsed, "%")
+    } else {
+      "Memory data not available"
+    }
   })
   
   # Batch add files ####

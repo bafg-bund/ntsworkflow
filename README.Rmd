@@ -19,7 +19,7 @@ The goal of ntsworkflow is to process non-target LC/GC-HRMS data and carry out s
 
 If you use the package or any derivative thereof, please cite the work. To cite this work please use the following citation or run `citation("ntsworkflow")` for more details.
 
-> Kevin S. Jewell, Ole Lessmann, Christian Dietrich, Toni Köppe, Franziska Prodöhl, Arne Wick and Thomas A. Ternes (2026). ntsworkflow: A Non-Target Screening Data Evaluation Tool. R package version 0.2.10. Federal Institute of Hydrology. [https://github.com/bafg-bund/ntsworkflow]
+> Kevin S. Jewell, Ole Lessmann, Christian Dietrich, Toni Köppe, Franziska Prodöhl, Arne Wick and Thomas A. Ternes (2026). ntsworkflow: A Non-Target Screening Data Evaluation Tool. R package version `r desc::desc_get_version()`. Federal Institute of Hydrology. [https://github.com/bafg-bund/ntsworkflow]
 
 ### Peer-reviewed articles reporting the development of ntsworkflow
 
@@ -29,7 +29,7 @@ If you use the package or any derivative thereof, please cite the work. To cite 
 
 ### Citations
 
-* Lessmann, O., Jewell, K. S., Ehlig, B., Kunkel, U., Macherius, A., Winter, E., Schlüsener, M. P., & Wick, A. (2025). Collective Spectral Library (25.7) [Data set]. Federal Institute of Hydrology. https://doi.org/10.5281/zenodo.17599588 
+* Lessmann, O., Jewell, K. S., Ehlig, B., Kunkel, U., Macherius, A., Winter, E., Schlüsener, M. P., & Wick, A. (2025). Collective Spectral Library (26.1) [Data set]. Federal Institute of Hydrology. https://doi.org/10.5281/zenodo.17599588 
 
 
 ## Installation
