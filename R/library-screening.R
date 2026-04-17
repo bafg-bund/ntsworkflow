@@ -339,6 +339,46 @@ comp_metadata_as_attribute <- function(spec) {
   res
 }
 
+#' Extraction of a MS2-Spectrum for a given ExperimentID from spectral library
+#'
+#' @param db Either a DBI connection object OR a csl_data list as returned by
+#'   get_csl_data() (containing $exptbl, $comptbl, $fragtbl)
+#' @param Exp.ID integer, a single experiment ID
+#'
+#' @return MS2 spectrum as a data.frame (mz, int)
+#' @export
+dbGetSpectrum <- function(db, Exp.ID) {
+  stopifnot(length(Exp.ID) == 1)
+  
+  # Resolve tables from either a db connection or a csl_data list
+  if (inherits(db, "DBIConnection")) {
+    exptbl  <- DBI::dbReadTable(db, "experiment")
+    comptbl <- DBI::dbReadTable(db, "compound")
+    fragtbl <- DBI::dbReadTable(db, "fragment")
+  } else if (is.list(db) && all(c("exptbl", "comptbl", "fragtbl") %in% names(db))) {
+    exptbl  <- db$exptbl
+    comptbl <- db$comptbl
+    fragtbl <- db$fragtbl
+  } else {
+    stop("`db` must be a DBI connection or a csl_data list with exptbl/comptbl/fragtbl")
+  }
+  
+  # Join tables
+  exptt <- exptbl[, c("experiment_id", "compound_id", "mz")]
+  compt <- comptbl[, c("compound_id", "cas", "name")]
+
+  frags <- fragtbl[fragtbl$experiment_id == Exp.ID, c("mz", "int", "experiment_id")]
+  
+  # Merge experiment and compound metadata
+  spectrum <- merge(frags, exptt, by = "experiment_id", all.x = TRUE)
+  spectrum <- merge(spectrum, compt, by = "compound_id", all.x = TRUE)
+  
+  # Build the spectrum df
+  spec <- comp_metadata_as_attribute(spectrum)
+  
+  return(spec)
+}
+
 #' Filter and normalize MS2 spectra by removing precursor peaks and noise.
 #'
 #' This function filters out peaks close to the precursor m/z and low-intensity 

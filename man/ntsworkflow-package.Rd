@@ -8,14 +8,15 @@
 ntsworkflow is a collection of functions for non-target-screening measurment data processing, including peak-picking, alignment and annotation.
 }
 \author{
-\strong{Maintainer}: Kevin S. Jewell \email{Jewell@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
+\strong{Maintainer}: Kevin S. Jewell \email{jewell@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
 
 Authors:
 \itemize{
-  \item Christian Dietrich \email{Christian.Dietrich@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
-  \item Toni Köppe \email{Koeppe@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
-  \item Franziska Thron \email{Thron@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
-  \item Arne Wick \email{Wick@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
+  \item Ole Lessmann \email{lessmann@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
+  \item Christian Dietrich \email{christian.dietrich@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
+  \item Toni Köppe \email{koeppe@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
+  \item Franziska Prodöhl \email{prodoehl@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
+  \item Arne Wick \email{wick@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
 }
 
 }
