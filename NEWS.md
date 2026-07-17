@@ -2,6 +2,14 @@
 # ntsworkflow 
 
 
+# 0.2.11
+
+When performing background correction within a Report, (`deleteBackground` method), this now also 
+removes all rows of the reintegration table (IntegRes) of all the compounds (name, adduct, isotopologue combination) 
+which are deleted from the peakList.
+
+- R=4.5.3
+
 # 0.2.10
 
 Moved to CSL version 25.7. Older CSL version will no longer work.

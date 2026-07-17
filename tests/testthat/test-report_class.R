@@ -106,3 +106,30 @@ test_that("Reintegration runs even with strange file names", {
   suppressMessages(test$process_all())
   expect_no_error(test$reIntegrate())
 })
+
+test_that("Blank correction also removes peaks from the reintegration table", {
+  testFiles <- c(
+    test_path("fixtures", "mzXML-test-files", "RH_pos_20230812.mzXML"),
+    test_path("fixtures", "mzXML-test-files", "RH_pos_20230813.mzXML")
+  )
+  test <- Report$new()
+  test$changeSettings("pol", "pos")
+  test$addDB(F, test_path("fixtures", "csl-test-files", "CSL_olmesartan-d6.db"))
+  test$addIS(F, test_path("fixtures", "IS_table_pos.csv"))
+  test$addRawFiles(F, testFiles)
+  suppressMessages(test$process_all())
+  suppressMessages(test$reIntegrate())
+  expect_equal(nrow(test$peakList), 2)
+  expect_equal(nrow(test$integRes), 2)
+  test$deleteBackground(2, 1)
+  expect_equal(nrow(test$peakList), 1)
+  expect_equal(nrow(test$integRes), 0)
+  
+  suppressMessages(test$reprocess())
+  suppressMessages(test$reIntegrate())
+  newIntegRes <- test$integRes
+  newIntegRes$comp_name[1] <- "foobar"
+  test$integRes <- newIntegRes
+  test$deleteBackground(2, 1)
+  expect_equal(nrow(test$integRes), 1)
+})

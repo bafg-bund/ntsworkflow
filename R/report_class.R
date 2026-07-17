@@ -1312,6 +1312,17 @@ Report <- setRefClass(
         }
       }
       if (length(delIDs) >= 1) {
+        
+        if (nrow(integRes) > 0) {
+          #browser()
+          specFields <- c("comp_name", "adduct", "isotopologue")
+          origCols <- colnames(integRes)
+          esiSpecDelDf <- peakList[peakList$peakID %in% delIDs, specFields]
+          esiSpecDel <- apply(esiSpecDelDf, 1, paste, collapse = "_")
+          integRes$esi_spec <- apply(integRes[, specFields], 1, paste, collapse = "_")
+          integRes <<- integRes[integRes$esi_spec %notin% esiSpecDel, origCols]
+        }
+        
         peakList <<- peakList[peakList$peakID %notin% delIDs, ]
         MS1 <<- MS1[MS1$peakID %notin% delIDs, ]
         MS2 <<- MS2[MS2$peakID %notin% delIDs, ]
