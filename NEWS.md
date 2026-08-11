@@ -4,11 +4,12 @@
 
 # 0.2.11
 
-When performing background correction within a Report, (`deleteBackground` method), this now also 
+- When performing background correction within a Report, (`deleteBackground` method), this now also 
 removes all rows of the reintegration table (IntegRes) of all the compounds (name, adduct, isotopologue combination) 
 which are deleted from the peakList.
 
-- R=4.5.3
+- R=4.6.1
+- C++=C++17
 
 # 0.2.10
 
