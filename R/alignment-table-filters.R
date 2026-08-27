@@ -101,9 +101,9 @@ averageReplicates <- function(alignment, samples, reps) {
 #' Aligned features not found in any samples (everything zero) will be removed. 
 #' 
 #' @param alignment alignment table
-#' @param samples numeric vector sample IDs to merge, length must be divisable by reps
-#' @param reps numer of replicates
-#' @param least Peak found in at least this many replicates, must be <= reps
+#' @param samples numeric vector sample IDs to merge, length must be divisible by reps
+#' @param reps number of replicates
+#' @param least peak found in at least this many replicates, must be <= reps
 #'
 #' @returns An alignment table with the same number of columns but a reduced number of rows.
 #' @export
