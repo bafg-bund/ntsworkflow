@@ -12,6 +12,7 @@ ntsworkflow is a collection of functions for non-target-screening measurment dat
 
 Authors:
 \itemize{
+  \item Kevin S. Jewell \email{jewell@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
   \item Ole Lessmann \email{lessmann@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
   \item Christian Dietrich \email{christian.dietrich@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)
   \item Toni Köppe \email{koeppe@bafg.de} (Federal Institute of Hydrology (BfG) Koblenz, Germany)

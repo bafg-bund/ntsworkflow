@@ -12,6 +12,7 @@
 #' @importFrom purrr pluck
 #' @import foreach
 #' @import dplyr
+#' @import logger
 NULL
 
 

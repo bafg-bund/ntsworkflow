@@ -348,7 +348,7 @@ mergeReport <- function(report1, report2) {
   stopifnot(identical(x$IS, y$IS))
   # check that rawData is clear
   stopifnot(length(x$rawData) == 0 && length(y$rawData) == 0)
-  #browser()
+  
   xPeakID <- x$currentPeakID - 1
   xISpeakID <- x$currentISpeakID - 1
   # change IDs of report y
@@ -358,9 +358,27 @@ mergeReport <- function(report1, report2) {
   y$MS2$peakID <- y$MS2$peakID + xPeakID
   y$ISresults$ISpeakID <- y$ISresults$ISpeakID + xISpeakID
   
-  # append data
-  x$currentPeakID <- max(y$peakList$peakID) + 1
-  x$currentISpeakID <- max(y$ISresults$ISpeakID) + 1
+  # Append data
+  x$currentPeakID <- if (nrow(x$peakList) == 0 && nrow(y$peakList) == 0) {
+    1
+  } else if (nrow(x$peakList) == 0) {
+    max(y$peakList$peakID) + 1
+  } else if (nrow(y$peakList) == 0) {
+    xPeakID + 1
+  } else {
+    max(y$peakList$peakID) + 1
+  }
+  
+  x$currentISpeakID <- if (nrow(x$ISresults) == 0 && nrow(y$ISresults) == 0) {
+    1
+  } else if (nrow(x$ISresults) == 0) {
+    max(y$ISresults$ISpeakID) + 1
+  } else if (nrow(y$ISresults) == 0) {
+    xISpeakID + 1
+  } else {
+    max(y$ISresults$ISpeakID) + 1
+  }  
+   
   x$rawFiles <- append(x$rawFiles, y$rawFiles) 
   x$rawFilesCompl <- rbind(x$rawFilesCompl, y$rawFilesCompl)
   x$peakList <- rbind(x$peakList, y$peakList)

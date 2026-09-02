@@ -82,8 +82,6 @@ form [M+H]+ or [M]+.}
 \item{\code{ISresults}}{\code{data.frame} with results of IS processings.}
 
 \item{\code{falsePos}}{\code{data.frame} recording which false positives should be deleted in which files}
-
-\item{\code{integRes}}{}
 }}
 
 \section{Methods}{

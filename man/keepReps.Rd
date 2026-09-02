@@ -9,11 +9,11 @@ keepReps(alignment, samples, reps, least)
 \arguments{
 \item{alignment}{alignment table}
 
-\item{samples}{numeric vector sample IDs to merge, length must be divisable by reps}
+\item{samples}{numeric vector sample IDs to merge, length must be divisible by reps}
 
-\item{reps}{numer of replicates}
+\item{reps}{number of replicates}
 
-\item{least}{Peak found in at least this many replicates, must be <= reps}
+\item{least}{peak found in at least this many replicates, must be <= reps}
 }
 \value{
 An alignment table with the same number of columns but a reduced number of rows.

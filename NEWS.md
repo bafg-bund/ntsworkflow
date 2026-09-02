@@ -7,6 +7,9 @@
 - When performing background correction within a Report, (`deleteBackground` method), this now also 
 removes all rows of the reintegration table (IntegRes) of all the compounds (name, adduct, isotopologue combination) 
 which are deleted from the peakList.
+- Bugfixes in mergeReport()
+
+## Dependency version updates
 
 - R=4.6.1
 - C++=C++17

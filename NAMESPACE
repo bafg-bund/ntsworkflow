@@ -44,10 +44,13 @@ exportClasses(Report)
 import(dplyr)
 import(foreach)
 import(ggplot2)
+import(logger)
 import(parallel)
 import(shiny)
 import(stringr)
-importFrom(Rcpp,evalCpp)
-importFrom(Rcpp,sourceCpp)
+importFrom(Rcpp,
+  evalCpp,
+  sourceCpp
+)
 importFrom(purrr,pluck)
 useDynLib(ntsworkflow, .registration=TRUE)

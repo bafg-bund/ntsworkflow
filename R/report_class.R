@@ -465,7 +465,7 @@ Report <- setRefClass(
         warning("No internal standards loaded")
       }
       
-      if (is.null(settings$db_path)) {
+      if (is.null(settings$db_path) || !file.exists(settings$db_path)) {
         stop("There is no DB")
       }
 

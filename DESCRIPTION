@@ -2,7 +2,7 @@ Package: ntsworkflow
 Type: Package
 Title: A Non-Target Screening Data Processing Tool. Federal Institute of Hydrology, Koblenz, Germany
 Version: 0.2.11
-Date: 2026-01-27
+Date: 2026-09-01
 Authors@R: c(
              person(
                c("Kevin", "S."), "Jewell", email = "jewell@bafg.de", role = c("aut", "cre"),
@@ -51,8 +51,8 @@ Imports:
     plotly,
     furrr,
     parallelDist,
-    xcms
-RoxygenNote: 7.3.3
+    xcms,
+    logger
 Suggests:
     rcdk,
     testthat (>= 3.0.0),
@@ -63,3 +63,4 @@ LinkingTo: Rcpp, RcppArmadillo
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 SystemRequirements: C++17
+Config/roxygen2/version: 8.1.0

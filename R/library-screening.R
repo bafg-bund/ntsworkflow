@@ -538,8 +538,8 @@ search_ms1_for_precursor <- function(df, raw_data, params, csl_comp){
     # If still no peaks were found, then log a warning and skip to next spectrum
     if (nrow(ms1) == 0) {
       warning(sprintf(
-        "Error: no precursor found for mz %.4f @ %.2f min",
-        df$mz[i], df$rt[i] / 60
+        "Warning: no precursor found for mz %.4f @ %.2f min in file %s",
+        df$mz[i], df$rt[i] / 60, raw_data@filepath
       ))
       df$mz_ok[i] <- FALSE
       next
