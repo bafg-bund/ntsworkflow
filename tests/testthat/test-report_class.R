@@ -122,14 +122,51 @@ test_that("Blank correction also removes peaks from the reintegration table", {
   expect_equal(nrow(test$peakList), 2)
   expect_equal(nrow(test$integRes), 2)
   test$deleteBackground(2, 1)
-  expect_equal(nrow(test$peakList), 1)
+  expect_equal(nrow(test$peakList), 0)
   expect_equal(nrow(test$integRes), 0)
   
+  # Detection only in integRes (gap-filled) and not in peaklist is removed
   suppressMessages(test$reprocess())
   suppressMessages(test$reIntegrate())
-  newIntegRes <- test$integRes
-  newIntegRes$comp_name[1] <- "foobar"
+  newIntegRes <- test$integRes[c(1, 2, 2), ]
+  newIntegRes[3, "samp"] <- "foobar"
+  test$rawFiles <- c(test$rawFiles, "foobar")
   test$integRes <- newIntegRes
+  test$deleteBackground(2:3, 1)
+  expect_equal(nrow(test$integRes), 0)
+  expect_equal(nrow(test$peakList), 0)
+  test$rawFiles <- test$rawFiles[1:2]
+  
+  # Comp found only in blank in peaklist and found in blank and sample in integRes is deleted from both
+  suppressMessages(test$reprocess())
+  suppressMessages(test$reIntegrate())
+  newPeakList <- test$peakList
+  newIntegRes <- test$integRes
+  newPeakList <- newPeakList[c(1, 1, 2), ]
+  newPeakList[1, "peakID"] <- 4
+  newPeakList[1, "comp_name"] <- "foobar"
+  newIntegRes <- newIntegRes[c(1,1,2,2), ]
+  newIntegRes[1, "comp_name"] <- "foobar"
+  newIntegRes[4, "comp_name"] <- "foobar"
+  test$integRes <- newIntegRes
+  test$peakList <- newPeakList
   test$deleteBackground(2, 1)
+  test$peakList
+  expect_equal(nrow(test$integRes), 0)
+  expect_equal(nrow(test$peakList), 0)
+  
+  # Detection with area much higher in sample than in blank is kept
+  suppressMessages(test$reprocess())
+  suppressMessages(test$reIntegrate())
+  newPeakList <- test$peakList
+  newIntegRes <- test$integRes
+  newPeakList[2, "int_a"] <- 1e5
+  newPeakList[2, "int_h"] <- 1e5
+  newIntegRes[2, "int_a"] <- 1e5
+  newIntegRes[2, "int_a"] <- 1e5
+  test$integRes <- newIntegRes
+  test$peakList <- newPeakList
+  test$deleteBackground(2, 1)
+  expect_equal(nrow(test$peakList), 1)
   expect_equal(nrow(test$integRes), 1)
 })

@@ -8,6 +8,10 @@
 removes all rows of the reintegration table (IntegRes) of all the compounds (name, adduct, isotopologue combination) 
 which are deleted from the peakList.
 - Bugfixes in mergeReport()
+- Bugfixes in Report Class when plotting MS2
+- Reworking of deleteBackground() so that 1) the maximum peak area from all available blanks is used as a basis for the 
+fold-change comparison with samples (rather than the average) 2) All blank peaks are removed from the peaklist and 
+reintegration table 3) additional bugfixes.
 
 ## Dependency version updates
 

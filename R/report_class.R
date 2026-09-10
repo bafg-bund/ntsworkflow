@@ -1287,48 +1287,52 @@ Report <- setRefClass(
       # find peakIDs and IS names of compounds found in blank files, but only those which are in the
       # data files specified
       # For a match, the intensity in sample must be within factor 3
-
-      dPeaks <- peakList[peakList$samp %in% dataSamp, c("peakID", "comp_name", "int_a", "int_h")]
-      bPeaks <- peakList[peakList$samp %in% blankSamp, c("peakID", "comp_name", "int_a", "int_h")]
-      delIDs <- numeric()
-      for (i in seq_len(nrow(dPeaks))) {
-        cname <- dPeaks[i, "comp_name"]
-        if (cname %in% bPeaks$comp_name) {
-          # get average intensity in blank
-          aveIntBlank <- mean(bPeaks[bPeaks$comp_name == cname, "int_a"], na.rm = TRUE)
-          # use int_h for comparison if int_a not available
-          if (is.na(dPeaks[i, "int_a"]) || is.na(aveIntBlank)) {
-            aveIntBlank <- mean(bPeaks[bPeaks$comp_name == cname, "int_h"], na.rm = TRUE)
-
-            if (dPeaks[i, "int_h"] <= (aveIntBlank * settings$blank_int_factor)) {
-              delIDs <- append(delIDs, dPeaks[i, "peakID"])
+      getIdsToDelete <- function(peakTable, dataSamp, blankSamp) {
+        specFields <- c("comp_name", "adduct", "isotopologue")
+        peakTable$esi_spec <- apply(peakTable[, specFields], 1, paste, collapse = "_")
+        dPeaks <- peakTable[peakTable$samp %in% dataSamp, c("peakID", "esi_spec", "int_a", "int_h")]
+        bPeaks <- peakTable[peakTable$samp %in% blankSamp, c("peakID", "esi_spec", "int_a", "int_h")]
+        delIDs <- numeric()
+        for (i in seq_len(nrow(dPeaks))) {
+          esiSpecI <- dPeaks[i, "esi_spec"]
+          if (esiSpecI %in% bPeaks$esi_spec) {
+            # get maximum intensity from all blanks
+            maxIntBlank <- max(bPeaks[bPeaks$esi_spec == esiSpecI, "int_a", drop = TRUE], na.rm = TRUE)
+            intSamp <- dPeaks[i, "int_a", drop = TRUE]
+            # use int_h for comparison if int_a not available
+            if (is.na(dPeaks[i, "int_a", drop = TRUE]) || is.na(maxIntBlank)) {
+              maxIntBlank <- max(bPeaks[bPeaks$esi_spec == esiSpecI, "int_h", drop = TRUE], na.rm = TRUE)
+              intSamp <- dPeaks[i, "int_h", drop = TRUE]
             }
-            next
-          }
-
-          if (dPeaks[i, "int_a"] <= (aveIntBlank * settings$blank_int_factor)) {
-            delIDs <- append(delIDs, dPeaks[i, "peakID"])
+            if (!is.na(maxIntBlank) && intSamp <= (maxIntBlank * settings$blank_int_factor)) {
+              delIDs <- append(delIDs, dPeaks[i, "peakID", drop = TRUE])
+            }
           }
         }
+        
+        # All blank peaks deleted
+        for (i in seq_len(nrow(bPeaks))) {
+          delIDs <- append(delIDs, bPeaks[i, "peakID"])
+        }
+        delIDs
       }
+      
+      delIDs <- getIdsToDelete(peakList, dataSamp, blankSamp)
+      
       if (length(delIDs) >= 1) {
-        
-        if (nrow(integRes) > 0) {
-          #browser()
-          specFields <- c("comp_name", "adduct", "isotopologue")
-          origCols <- colnames(integRes)
-          esiSpecDelDf <- peakList[peakList$peakID %in% delIDs, specFields]
-          esiSpecDel <- apply(esiSpecDelDf, 1, paste, collapse = "_")
-          integRes$esi_spec <- apply(integRes[, specFields], 1, paste, collapse = "_")
-          integRes <<- integRes[integRes$esi_spec %notin% esiSpecDel, origCols]
-        }
-        
         peakList <<- peakList[peakList$peakID %notin% delIDs, ]
         MS1 <<- MS1[MS1$peakID %notin% delIDs, ]
         MS2 <<- MS2[MS2$peakID %notin% delIDs, ]
         EIC <<- EIC[EIC$peakID %notin% delIDs, ]
       } else {
         message("No compounds found in blank")
+      }
+      
+      if (nrow(integRes) > 0) {
+        modIntegRes <- integRes
+        modIntegRes$peakID <- seq_len(nrow(modIntegRes))  # we call the row number peakID
+        delRows <- getIdsToDelete(modIntegRes, dataSamp, blankSamp)
+        integRes <<- integRes[-delRows, ]
       }
 
       if (includeIS) {
