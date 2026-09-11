@@ -151,7 +151,6 @@ test_that("Blank correction also removes peaks from the reintegration table", {
   test$integRes <- newIntegRes
   test$peakList <- newPeakList
   test$deleteBackground(2, 1)
-  test$peakList
   expect_equal(nrow(test$integRes), 0)
   expect_equal(nrow(test$peakList), 0)
   
@@ -167,6 +166,17 @@ test_that("Blank correction also removes peaks from the reintegration table", {
   test$integRes <- newIntegRes
   test$peakList <- newPeakList
   test$deleteBackground(2, 1)
+  expect_equal(nrow(test$peakList), 1)
+  expect_equal(nrow(test$integRes), 1)
+  
+  # no detections in blank, no peak removed.
+  suppressMessages(test$reprocess())
+  suppressMessages(test$reIntegrate())
+  newPeakList <- test$peakList[2, ]
+  newIntegRes <- test$integRes[2, ]
+  test$integRes <- newIntegRes
+  test$peakList <- newPeakList
+  suppressMessages(test$deleteBackground(2, 1))
   expect_equal(nrow(test$peakList), 1)
   expect_equal(nrow(test$integRes), 1)
 })

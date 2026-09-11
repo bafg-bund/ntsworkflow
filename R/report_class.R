@@ -1296,15 +1296,15 @@ Report <- setRefClass(
         for (i in seq_len(nrow(dPeaks))) {
           esiSpecI <- dPeaks[i, "esi_spec"]
           if (esiSpecI %in% bPeaks$esi_spec) {
-            # get maximum intensity from all blanks
+            # get maximum area from all blanks
             maxIntBlank <- max(bPeaks[bPeaks$esi_spec == esiSpecI, "int_a", drop = TRUE], na.rm = TRUE)
             intSamp <- dPeaks[i, "int_a", drop = TRUE]
             # use int_h for comparison if int_a not available
-            if (is.na(dPeaks[i, "int_a", drop = TRUE]) || is.na(maxIntBlank)) {
+            if (is.na(intSamp) || is.na(maxIntBlank)) {
               maxIntBlank <- max(bPeaks[bPeaks$esi_spec == esiSpecI, "int_h", drop = TRUE], na.rm = TRUE)
               intSamp <- dPeaks[i, "int_h", drop = TRUE]
             }
-            if (!is.na(maxIntBlank) && intSamp <= (maxIntBlank * settings$blank_int_factor)) {
+            if (!is.na(maxIntBlank) && !is.na(intSamp) && intSamp <= (maxIntBlank * settings$blank_int_factor)) {
               delIDs <- append(delIDs, dPeaks[i, "peakID", drop = TRUE])
             }
           }
@@ -1332,7 +1332,8 @@ Report <- setRefClass(
         modIntegRes <- integRes
         modIntegRes$peakID <- seq_len(nrow(modIntegRes))  # we call the row number peakID
         delRows <- getIdsToDelete(modIntegRes, dataSamp, blankSamp)
-        integRes <<- integRes[-delRows, ]
+        if (length(delRows) > 0)
+          integRes <<- integRes[-delRows, ]
       }
 
       if (includeIS) {
