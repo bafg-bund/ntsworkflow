@@ -1107,10 +1107,10 @@ Report <- setRefClass(
       return(ms2Plot)
     },
     delPeakID = function(delIDs) {
-      peakList <<- peakList[!(peakList$peakID %in% delIDs), ]
-      MS1 <<- MS1[!(MS1$peakID %in% delIDs), ]
-      MS2 <<- MS2[!(MS2$peakID %in% delIDs), ]
-      EIC <<- EIC[!(EIC$peakID %in% delIDs), ]
+      peakList <<- peakList[!(peakList$peakID %in% delIDs), , drop = FALSE]
+      MS1 <<- MS1[!(MS1$peakID %in% delIDs), , drop = FALSE]
+      MS2 <<- MS2[!(MS2$peakID %in% delIDs), , drop = FALSE]
+      EIC <<- EIC[!(EIC$peakID %in% delIDs), , drop = FALSE]
 
       .self$cleanPeakLetterCol()
     },
@@ -1120,28 +1120,33 @@ Report <- setRefClass(
       compound is always deleted, in all samples and also in future processed samples.
       Otherwise it is only deleted in the specified samples (by index)."
       stopifnot(length(substanceName) == 1, is.numeric(indices))
+      stopifnot(nrow(peakList) > 0)
       if (length(indices) > 1 && 0 %in% indices)
         stop("indices can be either 0 (all files) or the file index or indices as given by $rawFiles")
+      allComps <- unique(peakList$comp_name)
+      if (nrow(integRes) > 0)
+        allComps <- append(allComps, unique(integRes$comp_name))
 
-      if (substanceName %in% peakList$comp_name && length(indices) == 1 && indices[1] == 0) {
+      if (substanceName %in% allComps && length(indices) == 1 && indices[1] == 0) {
         # get all peakIDs corresponding to this substance
-        delIDs <- peakList[peakList$comp_name == substanceName, "peakID"]
-
-        .self$delPeakID(delIDs)
-        integRes <<- integRes[integRes$comp_name != substanceName, ]
+        delIDs <- peakList[peakList$comp_name == substanceName, "peakID", drop = TRUE]
+        if (length(delIDs) > 0)
+          .self$delPeakID(delIDs)
+        integRes <<- integRes[integRes$comp_name != substanceName, , drop = FALSE]
         # add fp to list
         if (substanceName %notin% falsePos$name |
           all(falsePos[falsePos$name == substanceName, "sampNum"] != 0)) {
           tempdf <- data.frame(name = substanceName, sampNum = 0, stringsAsFactors = FALSE)
           falsePos <<- rbind(falsePos, tempdf)
         }
-      } else if (substanceName %in% peakList$comp_name && indices[1] != 0) {
+      } else if (substanceName %in% allComps && indices[1] != 0) {
         samps <- basename(rawFiles[indices])
         delIDs <- peakList[peakList$comp_name == substanceName &
-          peakList$samp %in% samps, "peakID"]
-        .self$delPeakID(delIDs)
+          peakList$samp %in% samps, "peakID", drop = TRUE]
+        if (length(delIDs) > 0)
+          .self$delPeakID(delIDs)
         integRes <<- integRes[!(integRes$comp_name == substanceName &
-          integRes$samp %in% samps), ]
+          integRes$samp %in% samps), , drop = FALSE]
         # add fp to list
         if (substanceName %notin% falsePos$name) {
           tempdf <- data.frame(name = substanceName, sampNum = indices, stringsAsFactors = FALSE)

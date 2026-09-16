@@ -12,6 +12,7 @@ which are deleted from the peakList.
 - Reworking of deleteBackground() so that 1) the maximum peak area from all available blanks is used as a basis for the 
 fold-change comparison with samples (rather than the average) 2) All blank peaks are removed from the peaklist and 
 reintegration table 3) additional bugfixes.
+- Bugfix in deleteFP(): detections only in reintegration results are also removed
 
 ## Dependency version updates
 
