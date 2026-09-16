@@ -1017,7 +1017,7 @@ Report <- setRefClass(
       } else {
         ms1Plot <- ggplot2::ggplot(spec, aes(mz, int, label = round(mz, 4))) +
           geom_segment(aes(x = mz, xend = mz, y = 0, yend = int),
-            stat = "identity", size = .5, alpha = 0.5
+            stat = "identity", linewidth = .5, alpha = 0.5
           ) +
           theme_bw() +
           geom_text(data = spec[spec$int > comp_int * 0.2, ], check_overlap = TRUE, vjust = -0.5) +
@@ -1069,11 +1069,11 @@ Report <- setRefClass(
 
       ms2Plot <- ggplot2::ggplot(data_spec, aes(mz, int, label = round(mz, 4))) +
         geom_segment(aes(x = mz, xend = mz, y = 0, yend = int),
-          stat = "identity", size = .5, alpha = .5
+          stat = "identity", linewidth = .5, alpha = .5
         ) +
         geom_segment(
           data = db_spec, aes(x = mz, xend = mz, y = 0, yend = int),
-          stat = "identity", size = .5, alpha = .5
+          stat = "identity", linewidth = .5, alpha = .5
         ) +
         theme_bw() +
         geom_text(data = data_spec[data_spec$int > 0.01, ], check_overlap = TRUE, vjust = -0.5) +

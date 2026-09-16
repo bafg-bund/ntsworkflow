@@ -9,6 +9,7 @@ test_that("dbas processing can find IS in test files, these can be saved without
     test_path("fixtures", "mzXML-test-files", "RH_pos_20230813.mzXML")
   ))
   test$process_all()
+  expect_no_warning(test$plotMS2(1))
   expect_equal(nrow(test$peakList), 2)
   expect_contains(test$peakList$comp_name, "Olmesartan-d6")
   test$reIntegrate()
