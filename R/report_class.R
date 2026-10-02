@@ -979,11 +979,11 @@ Report <- setRefClass(
 
         ms1Plot <- ggplot2::ggplot(spec, aes(mz, int, label = round(mz, 4))) +
           geom_segment(aes(x = mz, xend = mz, y = 0, yend = int),
-            stat = "identity", size = .5, alpha = 0.5
+            stat = "identity", linewidth = .5, alpha = 0.5
           ) +
           geom_segment(
             data = isotope_spec, aes(x = mz, xend = mz, y = 0, yend = int),
-            stat = "identity", size = .5, alpha = 0.5
+            stat = "identity", linewidth = .5, alpha = 0.5
           ) +
           theme_bw() +
           # geom_text(data = mz_lab_data, vjust = -0.5, alpha = 0.4) +

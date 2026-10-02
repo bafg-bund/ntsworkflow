@@ -209,4 +209,16 @@ test_that("mzML files can be processed", {
     test$reIntegrate()
   ))
 })
-  
+
+test_that("MS1 spec can be produced", {
+  test <- Report$new()
+  test$addRawFilesDir(F, test_path("fixtures", "mzML-test-files"))
+  test$addDB(F, test_csl_path)
+  test$addIS(F, test_path("fixtures", "istd-tables-dbas", "bfg_nts_rp1_neochema_is_table_pos.csv"))
+  suppressMessages(
+    test$process_all(comp_names = "Rhodamine B base")
+  )
+  test$peakList
+  expect_no_error(testPlot <- test$plotMS1(1))
+  expect_s3_class(testPlot, "ggplot")
+})  
