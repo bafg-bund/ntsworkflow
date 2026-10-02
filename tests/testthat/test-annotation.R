@@ -10,7 +10,7 @@ test_that("annotate_grouped returns annotation table with expected compound", {
     sampleListLocal = sampleList,
     peakListList = peaklist,
     alignmentTable = grouped,
-    db_path = test_csl_path,
+    db_path = test_csl_path(),
     datenListLocal = datenList
   )
   

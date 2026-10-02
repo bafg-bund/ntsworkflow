@@ -6,7 +6,7 @@ test_that("ms2_search finds Olmesartan-d6 in sample files", {
   
   results <- ms2_search(
     data_path = mzxml_files,
-    csl_path = test_csl_path,
+    csl_path = test_csl_path(),
     compounds = c("Olmesartan-d6", "Bezafibrate-d4")
   )
   
@@ -28,7 +28,7 @@ test_that("Multiple peaks are labelled by letters according to RT", {
   
   results <- ms2_search(
     data_path = mzxml_files,
-    csl_path = test_csl_path,
+    csl_path = test_csl_path(),
     rttolm = 2,
     compounds = "Tebuconazole"
   )
@@ -43,7 +43,7 @@ test_that("ms2_search finds two out of three available compounds in sample files
   
   results <- ms2_search(
     data_path = mzxml_files,
-    csl_path = test_csl_path,
+    csl_path = test_csl_path(),
     compounds = c("Olmesartan-d6", "(2-Carboxyethyl)triphenylphosphonium", "Bezafibrate-d4")
   )
   
@@ -79,7 +79,7 @@ test_that("get_csl_data returns csl data correctly", {
   
   # Run function
   csl_data <- get_csl_data(
-    csl_path = test_csl_path,
+    csl_path = test_csl_path(),
     chromatography = chromatography,
     pol = pol,
     ce_s = ce_s,
@@ -111,7 +111,7 @@ test_that("get_csl_data filters suspects correctly", {
   
   # Run function
   csl_data <- get_csl_data(
-    csl_path = test_csl_path,
+    csl_path = test_csl_path(),
     chromatography = chromatography,
     pol = pol,
     ce_s = ce_s,

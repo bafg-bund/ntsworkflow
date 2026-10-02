@@ -2,7 +2,7 @@ test_that("dbas processing can find IS in test files, these can be saved without
           removing files from memory", {
   test <- Report$new()
   test$changeSettings("pol", "pos")
-  test$addDB(F, test_csl_path)
+  test$addDB(F, test_csl_path())
   test$addIS(F, test_path("fixtures", "IS_table_pos.csv"))
   test$addRawFiles(F, c(
     test_path("fixtures", "mzXML-test-files", "RH_pos_20230812.mzXML"),
@@ -26,7 +26,7 @@ test_that("dbas processing can find IS in test files, these can be saved without
 test_that("Processing an empty file returns an empty report", {
   test <- Report$new()
   test$changeSettings("pol", "pos")
-  test$addDB(F, test_csl_path)
+  test$addDB(F, test_csl_path())
   test$addIS(F, test_path("fixtures", "IS_table_pos.csv"))
   test$addRawFiles(F, test_path("fixtures", "mzXML-test-files", "RH_pos_20220602_no_peaks.mzXML"))
   test$process_all()
@@ -74,7 +74,7 @@ test_that("Reintegration runs without error", {
   # Prepare test files for reintegration
   test <- Report$new()
   test$changeSettings("pol", "pos")
-  test$addDB(F, test_csl_path)
+  test$addDB(F, test_csl_path())
   test$addIS(F, test_path("fixtures", "IS_table_pos.csv"))
   test$addRawFilesDir(F, test_path("fixtures", "mzXML-test-files"))
   test$process_all(comp_names = "Olmesartan-d6")
@@ -93,7 +93,7 @@ test_that("Reintegration runs even with strange file names", {
   # Prepare test files for reintegration
   test <- Report$new()
   test$changeSettings("pol", "pos")
-  test$addDB(F, test_csl_path)
+  test$addDB(F, test_csl_path())
   test$addIS(F, test_path("fixtures", "IS_table_pos.csv"))
   test$addRawFiles(F, nFiles)
   suppressMessages(test$process_all(comp_names = "Olmesartan-d6"))
@@ -107,7 +107,7 @@ test_that("Blank correction also removes peaks from the reintegration table", {
   )
   test <- Report$new()
   test$changeSettings("pol", "pos")
-  test$addDB(F, test_csl_path)
+  test$addDB(F, test_csl_path())
   test$addIS(F, test_path("fixtures", "IS_table_pos.csv"))
   test$addRawFiles(F, testFiles)
   suppressMessages(test$process_all(comp_names = "Olmesartan-d6"))
@@ -198,7 +198,7 @@ test_that("mzML as well as mzXML files can be added", {
 test_that("mzML files can be processed", {
   test <- Report$new()
   test$addRawFilesDir(F, test_path("fixtures", "mzML-test-files"))
-  test$addDB(F, test_csl_path)
+  test$addDB(F, test_csl_path())
   test$addIS(F, test_path("fixtures", "istd-tables-dbas", "bfg_nts_rp1_neochema_is_table_pos.csv"))
   suppressMessages(
     test$process_all(comp_names = "Bezafibrate-d6")
@@ -213,7 +213,7 @@ test_that("mzML files can be processed", {
 test_that("MS1 spec can be produced", {
   test <- Report$new()
   test$addRawFilesDir(F, test_path("fixtures", "mzML-test-files"))
-  test$addDB(F, test_csl_path)
+  test$addDB(F, test_csl_path())
   test$addIS(F, test_path("fixtures", "istd-tables-dbas", "bfg_nts_rp1_neochema_is_table_pos.csv"))
   suppressMessages(
     test$process_all(comp_names = "Rhodamine B base")

@@ -11,7 +11,7 @@ test_that("Merging a report with no IS results does not result in a warning", {
   
   test <- Report$new()
   test$changeSettings("pol", "pos")
-  test$addDB(F, test_csl_path)
+  test$addDB(F, test_csl_path())
   test$addIS(F, test_path("fixtures", "IS_table_pos.csv"))
   test$addRawFiles(F, c(
     test_path("fixtures", "mzXML-test-files", "RH_pos_20230812.mzXML")
@@ -21,7 +21,7 @@ test_that("Merging a report with no IS results does not result in a warning", {
   
   test2 <- Report$new()
   test2$changeSettings("pol", "pos")
-  test2$addDB(F, test_csl_path)
+  test2$addDB(F, test_csl_path())
   test2$addIS(F, newIsTable)
   test2$addRawFiles(F, c(
     test_path("fixtures", "mzXML-test-files", "RH_pos_20230813.mzXML")
