@@ -243,7 +243,7 @@ Report <- setRefClass(
         dir_path <- rstudioapi::selectDirectory(path = "~", caption = "Select directory containing mzXML files")
       }
 
-      newFiles <- list.files(dir_path, pattern = "*\\.mzXML$", full.names = TRUE)
+      newFiles <- list.files(dir_path, pattern = "*\\.mzX?ML$", full.names = TRUE)
       testMe <- append(basename(rawFiles), basename(newFiles))
       if (anyDuplicated(testMe)) {
         stop("All file names must be unique")
@@ -2394,5 +2394,6 @@ Report <- setRefClass(
     }
   )
 )
-# Copyright 2025 Bundesanstalt für Gewässerkunde (Federal Institute of Hydrology)
+
+# Copyright 2026 Bundesanstalt für Gewässerkunde (Federal Institute of Hydrology)
 # This file is part of ntsworkflow

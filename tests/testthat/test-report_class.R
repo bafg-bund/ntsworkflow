@@ -173,3 +173,40 @@ test_that("Blank correction also removes peaks from the reintegration table", {
   expect_equal(nrow(test$peakList), 1)
   expect_equal(nrow(test$integRes), 1)
 })
+
+test_that("mzML as well as mzXML files can be added", {
+  test <- Report$new()
+  test$addRawFiles(F, c(
+    test_path("fixtures", "mzXML-test-files", "RH_pos_20230812.mzXML"),
+    test_path("fixtures", "mzXML-test-files", "RH_pos_20230813.mzXML")
+  ))
+  expect_length(test$rawFiles, 2)
+  
+  test <- Report$new()
+  test$addRawFilesDir(F, test_path("fixtures", "mzXML-test-files"))
+  expect_length(test$rawFiles, 3)
+  
+  test <- Report$new()
+  test$addRawFiles(F, list.files(test_path("fixtures", "mzML-test-files"), full.names = TRUE))
+  expect_length(test$rawFiles, 2)
+  
+  test <- Report$new()
+  test$addRawFilesDir(F, test_path("fixtures", "mzML-test-files"))
+  expect_length(test$rawFiles, 2)
+})
+
+test_that("mzML files can be processed", {
+  test <- Report$new()
+  test$addRawFilesDir(F, test_path("fixtures", "mzML-test-files"))
+  test$addDB(F, test_csl_path)
+  test$addIS(F, test_path("fixtures", "istd-tables-dbas", "bfg_nts_rp1_neochema_is_table_pos.csv"))
+  suppressMessages(
+    test$process_all(comp_names = "Bezafibrate-d6")
+  )
+  expect_contains(test$peakList$comp_name, "Bezafibrate-d6")
+  expect_contains(test$ISresults$IS, "Bezafibrate-d6")
+  expect_no_error(suppressMessages(
+    test$reIntegrate()
+  ))
+})
+  

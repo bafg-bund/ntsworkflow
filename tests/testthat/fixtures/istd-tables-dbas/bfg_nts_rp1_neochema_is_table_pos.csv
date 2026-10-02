@@ -1,0 +1,20 @@
+name,formula,rt,adduct
+Sotalol-d7,C12H13N2O3S 2H7,4.837,[M+H]+
+Iopromid-d3,C18H21I3N3O8 2H3,4.985,[M+H]+
+"1H-Benzotriazol-4,5,6,7-d4",C6HN3 2H4,6.12,[M+H]+
+Metoprolol-d7,C15H18NO3 2H7,6.251,[M+H]+
+Chloridazon-d5,C10H3ClN3O 2H5,7.18,[M+H]+
+Sulfamethoxazol-d4,C10H7N3O3S 2H4,7.593,[M+H]+
+Bromacil-d3,C9H10BrN2O2 2H3,8.902,[M+H]+
+Simazin-d10,C7H2ClN5 2H10,9.057,[M+H]+
+Telmisartan-d3,C33H27N4O2 2H3,9.079,[M+H]+
+Carbamazepin-d10,C15H2N2O 2H10,9.244,[M+H]+
+Irbesartan-d4,C25H24N6O 2H4,9.534,[M+H]+
+Bentazon-isopropyl-d6,C10H6N2O3S 2H6,10.255,[M+H]+
+DEET-d7,C12H10NO 2H7,10.606,[M+H]+
+Diuron-d6,C9H4Cl2N2O 2H6,10.666,[M+H]+
+Darunavir-d9,C27H28N3O7S 2H9,11.184,[M+H]+
+Bezafibrate-d6,C19H14ClNO4 2H6,11.211,[M+H]+
+Fipronil-13C4,C8H4Cl2F6N4OS 13C4,14.055,[M+H]+
+Diflufenican-d3,C19H8F5N2O2 2H3,15.302,[M+H]+
+

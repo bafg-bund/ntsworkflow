@@ -18,7 +18,9 @@ reintegration table 3) additional bugfixes.
 
 - R: 4.6.1
 - C++: C++17
+- GCC (compiler): 14.2.0
 - CSL: 26.2
+- Proteowizard: 3.0.26183
 
 # 0.2.10
 

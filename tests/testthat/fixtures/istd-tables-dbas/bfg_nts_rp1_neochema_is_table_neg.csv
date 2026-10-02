@@ -1,0 +1,19 @@
+name,formula,rt,adduct
+Acesulfam-d4,C4HNO4S 2H4,3.889,[M-H]-
+Sotalol-d7,C12H13N2O3S 2H7,4.839,[M-H]-
+Iopromid-d3,C18H21I3N3O8 2H3,4.963,[M-H]-
+Saccharin-d4,C7HNO3S 2H4,5.124,[M-H]-
+Hydrochlorthiazid-13C-d2,C6H6ClN3O4S2 13C 2H2,5.715,[M-H]-
+"1H-Benzotriazol-4,5,6,7-d4",C6HN3 2H4,6.199,[M-H]-
+Chloridazon-d5,C10H3ClN3O 2H5,7.178,[M-H]-
+Sulfamethoxazol-d4,C10H7N3O3S 2H4,7.595,[M-H]-
+Bromacil-d3,C9H10BrN2O2 2H3,8.898,[M-H]-
+Telmisartan-d3,C33H27N4O2 2H3,9.07,[M-H]-
+Irbesartan-d4,C25H24N6O 2H4,9.523,[M-H]-
+Bentazon-isopropyl-d6,C10H6N2O3S 2H6,10.251,[M-H]-
+Diuron-d6,C9H4Cl2N2O 2H6,10.661,[M-H]-
+Darunavir-d9,C27H28N3O7S 2H9,11.177,[M-H]-
+Bezafibrate-d6,C19H14ClNO4 2H6,11.205,[M-H]-
+Fipronil-13C4,C8H4Cl2F6N4OS 13C4,14.051,[M-H]-
+Diflufenican-d3,C19H8F5N2O2 2H3,15.301,[M-H]-
+
