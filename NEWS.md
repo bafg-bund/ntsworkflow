@@ -16,8 +16,9 @@ reintegration table 3) additional bugfixes.
 
 ## Dependency version updates
 
-- R=4.6.1
-- C++=C++17
+- R: 4.6.1
+- C++: C++17
+- CSL: 26.2
 
 # 0.2.10
 

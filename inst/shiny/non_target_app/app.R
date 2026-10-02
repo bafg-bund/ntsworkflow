@@ -3818,7 +3818,7 @@ server <- function(input, output, session) {
         in the case of no file, an adduct annotation is done."
       ),
       p(
-        "1: MS2 'Spektrendatenbank' SQLite database, E.g. CSL_v25.7.db. To add standards to the
+        "1: MS2 'Spektrendatenbank' SQLite database, E.g. CSL_v26.2.db. To add standards to the
         DB, ask G2."
       ),
       p(

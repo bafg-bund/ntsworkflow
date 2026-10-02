@@ -1,6 +1,5 @@
 test_that("annotate_grouped returns annotation table with expected compound", {
   # Prepare inputs
-  csl_path <- testthat::test_path("fixtures", "csl-test-files", "CSL_v25.7.db")
   sampleList <- readRDS(testthat::test_path("fixtures", "annotation", "sampleListLocal.RDS"))
   peaklist <- readRDS(testthat::test_path("fixtures", "annotation", "peakListList.RDS"))
   grouped <- readRDS(testthat::test_path("fixtures", "annotation", "alignmentTable.RDS"))
@@ -11,7 +10,7 @@ test_that("annotate_grouped returns annotation table with expected compound", {
     sampleListLocal = sampleList,
     peakListList = peaklist,
     alignmentTable = grouped,
-    db_path = csl_path,
+    db_path = test_csl_path,
     datenListLocal = datenList
   )
   

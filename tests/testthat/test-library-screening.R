@@ -1,14 +1,13 @@
 # Integration tests ####
 
 test_that("ms2_search finds Olmesartan-d6 in sample files", {
-  # Prepare paths for CSL file and sample files
-  csl_path <- testthat::test_path("fixtures", "csl-test-files", "CSL_olmesartan-d6.db")
   data_dir <- testthat::test_path("fixtures", "mzXML-test-files")
   mzxml_files <- list.files(data_dir, pattern = "\\.mzXML$", full.names = TRUE)
   
   results <- ms2_search(
     data_path = mzxml_files,
-    csl_path = csl_path
+    csl_path = test_csl_path,
+    compounds = c("Olmesartan-d6", "Bezafibrate-d4")
   )
   
   # Test return class
@@ -24,13 +23,12 @@ test_that("ms2_search finds Olmesartan-d6 in sample files", {
 })
 
 test_that("Multiple peaks are labelled by letters according to RT", {
-  csl_path <- test_path("fixtures", "csl-test-files", "CSL_v25.7.db")
   data_dir <- test_path("fixtures", "mzXML-test-files", "lib-screening-multi-peaks")
   mzxml_files <- list.files(data_dir, pattern = "\\.mzXML$", full.names = TRUE)
   
   results <- ms2_search(
     data_path = mzxml_files,
-    csl_path = csl_path,
+    csl_path = test_csl_path,
     rttolm = 2,
     compounds = "Tebuconazole"
   )
@@ -40,15 +38,13 @@ test_that("Multiple peaks are labelled by letters according to RT", {
 })
 
 test_that("ms2_search finds two out of three available compounds in sample files", {
-  # Prepare paths for CSL file and sample files
-  csl_path <- testthat::test_path("fixtures", "csl-test-files", "CSL_olm-d6_beza-d4_2Ctp.db")
   data_dir <- testthat::test_path("fixtures", "mzXML-test-files")
   mzxml_files <- list.files(data_dir, pattern = "\\.mzXML$", full.names = TRUE)
   
-  # Run m2_search
   results <- ms2_search(
     data_path = mzxml_files,
-    csl_path = csl_path
+    csl_path = test_csl_path,
+    compounds = c("Olmesartan-d6", "(2-Carboxyethyl)triphenylphosphonium", "Bezafibrate-d4")
   )
   
   # Test return class
@@ -72,8 +68,6 @@ test_that("ms2_search finds two out of three available compounds in sample files
 
 
 test_that("get_csl_data returns csl data correctly", {
-  # Path to mock test database
-  test_csl_path <- testthat::test_path("fixtures", "csl-test-files", "CSL_olm-d6_beza-d4_2Ctp.db")
   
   # Prepare test inputs
   chromatography <- "bfg_nts_rp1"
@@ -106,8 +100,6 @@ test_that("get_csl_data returns csl data correctly", {
 
 
 test_that("get_csl_data filters suspects correctly", {
-  # Path to mock test database
-  test_csl_path <- testthat::test_path("fixtures", "csl-test-files", "CSL_olm-d6_beza-d4_2Ctp.db")
   
   # Prepare test inputs
   chromatography <- "bfg_nts_rp1"

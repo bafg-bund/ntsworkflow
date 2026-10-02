@@ -11,22 +11,22 @@ test_that("Merging a report with no IS results does not result in a warning", {
   
   test <- Report$new()
   test$changeSettings("pol", "pos")
-  test$addDB(F, test_path("fixtures", "csl-test-files", "CSL_olmesartan-d6.db"))
+  test$addDB(F, test_csl_path)
   test$addIS(F, test_path("fixtures", "IS_table_pos.csv"))
   test$addRawFiles(F, c(
     test_path("fixtures", "mzXML-test-files", "RH_pos_20230812.mzXML")
   ))
-  test$process_all()
+  test$process_all(comp_names = "Olmesartan-d6")
   test$clearAndSave(F, file.path(tempDir, "test1.report"))
   
   test2 <- Report$new()
   test2$changeSettings("pol", "pos")
-  test2$addDB(F, test_path("fixtures", "csl-test-files", "CSL_olmesartan-d6.db"))
+  test2$addDB(F, test_csl_path)
   test2$addIS(F, newIsTable)
   test2$addRawFiles(F, c(
     test_path("fixtures", "mzXML-test-files", "RH_pos_20230813.mzXML")
   ))
-  test2$process_all()
+  test2$process_all(comp_names = "Olmesartan-d6")
   # replace IS table to match test1
   test2$IS <- data.frame()
   test2$addIS(F, test_path("fixtures", "IS_table_pos.csv"))
