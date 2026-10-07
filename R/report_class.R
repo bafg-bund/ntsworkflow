@@ -190,8 +190,7 @@ Report <- setRefClass(
         int = numeric()
       )
       IS <<- data.frame(
-        name = character(), formula = character(), rt = numeric(),
-        default = logical(), adduct = character(),
+        name = character(), formula = character(), rt = numeric(), adduct = character(),
         stringsAsFactors = FALSE
       )
       ISresults <<- data.frame(
@@ -226,7 +225,7 @@ Report <- setRefClass(
       }
       df <- read.csv(fileName, stringsAsFactors = FALSE)
       # check that the table is ok
-      stopifnot(all.equal(colnames(df), c("name", "formula", "rt", "adduct")))
+      stopifnot(all(colnames(df) %in% c("name", "formula", "rt", "adduct")))
       stopifnot(inherits(df$rt, "numeric"))
 
       test <- rbind(IS, df)
@@ -747,8 +746,8 @@ Report <- setRefClass(
               # choose largest peak, normally there should only be one remaining peak
               res <- res[which.max(res$peakArea), ]
               peakList[peakList$peakID == thisID, "real_rt_min"] <<- round(res$scantime / 60, 2)
-              peakList[peakList$peakID == thisID, "int_h"] <<- as.integer(round(res$peak_intens))
-              peakList[peakList$peakID == thisID, "int_a"] <<- as.integer(round(res$peakArea))
+              peakList[peakList$peakID == thisID, "int_h"] <<- round(res$peak_intens)
+              peakList[peakList$peakID == thisID, "int_a"] <<- round(res$peakArea)
               peakList[peakList$peakID == thisID, "peak_start"] <<- round(res$scantimeleft_end / 60, 2)
               peakList[peakList$peakID == thisID, "peak_end"] <<- round(res$scantimeright_end / 60, 2)
               peakList[peakList$peakID == thisID, "s_to_n"] <<- round(res$peak_intens / res$noisedeviation, 1)
@@ -797,8 +796,8 @@ Report <- setRefClass(
           IS_res2 <- data.frame(
             samp = basename(datFile), IS = IS[k, "name"],
             mz = IS_res$exactmass, rt = IS_res$scantime_min,
-            int_h = as.integer(round(IS_res$peak_intens)),
-            int_a = as.integer(round(IS_res$peakArea)),
+            int_h = round(IS_res$peak_intens),
+            int_a = round(IS_res$peakArea),
             peak_start = round(IS_res$scantimeleft_end / 60, 2),
             peak_end = round(IS_res$scantimeright_end / 60, 2),
             eic_extraction_width = IS_res$e_width,
@@ -1512,8 +1511,8 @@ Report <- setRefClass(
             comp_name = thisComp,
             adduct = thisAd,
             isotopologue = thisIsot,
-            int_h = as.integer(round(compRes$peak_intens)),
-            int_a = as.integer(round(compRes$peakArea)),
+            int_h = round(compRes$peak_intens),
+            int_a = round(compRes$peakArea),
             s_to_n = round(compRes$peak_intens / compRes$noisedeviation, 1),
             rt_error_min = round(compRes$scantime / 60 - thisRt, 2),
             eic_extraction_width = compRes$e_width,
