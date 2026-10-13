@@ -1,0 +1,216 @@
+# ntsworkflow
+
+The goal of ntsworkflow is to process non-target LC/GC-HRMS data and
+carry out simple data analysis. It is designed as a basic peak-picking
+and annotation algorithm which feeds into more specialized workflows for
+different tasks. The Collective Spectral Library (Lessmann et al., 2025)
+is used for library screening and peak annotation.
+
+If you use the package or any derivative thereof, please cite the work.
+To cite this work please use the following citation or run
+`citation("ntsworkflow")` for more details.
+
+> Kevin S. Jewell, Ole Lessmann, Christian Dietrich, Toni Köppe,
+> Franziska Prodöhl, Arne Wick and Thomas A. Ternes (2026). ntsworkflow:
+> A Non-Target Screening Data Evaluation Tool. R package version 0.2.10.
+> Federal Institute of Hydrology.
+> \[<https://github.com/bafg-bund/ntsworkflow>\]
+
+### Peer-reviewed articles reporting the development of ntsworkflow
+
+- K. S. Jewell, U. Kunkel, B. Ehlig, F. Thron, M. Schlüsener, C.
+  Dietrich, A. Wick, and T. A. Ternes, *Rapid Communications in Mass
+  Spectrometry*, **2019**, 34, e8541.
+- T. Köppe, K. S. Jewell, C. Dietrich, A. Wick, and T. A. Ternes, *Water
+  Research*, **2020**, 178, 115703.
+- C. Dietrich, A. Wick, and T. A. Ternes, *Rapid Communications in Mass
+  Spectrometry*, **2021**, e9206.
+
+### Citations
+
+- Lessmann, O., Jewell, K. S., Ehlig, B., Kunkel, U., Macherius, A.,
+  Winter, E., Schlüsener, M. P., & Wick, A. (2025). Collective Spectral
+  Library (25.7) \[Data set\]. Federal Institute of Hydrology.
+  <https://doi.org/10.5281/zenodo.17599588>
+
+## Installation
+
+R 4.5.2 and Java JRE and JDK (v1.8) (for `rcdk`) are needed. Compilation
+of C++ code requires g++ v13.
+
+#### Install the Bioconductor package `xcms`
+
+It is recommended to install `xcms` first. Follow the instructions on
+[bioconductor - xcms](https://doi.org/doi:10.18129/B9.bioc.xcms).
+
+#### Install ntsworkflow
+
+``` r
+
+remotes::install_github("bafg-bund/ntsworkflow")
+```
+
+#### Install Genform (optional)
+
+The Windows .exe can be downloaded directly from Sourceforge. It must be
+put on the system path.
+
+For Linux, the program needs to be compiled from source. Download the
+source files and in the folder with the .cpp files run the following:
+`g++ main.cpp ms*.cpp -o genform`. This will compile the program and
+create the `genform` executable, which must be moved to the `~/bin`
+folder.
+
+#### Installation on Ubuntu
+
+We recommend using the PPA `r2u` and installing dependencies via `apt`.
+The bash command for installing dependencies is:
+
+``` R
+sudo apt install r-cran-tidyverse r-cran-rsqlite r-cran-shiny r-cran-shinyfiles r-cran-shinybs r-cran-dt r-cran-tcltk2 r-cran-foreach r-cran-doparallel r-cran-iterators r-cran-rcpp r-cran-rcpparmadillo r-cran-yaml r-cran-jsonlite r-cran-zoo r-cran-rcdk r-cran-future r-cran-furrr r-cran-paralleldist r-bioc-xcms
+```
+
+## Help files
+
+After loading the package with
+[`library(ntsworkflow)`](https://rdrr.io/r/base/library.html), You can
+find documentation by typing `browseVignettes("ntsworkflow")`.
+
+## Miscellaneous
+
+- `ntsworkflow` uses [Semantic Versioning](https://semver.org/).
+
+## License
+
+Copyright 2026 Bundesanstalt für Gewässerkunde (Federal Institute of
+Hydrology)
+
+ntsworkflow is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+ntsworkflow is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with ntsworkflow. If not, see <https://www.gnu.org/licenses/>.
+
+# Package index
+
+## All functions
+
+- [`Report-class`](http://r.bafg.de/reference/Report-class.md)
+  [`Report`](http://r.bafg.de/reference/Report-class.md) : A reference
+  class for database screening.
+- [`RunGenForm()`](http://r.bafg.de/reference/RunGenForm.md) : Run
+  GenForm with various Commands
+- [`alig_componentisation()`](http://r.bafg.de/reference/alig_componentisation.md)
+  : Second stage componentisation using the alignment table
+- [`alignmentBfGC()`](http://r.bafg.de/reference/alignmentBfGC.md) :
+  Align peaks in separate peak lists by m/z and retention time tolerance
+- [`alignment_BfG_cpp()`](http://r.bafg.de/reference/alignment_BfG_cpp.md)
+  : Alignment of peaks from difference samples
+- [`alignment_BfG_cpp_par()`](http://r.bafg.de/reference/alignment_BfG_cpp_par.md)
+  : Align peaks with parallel processing
+- [`annotateCleanMSMS()`](http://r.bafg.de/reference/annotateCleanMSMS.md)
+  : Annotate Cleaned MSMS
+- [`annotate_grouped()`](http://r.bafg.de/reference/annotate_grouped.md)
+  : Annotate alignment table with compound names by spectral library
+  screening
+- [`annotate_grouped_components()`](http://r.bafg.de/reference/annotate_grouped_components.md)
+  : Annotate alignment table with adduct and isotopologue information
+- [`annotate_grouped_mz_rt()`](http://r.bafg.de/reference/annotate_grouped_mz_rt.md)
+  : Annotate alignment table based only on m/z and RT comparison
+- [`averageReplicates()`](http://r.bafg.de/reference/averageReplicates.md)
+  : Get mean intensities for replicate injections
+- [`blankCorrection()`](http://r.bafg.de/reference/blankCorrection.md) :
+  Remove features also found in the blanks
+- [`calc_ndp()`](http://r.bafg.de/reference/calc_ndp.md) : Calculate
+  Normalized Dot Product Similarity Score Between MS2 Spectra
+- [`clean_and_normalize_ms2()`](http://r.bafg.de/reference/clean_and_normalize_ms2.md)
+  : Filter and normalize MS2 spectra by removing precursor peaks and
+  noise.
+- [`componentization_BfG()`](http://r.bafg.de/reference/componentization_BfG.md)
+  : Group features into components
+- [`correct_formula()`](http://r.bafg.de/reference/correct_formula.md) :
+  Combine a formula with the adduct
+- [`correlates_with_r()`](http://r.bafg.de/reference/correlates_with_r.md)
+  : Find Pearson's correlation between intensity trends
+- [`create_log_file()`](http://r.bafg.de/reference/create_log_file.md) :
+  Create a list for logging when processing with the Non-Target App
+- [`dbGetSpectrum()`](http://r.bafg.de/reference/dbGetSpectrum.md) :
+  Extraction of a MS2-Spectrum for a given ExperimentID from spectral
+  library
+- [`filter_matching_ms2()`](http://r.bafg.de/reference/filter_matching_ms2.md)
+  : Compare MS2 spectra to a reference database and record the best
+  match and similarity score.
+- [`filter_matching_rt_mz()`](http://r.bafg.de/reference/filter_matching_rt_mz.md)
+  : Match sample data by precursor mass and RT of csl compound within
+  tolerances
+- [`fixNoLossSpace()`](http://r.bafg.de/reference/fixNoLossSpace.md) :
+  Fix Whitespace Error in GenForm Loss Annotation
+- [`forIdentExport()`](http://r.bafg.de/reference/forIdentExport.md) :
+  Export data to For-Ident.
+- [`get_mass()`](http://r.bafg.de/reference/get_mass.md) : Calculate the
+  mass/charge (m/z) from molecular formula and adduct form
+- [`hello`](http://r.bafg.de/reference/hello.md) : A simple function
+  doing little
+- [`keepConsecutive()`](http://r.bafg.de/reference/keepConsecutive.md) :
+  Keep only rows found in at least X consecutive samples
+- [`keepReps()`](http://r.bafg.de/reference/keepReps.md) : Only retain
+  peaks found in all replicates
+- [`keep_reps_regex()`](http://r.bafg.de/reference/keep_reps_regex.md) :
+  Replicate feature based on regular expression
+- [`label_separate_peaks_by_rt()`](http://r.bafg.de/reference/label_separate_peaks_by_rt.md)
+  : Group and label separate chromatographic peaks (A-Z) based on
+  retention time, keeping only the most intense from each group.
+- [`loadReport()`](http://r.bafg.de/reference/loadReport.md) : Load a
+  previously saved Report
+- [`mergeReport()`](http://r.bafg.de/reference/mergeReport.md) : Merge
+  two Report objects
+- [`ms2_search()`](http://r.bafg.de/reference/ms2_search.md) : Library
+  screening without prior peak-picking
+- [`new_peaklist()`](http://r.bafg.de/reference/new_peaklist.md) : Add
+  additional peak and sample ID information to peaklists
+- [`ntsworkflow`](http://r.bafg.de/reference/ntsworkflow.md) :
+  ntsworkflow: A package for non-target-screening data processing.
+- [`onlyGroupLeaders()`](http://r.bafg.de/reference/onlyGroupLeaders.md)
+  : Keep only features which are the group leaders
+- [`optimumMzStep()`](http://r.bafg.de/reference/optimumMzStep.md) : Get
+  a recommendation for the m/z-step parameter (binning width)
+- [`pickPeaksMzRange()`](http://r.bafg.de/reference/pickPeaksMzRange.md)
+  : Peak-picking for an m/z range
+- [`pickPeaksOneEic()`](http://r.bafg.de/reference/pickPeaksOneEic.md) :
+  Peakpeaking algorithm using C++
+- [`pickPeaksOneEicCpp()`](http://r.bafg.de/reference/pickPeaksOneEicCpp.md)
+  : Find peaks in an ion chromatogram
+- [`rcpparma_hello_world()`](http://r.bafg.de/reference/rcpparma_hello_world.md)
+  [`rcpparma_outerproduct()`](http://r.bafg.de/reference/rcpparma_hello_world.md)
+  [`rcpparma_innerproduct()`](http://r.bafg.de/reference/rcpparma_hello_world.md)
+  [`rcpparma_bothproducts()`](http://r.bafg.de/reference/rcpparma_hello_world.md)
+  : Set of functions in example RcppArmadillo package
+- [`removeRare()`](http://r.bafg.de/reference/removeRare.md) : Remove
+  features found in less than x samples
+- [`runPeakPicking()`](http://r.bafg.de/reference/runPeakPicking.md) :
+  Start the shiny peak picking app from the R console
+- [`search_ms1_for_precursor()`](http://r.bafg.de/reference/search_ms1_for_precursor.md)
+  : Search MS1 scans near the MS2 retention time for a precursor ion
+  matching the expected m/z.
+- [`summarize_groups()`](http://r.bafg.de/reference/summarize_groups.md)
+  : Summarize componentization groups into one column
+- [`wind()`](http://r.bafg.de/reference/wind.md) : Simple function to
+  create window tolerance
+
+# Articles
+
+### All vignettes
+
+- [Introduction to DB-screening using
+  ntsworkflow](http://r.bafg.de/articles/db-screening.md):
+- [Library screening with
+  \`ms2_search()\`](http://r.bafg.de/articles/libScreening-ms2search.md):
+- [Example peak-picking and annotation using
+  ntsworkflow](http://r.bafg.de/articles/peak-picking.md):

@@ -1,0 +1,79 @@
+# Find peaks in an ion chromatogram
+
+Peak finding algorithm using apex detection by 1st derivative, an
+iterative search method and no chromatogram smoothing. The method is
+published in Dietrich, C., Wick, A., & Ternes, T. A. (2021). Open source
+feature detection for non‐target LC‐MS analytics. Rapid Communications
+in Mass Spectrometry, e9206. https://doi.org/10.1002/rcm.9206
+
+## Usage
+
+``` r
+pickPeaksOneEicCpp(
+  mz,
+  mz_step,
+  eic,
+  scantime,
+  minIntensity,
+  sn,
+  noisescans,
+  peakwidth_min,
+  peakwidth_max,
+  maxPeaksPerSignal
+)
+```
+
+## Arguments
+
+- mz:
+
+  m/z of current ion chromatogram (Da)
+
+- mz_step:
+
+  binning width used to extract chromatogram (da)
+
+- eic:
+
+  extracted ion chromatogram (just intensities)
+
+- scantime:
+
+  Scan time of each index in eic (in s)
+
+- minIntensity:
+
+  Minimum intensity for peak-picking
+
+- sn:
+
+  Minimum signal-to-noise ratio
+
+- noisescans:
+
+  Number of scans before and after peak to determine noise
+
+- peakwidth_min:
+
+  Minimum width of a peak
+
+- peakwidth_max:
+
+  Maximum width of a peak
+
+- maxPeaksPerSignal:
+
+  Maximum number of sub-peaks (direction changes) within a peak
+
+## Value
+
+A numeric matrix of class Rcpp::numericMatrix. rows: peaks found. cols:
+16 peak descriptors. col 1: 0 (placeholder for m/z) col 2: Retention
+time of peak (s) col 3: 0 (Placeholder for peak intensity) col 4:
+Intensity found in chromatogram col 5: Scan number of peak apex col 6:
+Scantime of peak start col 7: Scantime of peak end col 8: Scan number of
+peak start col 9: Scan number of peak end col 10: UNKNOWN noisedeviation
+col 11: Peak area col 12: Left RT of peak at half height (s) col 13:
+Right RT of peak at half height (s) col 14: Baseline of peak (intensity)
+col 15: m/z of this chromatogram col 16: 0 (placeholder for ms2 scan
+number)
